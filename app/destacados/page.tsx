@@ -25,8 +25,8 @@ export default async function DestacadosPage() {
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-[#ededed] py-6">
-        <div className="mx-auto max-w-7xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-[#ededed] py-6 pb-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
             <h1 className="text-2xl font-bold text-[#1d1d1b]">
               ⭐ Productos destacados

@@ -28,8 +28,8 @@ export default async function OfertasPage() {
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-[#ededed] py-6">
-        <div className="mx-auto max-w-7xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-[#ededed] py-6 pb-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="mb-6 rounded-lg bg-gradient-to-r from-green-500 to-green-600 p-6 text-white shadow-sm">
             <h1 className="text-2xl font-bold">
               🔥 Ofertas imperdibles

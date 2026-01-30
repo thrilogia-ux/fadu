@@ -88,16 +88,16 @@ export default function CheckoutPage() {
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-4xl px-4">
-          <h1 className="mb-8 text-3xl font-bold text-[#1d1d1b]">Finalizar compra</h1>
+      <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
+          <h1 className="mb-6 text-2xl font-bold text-[#1d1d1b] text-center md:mb-8 md:text-left md:text-3xl">Finalizar compra</h1>
 
           <form onSubmit={handleSubmit}>
-            <div className="grid gap-8 lg:grid-cols-3">
+            <div className="grid min-w-0 gap-8 lg:grid-cols-3">
               {/* Datos y pago */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="min-w-0 space-y-6 lg:col-span-2">
                 {/* Datos de contacto */}
-                <div className="rounded-lg border border-black/8 bg-white p-6">
+                <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
                   <h2 className="mb-4 text-lg font-semibold">Datos de contacto</h2>
                   <div className="space-y-4">
                     <div>
@@ -128,7 +128,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Método de pago */}
-                <div className="rounded-lg border border-black/8 bg-white p-6">
+                <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
                   <h2 className="mb-4 text-lg font-semibold">Método de pago</h2>
                   <div className="space-y-3">
                     <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-black/10 p-4 transition hover:border-[#0f3bff] has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5">
@@ -180,26 +180,26 @@ export default function CheckoutPage() {
               </div>
 
               {/* Resumen */}
-              <div>
-                <div className="sticky top-24 rounded-lg border border-black/8 bg-white p-6">
-                  <h2 className="mb-4 text-lg font-semibold">Resumen</h2>
+              <div className="min-w-0">
+                <div className="rounded-lg border border-black/8 bg-white p-4 pb-8 sm:p-6 lg:sticky lg:top-24">
+                  <h2 className="mb-4 text-center text-lg font-semibold md:text-left">Resumen</h2>
 
                   <div className="mb-4 space-y-2 border-b border-black/8 pb-4">
                     {items.map((item) => (
-                      <div key={item.productId} className="flex justify-between text-sm">
-                        <span className="text-gray-600">
+                      <div key={item.productId} className="flex min-w-0 justify-between gap-2 text-sm">
+                        <span className="min-w-0 truncate text-gray-600">
                           {item.name} x{item.quantity}
                         </span>
-                        <span className="font-semibold">
+                        <span className="font-semibold shrink-0">
                           ${(item.price * item.quantity).toLocaleString("es-AR")}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mb-6 flex justify-between text-xl font-bold">
+                  <div className="mb-6 flex justify-between gap-2 text-xl font-bold">
                     <span>Total</span>
-                    <span>${total.toLocaleString("es-AR")}</span>
+                    <span className="shrink-0">${total.toLocaleString("es-AR")}</span>
                   </div>
 
                   <button

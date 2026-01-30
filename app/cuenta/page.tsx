@@ -50,8 +50,8 @@ export default function CuentaPage() {
     <>
       <Header categories={[]} />
 
-      <main className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-4xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
           {/* Header */}
           <div className="mb-8 rounded-lg bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">

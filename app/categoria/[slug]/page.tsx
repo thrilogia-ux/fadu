@@ -49,11 +49,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-[#ededed] py-6">
-        <div className="mx-auto max-w-7xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-[#ededed] py-6 pb-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           {/* Breadcrumbs */}
-          <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-[#0f3bff]">
+          <nav className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 overflow-x-auto pb-1 text-sm text-gray-600">
+            <Link href="/" className="shrink-0 hover:text-[#0f3bff]">
               Inicio
             </Link>
             <span className="text-gray-400">›</span>

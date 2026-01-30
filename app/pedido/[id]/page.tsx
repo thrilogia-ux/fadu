@@ -64,8 +64,8 @@ export default function PedidoPage() {
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-2xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
+        <div className="mx-auto w-full max-w-2xl px-4 sm:px-6">
           {success && (
             <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-6 text-center">
               <div className="mb-2 text-4xl">✅</div>
@@ -78,7 +78,7 @@ export default function PedidoPage() {
             </div>
           )}
 
-          <div className="rounded-lg border border-black/8 bg-white p-6">
+          <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
             <div className="mb-6 border-b border-black/8 pb-6">
               <h1 className="mb-2 text-2xl font-bold">Pedido #{order.pickupCode}</h1>
               <p className="text-sm text-gray-600">
@@ -135,11 +135,11 @@ export default function PedidoPage() {
               <h3 className="mb-3 text-sm font-semibold text-gray-600">Productos</h3>
               <div className="space-y-2">
                 {order.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>
+                  <div key={idx} className="flex min-w-0 justify-between gap-2 text-sm">
+                    <span className="min-w-0 truncate">
                       {item.product.name} x{item.quantity}
                     </span>
-                    <span className="font-semibold">
+                    <span className="font-semibold shrink-0">
                       ${(Number(item.price) * item.quantity).toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -167,7 +167,7 @@ export default function PedidoPage() {
               </p>
             </div>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/"
                 className="flex-1 rounded-lg border border-black/20 py-3 text-center font-semibold hover:bg-black/5"

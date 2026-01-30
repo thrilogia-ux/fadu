@@ -69,18 +69,18 @@ export default function MisPedidosPage() {
     <>
       <Header categories={[]} />
 
-      <main className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-4xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
           {/* Breadcrumbs */}
-          <nav className="mb-6 flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:underline">Inicio</Link>
+          <nav className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 overflow-x-auto pb-1 text-sm text-gray-600">
+            <Link href="/" className="shrink-0 hover:underline">Inicio</Link>
             <span>/</span>
             <Link href="/cuenta" className="hover:underline">Mi cuenta</Link>
             <span>/</span>
             <span className="text-[#1d1d1b]">Mis compras</span>
           </nav>
 
-          <h1 className="mb-8 text-3xl font-bold text-[#1d1d1b]">Mis compras</h1>
+          <h1 className="mb-6 text-center text-2xl font-bold text-[#1d1d1b] md:mb-8 md:text-left md:text-3xl">Mis compras</h1>
 
           {orders.length === 0 ? (
             <div className="rounded-lg border border-black/8 bg-white p-12 text-center">
@@ -104,11 +104,11 @@ export default function MisPedidosPage() {
                   href={`/pedido/${order.id}`}
                   className="block rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="mb-2 flex items-center gap-3">
-                        <span className="font-mono font-bold">#{order.pickupCode}</span>
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColors[order.status]}`}>
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span className="font-mono font-bold shrink-0">#{order.pickupCode}</span>
+                        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusColors[order.status]}`}>
                           {statusLabels[order.status]}
                         </span>
                       </div>
@@ -119,11 +119,11 @@ export default function MisPedidosPage() {
                           year: "numeric",
                         })}
                       </p>
-                      <p className="mt-2 text-sm text-gray-700">
+                      <p className="mt-2 line-clamp-2 text-sm text-gray-700">
                         {order.items.map((i) => `${i.product.name} (x${i.quantity})`).join(", ")}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-right">
                       <p className="text-lg font-bold">
                         ${Number(order.total).toLocaleString("es-AR")}
                       </p>

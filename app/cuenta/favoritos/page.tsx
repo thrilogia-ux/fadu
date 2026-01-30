@@ -72,19 +72,19 @@ export default function FavoritosPage() {
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-7xl px-4">
+      <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           {/* Breadcrumbs */}
-          <nav className="mb-6 flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:underline">Inicio</Link>
+          <nav className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 overflow-x-auto pb-1 text-sm text-gray-600">
+            <Link href="/" className="shrink-0 hover:underline">Inicio</Link>
             <span>/</span>
             <Link href="/cuenta" className="hover:underline">Mi cuenta</Link>
             <span>/</span>
             <span className="text-[#1d1d1b]">Favoritos</span>
           </nav>
 
-          <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-[#1d1d1b]">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-center text-2xl font-bold text-[#1d1d1b] md:text-left md:text-3xl">
               Mis favoritos ({favorites.length})
             </h1>
           </div>
