@@ -209,10 +209,12 @@ export default function ProductPage() {
 
   if (!product) return null;
 
-  const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
-  const discountPercent = hasDiscount
-    ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
-    : 0;
+  const compareAt = product.compareAtPrice;
+  const hasDiscount = compareAt != null && compareAt > product.price;
+  const discountPercent =
+    hasDiscount && compareAt != null
+      ? Math.round(((compareAt - product.price) / compareAt) * 100)
+      : 0;
 
   function handleAddToCart() {
     addItem({
