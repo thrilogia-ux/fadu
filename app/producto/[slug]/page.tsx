@@ -393,7 +393,7 @@ export default function ProductPage() {
                 
                 {/* Formulario de pregunta */}
                 <form onSubmit={submitQuestion} className="mb-6">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+                  <div className="flex flex-wrap gap-3">
                     <input
                       type="text"
                       value={newQuestion}
@@ -404,7 +404,7 @@ export default function ProductPage() {
                     <button
                       type="submit"
                       disabled={loadingQuestion || newQuestion.trim().length < 10}
-                      className="w-full shrink-0 rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300 sm:w-auto"
+                      className="rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300"
                     >
                       {loadingQuestion ? "..." : "Preguntar"}
                     </button>
