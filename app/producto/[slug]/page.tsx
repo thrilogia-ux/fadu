@@ -393,18 +393,18 @@ export default function ProductPage() {
                 
                 {/* Formulario de pregunta */}
                 <form onSubmit={submitQuestion} className="mb-6">
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
                     <input
                       type="text"
                       value={newQuestion}
                       onChange={(e) => setNewQuestion(e.target.value)}
                       placeholder="Escribí tu pregunta..."
-                      className="flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#0f3bff]"
+                      className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#0f3bff]"
                     />
                     <button
                       type="submit"
                       disabled={loadingQuestion || newQuestion.trim().length < 10}
-                      className="rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300"
+                      className="w-full shrink-0 rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300 sm:w-auto"
                     >
                       {loadingQuestion ? "..." : "Preguntar"}
                     </button>
