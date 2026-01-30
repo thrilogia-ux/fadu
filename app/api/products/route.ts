@@ -6,13 +6,22 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get("featured");
     const categorySlug = searchParams.get("category");
+    const q = searchParams.get("q");
     const limit = parseInt(searchParams.get("limit") ?? "20");
 
-    const where: any = { active: true };
-    if (featured === "true") where.featured = true;
-    if (categorySlug) {
-      const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
-      if (category) where.categoryId = category.id;
+    const where: { active: boolean; featured?: boolean; categoryId?: string; OR?: { name?: { contains: string; mode: "insensitive" }; description?: { contains: string; mode: "insensitive" } }[] } = { active: true };
+    if (q && q.trim()) {
+      const term = q.trim();
+      where.OR = [
+        { name: { contains: term, mode: "insensitive" } },
+        { description: { contains: term, mode: "insensitive" } },
+      ];
+    } else {
+      if (featured === "true") where.featured = true;
+      if (categorySlug) {
+        const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
+        if (category) where.categoryId = category.id;
+      }
     }
 
     const products = await prisma.product.findMany({

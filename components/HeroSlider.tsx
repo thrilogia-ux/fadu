@@ -64,7 +64,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative h-[400px] overflow-hidden md:h-[500px]"
+      className="relative h-[280px] overflow-hidden sm:h-[340px] md:h-[420px] lg:h-[500px]"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
@@ -89,12 +89,12 @@ export function HeroSlider({ slides }: HeroSliderProps) {
       <div className="relative mx-auto flex h-full max-w-7xl items-center px-4">
         <div className="max-w-2xl text-white">
           {slide.title && (
-            <h1 className="mb-4 text-4xl font-bold drop-shadow-lg md:text-5xl">
+            <h1 className="mb-2 text-2xl font-bold drop-shadow-lg sm:mb-3 sm:text-3xl md:mb-4 md:text-4xl lg:text-5xl">
               {slide.title}
             </h1>
           )}
           {slide.subtitle && (
-            <p className="mb-6 text-lg text-white/90 drop-shadow-md">
+            <p className="mb-4 text-sm text-white/90 drop-shadow-md sm:mb-5 sm:text-base md:mb-6 md:text-lg">
               {slide.subtitle}
             </p>
           )}
@@ -115,7 +115,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           {/* Flechas */}
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30 md:left-4 md:p-3"
             aria-label="Slide anterior"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30 md:right-4 md:p-3"
             aria-label="Slide siguiente"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           </button>
 
           {/* Indicadores */}
-          <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-6">
             {slides.map((_, idx) => (
               <button
                 key={idx}

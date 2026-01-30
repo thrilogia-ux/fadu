@@ -20,7 +20,7 @@ export function ProductCard({ name, slug, price, compareAtPrice, images, categor
   return (
     <Link
       href={`/producto/${slug}`}
-      className="group block overflow-hidden rounded-lg border border-black/8 bg-white transition hover:shadow-lg"
+      className="group block min-w-0 overflow-hidden rounded-lg border border-black/8 bg-white transition hover:shadow-lg"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         {images[0] ? (
