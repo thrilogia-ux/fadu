@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fadu.store — E-commerce diseño y arquitectura
 
-## Getting Started
+Sitio de e-commerce para productos de diseño, arquitectura e iluminación. Inspirado en la usabilidad de Mercado Libre, con panel admin y área de usuarios.
 
-First, run the development server:
+## Fase 1 (actual)
+
+- **Next.js 16** (App Router), TypeScript, Tailwind CSS
+- **Prisma** + PostgreSQL (usuarios, categorías, productos, pedidos, cupones, favoritos, notificaciones, hero)
+- **NextAuth** con registro manual (email/contraseña) y Google OAuth
+- **Logo** Fadu.store en header; estilo limpio y minimalista
+
+## Cómo arrancar
+
+### 1. Base de datos
+
+Necesitás PostgreSQL (local o en la nube: [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/storage/postgres), [Railway](https://railway.app), etc.).
+
+Copia `.env.example` a `.env.local` y completá:
+
+- `DATABASE_URL`: URL de tu base PostgreSQL
+- `AUTH_SECRET`: generá uno con `npx auth secret`
+- `AUTH_URL`: en desarrollo `http://localhost:3000`
+- Opcional: `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` para login con Google
+
+### 2. Migrar y seed
+
+```bash
+npm run db:push
+npm run db:seed
+```
+
+Esto crea las tablas y carga:
+
+- Usuario admin: **admin@fadustore.com** / **admin123**
+- Categorías: Iluminación, Muebles, Decoración, Herramientas de diseño, Arquitectura
+- 3 productos de prueba
+
+### 3. Servidor
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrí [http://localhost:3000](http://localhost:3000). Podés registrarte, iniciar sesión (credenciales o Google si configuraste las env) y ver el home con el logo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando        | Descripción              |
+|----------------|--------------------------|
+| `npm run dev`  | Servidor de desarrollo   |
+| `npm run build`| Build de producción     |
+| `npm run start`| Servidor de producción   |
+| `npm run db:generate` | Generar cliente Prisma |
+| `npm run db:push`     | Aplicar schema a la BD  |
+| `npm run db:migrate`  | Crear migración         |
+| `npm run db:seed`     | Ejecutar seed           |
 
-## Learn More
+## Estructura del proyecto
 
-To learn more about Next.js, take a look at the following resources:
+- `app/` — Rutas y páginas (App Router)
+- `components/` — Componentes React
+- `lib/` — Prisma client y utilidades
+- `prisma/` — Schema y seed
+- `auth.ts` — Configuración NextAuth (credenciales + Google)
+- `public/fadustore.svg` — Logo
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Las categorías y el resto del contenido se administrarán desde el panel en fases siguientes.

@@ -1,65 +1,183 @@
-import Image from "next/image";
+import { prisma } from "@/lib/prisma";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { ProductCard } from "@/components/ProductCard";
+import { HeroSlider } from "@/components/HeroSlider";
+import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  // Hero slides activos
+  const heroSlides = await prisma.heroSlide.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      title: true,
+      subtitle: true,
+      buttonText: true,
+      buttonLink: true,
+      imageUrl: true,
+    },
+  });
+
+  // Categorías activas
+  const categories = await prisma.category.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+
+  // Productos destacados
+  const featured = await prisma.product.findMany({
+    where: { active: true, featured: true },
+    take: 8,
+    orderBy: { createdAt: "desc" },
+    include: {
+      category: { select: { name: true, slug: true } },
+      images: { where: { isPrimary: true }, take: 1 },
+    },
+  });
+
+  // Productos en oferta (con compareAtPrice)
+  const offers = await prisma.product.findMany({
+    where: {
+      active: true,
+      compareAtPrice: { not: null },
+    },
+    take: 8,
+    orderBy: { createdAt: "desc" },
+    include: {
+      category: { select: { name: true, slug: true } },
+      images: { where: { isPrimary: true }, take: 1 },
+    },
+  });
+
+  const iconsByCategory: Record<string, string> = {
+    iluminacion: "💡",
+    muebles: "🪑",
+    decoracion: "🎨",
+    "herramientas-diseno": "✏️",
+    arquitectura: "🏛️",
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <Header categories={categories} />
+
+      <main>
+        {/* Hero Slider */}
+        <HeroSlider slides={heroSlides} />
+
+        {/* Beneficios */}
+        <section className="border-b border-black/8 bg-white py-8">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 md:grid-cols-3">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl">
+                📍
+              </div>
+              <div>
+                <h3 className="font-semibold">Retiro en FADU</h3>
+                <p className="text-sm text-gray-600">Tu pedido listo en 7 días</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl">
+                💳
+              </div>
+              <div>
+                <h3 className="font-semibold">Pagá como quieras</h3>
+                <p className="text-sm text-gray-600">Mercado Pago o transferencia</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-2xl">
+                🔒
+              </div>
+              <div>
+                <h3 className="font-semibold">Compra segura</h3>
+                <p className="text-sm text-gray-600">Tus datos están protegidos</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Categorías */}
+        <section className="bg-gray-50 py-12">
+          <div className="mx-auto max-w-7xl px-4">
+            <h2 className="mb-8 text-2xl font-bold text-[#1d1d1b]">Explorar por categoría</h2>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/categoria/${cat.slug}`}
+                  className="flex flex-col items-center justify-center gap-3 rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
+                >
+                  <span className="text-4xl">{iconsByCategory[cat.slug] || "📦"}</span>
+                  <span className="text-center text-sm font-medium">{cat.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Productos destacados */}
+        {featured.length > 0 && (
+          <section className="bg-white py-12">
+            <div className="mx-auto max-w-7xl px-4">
+              <div className="mb-8 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#1d1d1b]">Destacados</h2>
+                <Link href="/destacados" className="text-sm text-[#0f3bff] hover:underline">
+                  Ver todos
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {featured.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    slug={product.slug}
+                    price={Number(product.price)}
+                    compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
+                    images={product.images}
+                    category={product.category}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Ofertas */}
+        {offers.length > 0 && (
+          <section className="bg-gray-50 py-12">
+            <div className="mx-auto max-w-7xl px-4">
+              <div className="mb-8 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#1d1d1b]">Ofertas imperdibles</h2>
+                <Link href="/ofertas" className="text-sm text-[#0f3bff] hover:underline">
+                  Ver todas
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {offers.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    slug={product.slug}
+                    price={Number(product.price)}
+                    compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
+                    images={product.images}
+                    category={product.category}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
-    </div>
+
+      <Footer />
+    </>
   );
 }

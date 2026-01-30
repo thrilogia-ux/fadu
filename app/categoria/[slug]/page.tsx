@@ -1,0 +1,105 @@
+import { prisma } from "@/lib/prisma";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { ProductCard } from "@/components/ProductCard";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  
+  const categories = await prisma.category.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+
+  const category = await prisma.category.findUnique({
+    where: { slug },
+  });
+
+  if (!category || !category.active) {
+    notFound();
+  }
+
+  const products = await prisma.product.findMany({
+    where: {
+      active: true,
+      categoryId: category.id,
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      category: { select: { name: true, slug: true } },
+      images: { where: { isPrimary: true }, take: 1 },
+    },
+  });
+
+  // Iconos por categoría
+  const categoryIcons: Record<string, string> = {
+    "iluminacion": "💡",
+    "muebles": "🪑",
+    "decoracion": "🎨",
+    "herramientas-diseno": "📐",
+    "arquitectura": "🏛️",
+  };
+
+  return (
+    <>
+      <Header categories={categories} />
+
+      <main className="min-h-screen bg-[#ededed] py-6">
+        <div className="mx-auto max-w-7xl px-4">
+          {/* Breadcrumbs */}
+          <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600">
+            <Link href="/" className="hover:text-[#0f3bff]">
+              Inicio
+            </Link>
+            <span className="text-gray-400">›</span>
+            <span className="text-gray-800">{category.name}</span>
+          </nav>
+
+          {/* Header de categoría */}
+          <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-4xl">
+                {categoryIcons[category.slug] || "📦"}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-[#1d1d1b]">{category.name}</h1>
+                <p className="mt-1 text-gray-600">
+                  {products.length} {products.length === 1 ? "producto" : "productos"} disponibles
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {products.length === 0 ? (
+            <div className="rounded-lg bg-white p-12 text-center shadow-sm">
+              <p className="text-gray-600">No hay productos en esta categoría</p>
+              <Link href="/" className="mt-4 inline-block text-[#0f3bff] hover:underline">
+                ← Volver al inicio
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  slug={product.slug}
+                  price={Number(product.price)}
+                  compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
+                  images={product.images}
+                  category={product.category}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <Footer />
+    </>
+  );
+}
