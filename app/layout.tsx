@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   description: "E-commerce de productos de diseño, arquitectura e iluminación.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,7 +31,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
           <CartProvider>
-            <div className="min-h-screen bg-[#fafafa] text-[#1d1d1b]">
+            <div className="min-h-screen overflow-x-hidden bg-[#fafafa] text-[#1d1d1b]">
               {children}
             </div>
           </CartProvider>

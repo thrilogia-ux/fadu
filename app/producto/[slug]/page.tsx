@@ -233,25 +233,25 @@ export default function ProductPage() {
     <>
       <Header categories={categories} />
 
-      <main className="min-h-screen bg-[#ededed] py-6">
-        <div className="mx-auto max-w-7xl px-4">
-          {/* Breadcrumbs */}
-          <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-[#0f3bff]">Inicio</Link>
-            <span className="text-gray-400">›</span>
-            <Link href={`/categoria/${product.category.slug}`} className="hover:text-[#0f3bff]">
+      <main className="min-h-screen overflow-x-hidden bg-[#ededed] py-4 md:py-6">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+          {/* Breadcrumbs - scroll horizontal en mobile */}
+          <nav className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 text-sm text-gray-600 md:overflow-visible">
+            <Link href="/" className="flex-shrink-0 hover:text-[#0f3bff]">Inicio</Link>
+            <span className="flex-shrink-0 text-gray-400">›</span>
+            <Link href={`/categoria/${product.category.slug}`} className="flex-shrink-0 hover:text-[#0f3bff]">
               {product.category.name}
             </Link>
-            <span className="text-gray-400">›</span>
-            <span className="text-gray-500 line-clamp-1">{product.name}</span>
+            <span className="flex-shrink-0 text-gray-400">›</span>
+            <span className="min-w-0 truncate text-gray-500">{product.name}</span>
           </nav>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
             {/* Columna izquierda: Galería */}
-            <div className="lg:col-span-2">
-              <div className="overflow-hidden rounded-lg bg-white shadow-sm">
-                <div className={`p-4 ${mediaItems.length > 1 ? "grid md:grid-cols-[80px_1fr] gap-4" : ""}`}>
-                  {/* Thumbnails verticales */}
+            <div className="min-w-0 lg:col-span-2">
+              <div className="w-full min-w-0 overflow-hidden rounded-xl bg-white shadow-sm md:rounded-lg">
+                <div className={`p-3 md:p-4 ${mediaItems.length > 1 ? "grid md:grid-cols-[80px_1fr] gap-4" : ""}`}>
+                  {/* Thumbnails verticales - desktop */}
                   {mediaItems.length > 1 && (
                     <div className="hidden md:flex flex-col gap-2 max-h-[500px] overflow-y-auto">
                       {mediaItems.map((item, idx) => (
@@ -288,45 +288,47 @@ export default function ProductPage() {
                     </div>
                   )}
                   
-                  {/* Media principal (imagen o video) */}
-                  <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-50">
-                    {mediaItems[selectedMedia] ? (
-                      mediaItems[selectedMedia].type === "image" ? (
-                        <Image
-                          src={mediaItems[selectedMedia].url}
-                          alt={product.name}
-                          fill
-                          className="object-contain"
-                          sizes="(max-width: 768px) 100vw, 60vw"
-                          priority
-                          unoptimized
-                        />
+                  {/* Media principal (imagen o video) - centrado y contenido */}
+                  <div className="relative w-full overflow-hidden rounded-lg bg-gray-50">
+                    <div className="relative aspect-square w-full">
+                      {mediaItems[selectedMedia] ? (
+                        mediaItems[selectedMedia].type === "image" ? (
+                          <Image
+                            src={mediaItems[selectedMedia].url}
+                            alt={product.name}
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 768px) 100vw, 60vw"
+                            priority
+                            unoptimized
+                          />
+                        ) : (
+                          <iframe
+                            src={(mediaItems[selectedMedia] as any).embedUrl}
+                            className="absolute inset-0 h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        )
                       ) : (
-                        <iframe
-                          src={(mediaItems[selectedMedia] as any).embedUrl}
-                          className="absolute inset-0 h-full w-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      )
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-gray-400">
-                        Sin imagen
-                      </div>
-                    )}
+                        <div className="flex h-full items-center justify-center text-gray-400">
+                          Sin imagen
+                        </div>
+                      )}
+                    </div>
                     
                     {/* Badge descuento (solo en imágenes) */}
                     {hasDiscount && mediaItems[selectedMedia]?.type === "image" && (
-                      <span className="absolute left-4 top-4 rounded-full bg-green-500 px-3 py-1 text-sm font-bold text-white">
+                      <span className="absolute left-2 top-2 rounded-full bg-green-500 px-2.5 py-1 text-xs font-bold text-white md:left-4 md:top-4 md:px-3 md:py-1 md:text-sm">
                         {discountPercent}% OFF
                       </span>
                     )}
                     
-                    {/* Botón favorito */}
+                    {/* Botón favorito - dentro del área visible */}
                     <button
                       onClick={toggleFavorite}
                       disabled={loadingFav}
-                      className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:scale-110"
+                      className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm transition hover:scale-105 active:scale-95 md:right-4 md:top-4 md:h-10 md:w-10"
                     >
                       {isFavorite ? (
                         <span className="text-xl text-red-500">❤️</span>
@@ -455,10 +457,10 @@ export default function ProductPage() {
             </div>
 
             {/* Columna derecha: Info y compra */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-4 space-y-4">
+            <div className="min-w-0 lg:col-span-1">
+              <div className="space-y-4 lg:sticky lg:top-4">
                 {/* Card principal */}
-                <div className="rounded-lg bg-white p-6 shadow-sm">
+                <div className="min-w-0 rounded-xl bg-white p-4 shadow-sm md:rounded-lg md:p-6">
                   {/* Condición */}
                   <p className="mb-2 text-sm text-gray-500">Nuevo | +50 vendidos</p>
                   
