@@ -3,6 +3,8 @@ import { generateQRDataURL } from "./qr";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
+// Si está definido, todos los emails se envían a esta dirección (útil para testeo)
+const TEST_TO = process.env.RESEND_TEST_TO;
 
 export type OrderForEmail = {
   id: string;
@@ -17,7 +19,7 @@ export type OrderForEmail = {
  * Envía email de confirmación de venta
  */
 export async function sendOrderConfirmation(order: OrderForEmail): Promise<boolean> {
-  if (!resend || !order.user.email) return false;
+  if (!resend) return false;
 
   const itemsList = order.items
     .map((i) => `• ${i.product.name} x${i.quantity} — $${(Number(i.price) * i.quantity).toLocaleString("es-AR")}`)
@@ -40,10 +42,13 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<boole
     </html>
   `;
 
+  const toEmail = TEST_TO || order.user.email;
+  if (!toEmail) return false;
+
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: order.user.email,
+      to: toEmail,
       subject: `Pedido #${order.pickupCode || order.id} confirmado — Fadu.store`,
       html,
     });
@@ -62,7 +67,7 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<boole
  * Envía email con QR para retiro en pickup
  */
 export async function sendPickupReadyEmail(order: OrderForEmail): Promise<boolean> {
-  if (!resend || !order.user.email || !order.pickupCode) return false;
+  if (!resend || !order.pickupCode) return false;
 
   let qrDataUrl: string;
   try {
@@ -90,10 +95,13 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<boolea
     </html>
   `;
 
+  const toEmail = TEST_TO || order.user.email;
+  if (!toEmail) return false;
+
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: order.user.email,
+      to: toEmail,
       subject: `Retirá tu pedido #${order.pickupCode} — Fadu.store`,
       html,
     });

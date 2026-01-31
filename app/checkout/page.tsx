@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
+  const isCompletingOrderRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/categories").then((r) => r.json()).then(setCategories);
@@ -26,7 +27,7 @@ export default function CheckoutPage() {
     if (status === "unauthenticated") {
       router.push("/login?callbackUrl=/checkout");
     }
-    if (items.length === 0 && status === "authenticated") {
+    if (items.length === 0 && status === "authenticated" && !isCompletingOrderRef.current) {
       router.push("/");
     }
   }, [status, items, router]);
@@ -68,8 +69,9 @@ export default function CheckoutPage() {
       }
 
       // Si es transferencia o pago de prueba, ir a página de confirmación
-      clearCart();
+      isCompletingOrderRef.current = true;
       router.push(`/pedido/${data.orderId}?success=true`);
+      clearCart();
     } catch {
       setError("Error de conexión");
       setLoading(false);

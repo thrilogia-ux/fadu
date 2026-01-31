@@ -85,16 +85,29 @@ export default function PedidoPage() {
       <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
         <div className="mx-auto w-full max-w-2xl px-4 sm:px-6">
           {success && (
-            <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-6 text-center">
-              <div className="mb-2 text-4xl">✅</div>
-              <h2 className="mb-2 text-xl font-bold text-green-800">¡Pedido confirmado!</h2>
-              <p className="text-green-700">
-                {isTest || order.status === "ready_for_pickup"
-                  ? "Tu pedido está listo para retirar. Revisá tu email con el código QR."
-                  : isTransfer
-                    ? "Te enviamos los datos de transferencia por email"
-                    : "Te avisaremos cuando esté listo para retirar"}
+            <div className="mb-6 rounded-xl border-2 border-green-300 bg-green-50 p-8 text-center shadow-sm">
+              <div className="mb-4 text-5xl">✅</div>
+              <h2 className="mb-3 text-2xl font-bold text-green-800">
+                ¡Gracias por tu compra!
+              </h2>
+              <p className="mb-2 text-lg font-semibold text-green-800">
+                Tu compra se realizó con éxito.
               </p>
+              <p className="mb-6 text-green-700">
+                {isTest
+                  ? "Simulación completada. Revisá tu email para ver los correos de prueba (confirmación + QR para retiro)."
+                  : isTransfer
+                    ? "Te enviamos un email con los datos de transferencia. Una vez confirmado el pago, te avisaremos cuando tu pedido esté listo para retirar en FADU."
+                    : order.status === "ready_for_pickup"
+                      ? "Te enviamos un email con el código QR para retirar tu pedido en el Pickup Point de FADU."
+                      : "Te avisaremos por email cuando tu pedido esté listo para retirar en FADU."}
+              </p>
+              <Link
+                href="/"
+                className="inline-block rounded-lg bg-green-600 px-8 py-3 font-semibold text-white hover:bg-green-700"
+              >
+                Volver a la tienda
+              </Link>
             </div>
           )}
 
@@ -197,7 +210,7 @@ export default function PedidoPage() {
                 href="/"
                 className="flex-1 rounded-lg border border-black/20 py-3 text-center font-semibold hover:bg-black/5"
               >
-                Volver al inicio
+                Volver a la tienda
               </Link>
               <Link
                 href="/cuenta/pedidos"
