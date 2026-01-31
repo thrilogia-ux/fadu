@@ -106,13 +106,13 @@ export default async function Home() {
         <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4">
             <h2 className="mb-6 text-xl font-bold text-[#1d1d1b] md:mb-8 md:text-2xl">Explorar por categoría</h2>
-            {/* Mobile: solo links */}
-            <div className="flex flex-wrap gap-2 md:hidden">
+            {/* Mobile: grid simétrico 3 columnas, fila inferior centrada */}
+            <div className="grid grid-cols-3 gap-2 md:hidden [&>*:nth-child(4)]:col-start-2">
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categoria/${cat.slug}`}
-                  className="rounded-lg bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition hover:shadow-md"
+                  className="flex min-h-[44px] items-center justify-center rounded-lg bg-white px-3 py-2.5 text-center text-sm font-medium shadow-sm transition hover:shadow-md"
                 >
                   {cat.name}
                 </Link>
@@ -142,33 +142,33 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Beneficios - compacto en mobile */}
+        {/* Beneficios - ordenado y centrado en mobile */}
         <section className="border-t border-black/8 bg-white py-6 md:py-8">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="flex flex-wrap justify-center gap-6 md:grid md:grid-cols-3">
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 flex-shrink-0 md:h-12 md:w-12">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+              <div className="flex items-center justify-center gap-3 md:justify-start">
+                <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
                   <Image src="/pickup.png" alt="" fill className="object-contain" unoptimized />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-semibold">Retiro en FADU</h3>
                   <p className="text-xs text-gray-600 md:text-sm">Tu pedido listo en 7 días</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 flex-shrink-0 md:h-12 md:w-12">
+              <div className="flex items-center justify-center gap-3 md:justify-start">
+                <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
                   <Image src="/pay.png" alt="" fill className="object-contain" unoptimized />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-semibold">Pagá como quieras</h3>
                   <p className="text-xs text-gray-600 md:text-sm">Mercado Pago o transferencia</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 flex-shrink-0 md:h-12 md:w-12">
+              <div className="flex items-center justify-center gap-3 md:justify-start">
+                <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
                   <Image src="/seguro.png" alt="" fill className="object-contain" unoptimized />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-semibold">Compra segura</h3>
                   <p className="text-xs text-gray-600 md:text-sm">Tus datos están protegidos</p>
                 </div>
