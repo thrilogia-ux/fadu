@@ -11,6 +11,7 @@ interface HeroSlide {
   buttonText: string | null;
   buttonLink: string | null;
   imageUrl: string | null;
+  imagePosition?: string | null;
 }
 
 interface HeroSliderProps {
@@ -75,6 +76,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           alt={slide.title || "Hero"}
           fill
           className="object-cover"
+          style={{ objectPosition: slide.imagePosition || "50% 50%" }}
           priority
           unoptimized
         />

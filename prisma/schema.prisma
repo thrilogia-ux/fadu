@@ -283,16 +283,17 @@ model ProductQuestion {
 
 // --- Hero / Banners ---
 model HeroSlide {
-  id         String   @id @default(cuid())
-  title      String?
-  subtitle   String?  @db.Text
-  buttonText String?  @map("button_text")
-  buttonLink String?  @map("button_link")
-  imageUrl   String?  @map("image_url")
-  videoUrl   String?  @map("video_url")
-  order      Int      @default(0)
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id            String   @id @default(cuid())
+  title         String?
+  subtitle      String?  @db.Text
+  buttonText    String?  @map("button_text")
+  buttonLink    String?  @map("button_link")
+  imageUrl      String?  @map("image_url")
+  imagePosition String?  @default("50% 50%") @map("image_position") // object-position: "x% y%"
+  videoUrl      String?  @map("video_url")
+  order         Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   @@map("hero_slides")
 }

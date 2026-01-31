@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,6 +13,7 @@ interface HeroSlide {
   buttonText: string | null;
   buttonLink: string | null;
   imageUrl: string | null;
+  imagePosition?: string | null;
   order: number;
   active: boolean;
 }
@@ -32,11 +33,13 @@ export default function AdminHeroPage() {
     buttonText: "",
     buttonLink: "",
     imageUrl: "",
+    imagePosition: "50% 50%",
     order: 0,
     active: true,
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const positionPadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -72,6 +75,7 @@ export default function AdminHeroPage() {
       buttonText: "",
       buttonLink: "",
       imageUrl: "",
+      imagePosition: "50% 50%",
       order: slides.length,
       active: true,
     });
@@ -86,10 +90,47 @@ export default function AdminHeroPage() {
       buttonText: slide.buttonText || "",
       buttonLink: slide.buttonLink || "",
       imageUrl: slide.imageUrl || "",
+      imagePosition: slide.imagePosition || "50% 50%",
       order: slide.order,
       active: slide.active,
     });
     setShowForm(true);
+  }
+
+  function updatePositionFromCoords(clientX: number, clientY: number) {
+    const el = positionPadRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = Math.round(((clientX - rect.left) / rect.width) * 100);
+    const y = Math.round(((clientY - rect.top) / rect.height) * 100);
+    const clampedX = Math.min(100, Math.max(0, x));
+    const clampedY = Math.min(100, Math.max(0, y));
+    setForm((f) => ({ ...f, imagePosition: `${clampedX}% ${clampedY}%` }));
+  }
+
+  function handlePositionPointerDown(e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) {
+    e.preventDefault();
+    if ("touches" in e) {
+      updatePositionFromCoords(e.touches[0].clientX, e.touches[0].clientY);
+    } else {
+      updatePositionFromCoords(e.clientX, e.clientY);
+    }
+    const onMove = (ev: MouseEvent | TouchEvent) => {
+      if ("touches" in ev) ev.preventDefault();
+      const x = "touches" in ev ? ev.touches[0]?.clientX ?? 0 : ev.clientX;
+      const y = "touches" in ev ? ev.touches[0]?.clientY ?? 0 : ev.clientY;
+      updatePositionFromCoords(x, y);
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onUp);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -279,18 +320,45 @@ export default function AdminHeroPage() {
                     Recomendado: 1920x600px mínimo. Máx. 5MB (JPEG, PNG, WebP, GIF).
                   </p>
                   {form.imageUrl && (
-                    <div className="mt-2 relative h-32 w-full overflow-hidden rounded-lg bg-gray-100">
-                      <Image
-                        src={form.imageUrl}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                        unoptimized
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    </div>
+                    <>
+                      <div className="mt-2 relative h-32 w-full overflow-hidden rounded-lg bg-gray-100">
+                        <Image
+                          src={form.imageUrl}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                          style={{ objectPosition: form.imagePosition }}
+                          unoptimized
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                      {/* Joystick: arrastrar para ajustar encuadre */}
+                      <div className="mt-2">
+                        <p className="mb-1.5 text-xs font-medium text-gray-600">
+                          Ajustar encuadre — arrastrá el punto para elegir qué parte se ve
+                        </p>
+                        <div
+                          ref={positionPadRef}
+                          role="slider"
+                          aria-label="Posición de la imagen"
+                          tabIndex={0}
+                          onMouseDown={handlePositionPointerDown}
+                          onTouchStart={handlePositionPointerDown}
+                          className="relative h-20 w-full cursor-crosshair select-none rounded-lg border-2 border-dashed border-gray-300 bg-gray-100 touch-none"
+                          style={{ aspectRatio: "3/1" }}
+                        >
+                          <div
+                            className="absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#0f3bff] bg-white shadow-md"
+                            style={{
+                              left: form.imagePosition.split(/\s+/)[0] || "50%",
+                              top: form.imagePosition.split(/\s+/)[1] || "50%",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -359,7 +427,14 @@ export default function AdminHeroPage() {
                 {/* Preview */}
                 <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                   {slide.imageUrl ? (
-                    <Image src={slide.imageUrl} alt="" fill className="object-cover" unoptimized />
+                    <Image
+                      src={slide.imageUrl}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      style={{ objectPosition: slide.imagePosition || "50% 50%" }}
+                      unoptimized
+                    />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#0f3bff] to-[#0a2699]">
                       <span className="text-xs text-white">Sin imagen</span>

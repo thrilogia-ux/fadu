@@ -11,7 +11,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const body = await request.json();
-    const { title, subtitle, buttonText, buttonLink, imageUrl, order, active } = body;
+    const { title, subtitle, buttonText, buttonLink, imageUrl, imagePosition, order, active } = body;
 
     const slide = await prisma.heroSlide.update({
       where: { id },
@@ -21,6 +21,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         buttonText: buttonText || null,
         buttonLink: buttonLink || null,
         imageUrl: imageUrl || null,
+        imagePosition: imagePosition || "50% 50%",
         order: order ?? 0,
         active: active ?? true,
       },

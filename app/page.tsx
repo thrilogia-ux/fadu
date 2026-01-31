@@ -19,6 +19,7 @@ export default async function Home() {
       buttonText: true,
       buttonLink: true,
       imageUrl: true,
+      imagePosition: true,
     },
   });
 
