@@ -34,6 +34,8 @@ export default function AdminProductosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterCategoryId, setFilterCategoryId] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"category" | "name" | "price" | "stock">("category");
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -256,12 +258,50 @@ export default function AdminProductosPage() {
     return null;
   }
 
+  // Filtrar y ordenar productos
+  const filteredProducts = filterCategoryId
+    ? products.filter((p) => p.categoryId === filterCategoryId)
+    : products;
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "category") {
+      return (a.category?.name || "").localeCompare(b.category?.name || "");
+    }
+    if (sortBy === "name") return a.name.localeCompare(b.name);
+    if (sortBy === "price") return Number(a.price) - Number(b.price);
+    if (sortBy === "stock") return a.stock - b.stock;
+    return 0;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-black/8 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Productos ({products.length})</h1>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-bold">Productos ({filteredProducts.length}{filterCategoryId ? ` de ${products.length}` : ""})</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filterCategoryId}
+                onChange={(e) => setFilterCategoryId(e.target.value)}
+                className="rounded-lg border border-black/20 px-3 py-2 text-sm outline-none focus:border-[#0f3bff]"
+              >
+                <option value="">Todas las categorías</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="rounded-lg border border-black/20 px-3 py-2 text-sm outline-none focus:border-[#0f3bff]"
+              >
+                <option value="category">Por categoría</option>
+                <option value="name">Por nombre</option>
+                <option value="price">Por precio</option>
+                <option value="stock">Por stock</option>
+              </select>
+            </div>
             <div className="flex items-center gap-4">
               <button
                 onClick={openNew}
@@ -557,7 +597,7 @@ export default function AdminProductosPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => (
+            {sortedProducts.map((product) => (
               <div
                 key={product.id}
                 className="overflow-hidden rounded-lg border border-black/8 bg-white"

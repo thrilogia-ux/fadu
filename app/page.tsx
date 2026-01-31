@@ -24,12 +24,14 @@ export default async function Home() {
     },
   });
 
-  // Categorías activas
-  const categories = await prisma.category.findMany({
+  // Categorías activas (solo las 5 del home)
+  const allowedCategorySlugs = ["iluminacion", "escritorio", "decoracion", "diseno", "accesorios"];
+  const allCategories = await prisma.category.findMany({
     where: { active: true },
     orderBy: { order: "asc" },
     select: { id: true, name: true, slug: true },
   });
+  const categories = allCategories.filter((c) => allowedCategorySlugs.includes(c.slug));
 
   // Productos destacados
   const featured = await prisma.product.findMany({

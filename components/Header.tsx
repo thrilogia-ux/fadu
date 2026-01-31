@@ -243,9 +243,6 @@ export function Header({ categories }: { categories: Category[] }) {
               </div>
             )}
           </div>
-          <Link href="/ofertas" className="hover:underline">Ofertas</Link>
-          <Link href="/cupones" className="hover:underline">Cupones</Link>
-          <Link href="/retiro" className="hover:underline">Retiro en FADU</Link>
         </nav>
       </div>
 
@@ -298,11 +295,7 @@ export function Header({ categories }: { categories: Category[] }) {
               </div>
 
               {/* Links */}
-              <div className="space-y-2 pt-4">
-                <Link href="/ofertas" className="block py-2 text-sm font-medium" onClick={closeMenus}>Ofertas</Link>
-                <Link href="/cupones" className="block py-2 text-sm font-medium" onClick={closeMenus}>Cupones</Link>
-                <Link href="/retiro" className="block py-2 text-sm font-medium" onClick={closeMenus}>Retiro en FADU</Link>
-              </div>
+              <div className="pt-4" />
             </div>
           </div>
         </div>
