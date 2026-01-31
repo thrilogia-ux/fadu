@@ -35,6 +35,8 @@ export default function AdminHeroPage() {
     order: 0,
     active: true,
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -129,6 +131,38 @@ export default function AdminHeroPage() {
     }
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError("");
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUploadError(data.error || "Error al subir");
+        return;
+      }
+
+      setForm({ ...form, imageUrl: data.url });
+    } catch {
+      setUploadError("Error de conexión");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
   if (status === "loading" || loading) {
     return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
   }
@@ -214,16 +248,35 @@ export default function AdminHeroPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium">URL de imagen de fondo</label>
+                  <label className="mb-1 block text-sm font-medium">Imagen de fondo</label>
+                  <div className="flex flex-wrap gap-2">
+                    <label className="cursor-pointer rounded-lg border border-[#0f3bff] bg-[#0f3bff]/5 px-4 py-2.5 text-sm font-medium text-[#0f3bff] transition hover:bg-[#0f3bff]/10">
+                      {uploading ? "Subiendo…" : "Subir imagen"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="flex items-center text-sm text-gray-500">o pegá una URL</span>
+                  </div>
                   <input
                     type="url"
                     value={form.imageUrl}
-                    onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full rounded-lg border border-black/20 px-4 py-2.5 outline-none focus:border-[#0f3bff]"
+                    onChange={(e) => {
+                      setForm({ ...form, imageUrl: e.target.value });
+                      setUploadError("");
+                    }}
+                    placeholder="https://images.unsplash.com/... o URL de imagen"
+                    className="mt-2 w-full rounded-lg border border-black/20 px-4 py-2.5 outline-none focus:border-[#0f3bff]"
                   />
+                  {uploadError && (
+                    <p className="mt-1 text-sm text-red-600">{uploadError}</p>
+                  )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Recomendado: 1920x600px mínimo. Podés usar Unsplash, Cloudinary, etc.
+                    Recomendado: 1920x600px mínimo. Máx. 5MB (JPEG, PNG, WebP, GIF).
                   </p>
                   {form.imageUrl && (
                     <div className="mt-2 relative h-32 w-full overflow-hidden rounded-lg bg-gray-100">
@@ -232,6 +285,7 @@ export default function AdminHeroPage() {
                         alt="Preview"
                         fill
                         className="object-cover"
+                        unoptimized
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -305,7 +359,7 @@ export default function AdminHeroPage() {
                 {/* Preview */}
                 <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                   {slide.imageUrl ? (
-                    <Image src={slide.imageUrl} alt="" fill className="object-cover" />
+                    <Image src={slide.imageUrl} alt="" fill className="object-cover" unoptimized />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#0f3bff] to-[#0a2699]">
                       <span className="text-xs text-white">Sin imagen</span>
