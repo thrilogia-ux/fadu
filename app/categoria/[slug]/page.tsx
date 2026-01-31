@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -36,13 +37,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     },
   });
 
-  // Iconos por categoría
+  // Iconos por categoría (PNG en public)
   const categoryIcons: Record<string, string> = {
-    "iluminacion": "💡",
-    "muebles": "🪑",
-    "decoracion": "🎨",
-    "herramientas-diseno": "📐",
-    "arquitectura": "🏛️",
+    iluminacion: "/iluminacion.png",
+    escritorio: "/escritorio.png",
+    decoracion: "/decoracion.png",
+    diseno: "/diseño.png",
+    accesorios: "/accesorios.png",
   };
 
   return (
@@ -63,8 +64,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           {/* Header de categoría */}
           <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-4xl">
-                {categoryIcons[category.slug] || "📦"}
+              <div className="relative h-16 w-16 flex-shrink-0">
+                <Image
+                  src={categoryIcons[category.slug] || "/accesorios.png"}
+                  alt=""
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-[#1d1d1b]">{category.name}</h1>

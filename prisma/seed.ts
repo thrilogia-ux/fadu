@@ -21,10 +21,10 @@ async function main() {
   // Categorías iniciales (administrables desde panel después)
   const categories = [
     { name: "Iluminación", slug: "iluminacion", order: 1 },
-    { name: "Muebles", slug: "muebles", order: 2 },
+    { name: "Escritorio", slug: "escritorio", order: 2 },
     { name: "Decoración", slug: "decoracion", order: 3 },
-    { name: "Herramientas de diseño", slug: "herramientas-diseno", order: 4 },
-    { name: "Arquitectura", slug: "arquitectura", order: 5 },
+    { name: "Diseño", slug: "diseno", order: 4 },
+    { name: "Accesorios", slug: "accesorios", order: 5 },
   ];
 
   for (const c of categories) {
@@ -38,8 +38,8 @@ async function main() {
 
   // Productos de prueba
   const ilum = await prisma.category.findUnique({ where: { slug: "iluminacion" } });
-  const muebles = await prisma.category.findUnique({ where: { slug: "muebles" } });
-  if (ilum && muebles) {
+  const escritorio = await prisma.category.findUnique({ where: { slug: "escritorio" } });
+  if (ilum && escritorio) {
     await prisma.product.upsert({
       where: { slug: "lampara-diseno-nordico" },
       update: {},
@@ -65,7 +65,7 @@ async function main() {
       where: { slug: "silla-eames-replica" },
       update: {},
       create: {
-        categoryId: muebles.id,
+        categoryId: escritorio.id,
         name: "Silla Eames estilo",
         slug: "silla-eames-replica",
         description: "Silla de comedor con inspiración Eames. Madera y estructura metálica.",
@@ -85,7 +85,7 @@ async function main() {
       where: { slug: "mesa-centro-marmol" },
       update: {},
       create: {
-        categoryId: muebles.id,
+        categoryId: escritorio.id,
         name: "Mesa de centro mármol",
         slug: "mesa-centro-marmol",
         description: "Mesa de centro con tapa de mármol y base de metal.",

@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { HeroSlider } from "@/components/HeroSlider";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function Home() {
   // Hero slides activos
@@ -56,11 +57,11 @@ export default async function Home() {
   });
 
   const iconsByCategory: Record<string, string> = {
-    iluminacion: "💡",
-    muebles: "🪑",
-    decoracion: "🎨",
-    "herramientas-diseno": "✏️",
-    arquitectura: "🏛️",
+    iluminacion: "/iluminacion.png",
+    escritorio: "/escritorio.png",
+    decoracion: "/decoracion.png",
+    diseno: "/diseño.png",
+    accesorios: "/accesorios.png",
   };
 
   return (
@@ -123,7 +124,15 @@ export default async function Home() {
                   href={`/categoria/${cat.slug}`}
                   className="flex flex-col items-center justify-center gap-3 rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
                 >
-                  <span className="text-4xl">{iconsByCategory[cat.slug] || "📦"}</span>
+                  <div className="relative h-12 w-12">
+                    <Image
+                      src={iconsByCategory[cat.slug] || "/accesorios.png"}
+                      alt=""
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
                   <span className="text-center text-sm font-medium">{cat.name}</span>
                 </Link>
               ))}
@@ -136,8 +145,8 @@ export default async function Home() {
           <div className="mx-auto max-w-7xl px-4">
             <div className="flex flex-wrap justify-center gap-6 md:grid md:grid-cols-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-lg md:h-12 md:w-12 md:text-2xl">
-                  📍
+                <div className="relative h-10 w-10 flex-shrink-0 md:h-12 md:w-12">
+                  <Image src="/pickup.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div>
                   <h3 className="font-semibold">Retiro en FADU</h3>
@@ -145,8 +154,8 @@ export default async function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg md:h-12 md:w-12 md:text-2xl">
-                  💳
+                <div className="relative h-10 w-10 flex-shrink-0 md:h-12 md:w-12">
+                  <Image src="/pay.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div>
                   <h3 className="font-semibold">Pagá como quieras</h3>
@@ -154,8 +163,8 @@ export default async function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 text-lg md:h-12 md:w-12 md:text-2xl">
-                  🔒
+                <div className="relative h-10 w-10 flex-shrink-0 md:h-12 md:w-12">
+                  <Image src="/seguro.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div>
                   <h3 className="font-semibold">Compra segura</h3>
