@@ -13,7 +13,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<"mercadopago" | "transfer">("mercadopago");
+  const [paymentMethod, setPaymentMethod] = useState<"mercadopago" | "transfer" | "test">("mercadopago");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
@@ -67,7 +67,7 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Si es transferencia, ir a página de confirmación
+      // Si es transferencia o pago de prueba, ir a página de confirmación
       clearCart();
       router.push(`/pedido/${data.orderId}?success=true`);
     } catch {
@@ -169,6 +169,30 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     </label>
+
+                    {(session.user as { role?: string })?.role === "admin" && (
+                      <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-dashed border-amber-500/60 bg-amber-50/50 p-4 transition hover:border-amber-500 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-100/50">
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="test"
+                          checked={paymentMethod === "test"}
+                          onChange={() => setPaymentMethod("test")}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">Pago de prueba</span>
+                            <span className="rounded bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                              Solo admin
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            Simula la compra completa: pedido, emails, QR y seguimiento
+                          </p>
+                        </div>
+                      </label>
+                    )}
                   </div>
                 </div>
 
@@ -210,8 +234,10 @@ export default function CheckoutPage() {
                     {loading
                       ? "Procesando..."
                       : paymentMethod === "mercadopago"
-                      ? "Ir a pagar"
-                      : "Confirmar pedido"}
+                        ? "Ir a pagar"
+                        : paymentMethod === "test"
+                          ? "Simular compra completa"
+                          : "Confirmar pedido"}
                   </button>
 
                   <Link

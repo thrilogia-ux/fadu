@@ -59,6 +59,24 @@ export default function PedidoPage() {
 
   const isPendingPayment = order.status === "pending_payment";
   const isTransfer = order.paymentMethod === "transfer";
+  const isTest = order.paymentMethod === "test";
+
+  const statusLabels: Record<string, string> = {
+    pending_payment: "Pendiente de pago",
+    paid: "Pagado",
+    preparing: "Preparando",
+    ready_for_pickup: "Listo para retirar",
+    completed: "Completado",
+    cancelled: "Cancelado",
+  };
+  const statusColors: Record<string, string> = {
+    pending_payment: "bg-yellow-100 text-yellow-800",
+    paid: "bg-blue-100 text-blue-800",
+    preparing: "bg-purple-100 text-purple-800",
+    ready_for_pickup: "bg-green-100 text-green-800",
+    completed: "bg-gray-100 text-gray-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
 
   return (
     <>
@@ -71,9 +89,11 @@ export default function PedidoPage() {
               <div className="mb-2 text-4xl">✅</div>
               <h2 className="mb-2 text-xl font-bold text-green-800">¡Pedido confirmado!</h2>
               <p className="text-green-700">
-                {isTransfer
-                  ? "Te enviamos los datos de transferencia por email"
-                  : "Te avisaremos cuando esté listo para retirar"}
+                {isTest || order.status === "ready_for_pickup"
+                  ? "Tu pedido está listo para retirar. Revisá tu email con el código QR."
+                  : isTransfer
+                    ? "Te enviamos los datos de transferencia por email"
+                    : "Te avisaremos cuando esté listo para retirar"}
               </p>
             </div>
           )}
@@ -89,8 +109,12 @@ export default function PedidoPage() {
             {/* Estado */}
             <div className="mb-6">
               <h3 className="mb-2 text-sm font-semibold text-gray-600">Estado</h3>
-              <span className="inline-block rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
-                {isPendingPayment ? "Pendiente de pago" : order.status}
+              <span
+                className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${
+                  statusColors[order.status] || "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {statusLabels[order.status] || order.status}
               </span>
             </div>
 
@@ -157,8 +181,9 @@ export default function PedidoPage() {
             <div className="rounded-lg bg-gray-50 p-4">
               <h3 className="mb-2 font-semibold">📍 Retiro en FADU</h3>
               <p className="text-sm text-gray-700">
-                Una vez que tu pedido esté listo, recibirás un email con un código QR para
-                retirarlo en FADU.
+                {order.status === "ready_for_pickup" || order.status === "completed"
+                  ? "Recibiste un email con el código QR para retirar en FADU."
+                  : "Una vez que tu pedido esté listo, recibirás un email con un código QR para retirarlo en FADU."}
               </p>
               <p className="mt-2 text-xs text-gray-600">
                 Dirección: Av. San Juan 350, CABA
