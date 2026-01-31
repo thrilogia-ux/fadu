@@ -1,25 +1,22 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
     <footer className="border-t border-black/8 bg-white py-12">
       <div className="mx-auto max-w-7xl px-4">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Sobre Fadu.store */}
+          {/* Logo gris */}
           <div>
-            <h3 className="mb-4 font-semibold text-[#1d1d1b]">Sobre Fadu.store</h3>
-            <ul className="space-y-2 text-sm text-[#1d1d1b]/70">
-              <li>
-                <Link href="/nosotros" className="hover:underline">
-                  Quiénes somos
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacto" className="hover:underline">
-                  Contacto
-                </Link>
-              </li>
-            </ul>
+            <Link href="/" className="inline-block">
+              <Image
+                src="/fadustoregris.svg"
+                alt="Fadu.store"
+                width={140}
+                height={26}
+                className="h-7 w-auto opacity-90"
+              />
+            </Link>
           </div>
 
           {/* Ayuda */}
