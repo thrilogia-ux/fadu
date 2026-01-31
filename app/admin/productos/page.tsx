@@ -50,6 +50,8 @@ export default function AdminProductosPage() {
     images: [{ url: "", isPrimary: true }] as { url: string; isPrimary: boolean }[],
     videos: [""] as string[],
   });
+  const [uploadingImageIdx, setUploadingImageIdx] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -136,6 +138,39 @@ export default function AdminProductosPage() {
   function setPrimaryImage(idx: number) {
     const updated = form.images.map((img, i) => ({ ...img, isPrimary: i === idx }));
     setForm({ ...form, images: updated });
+  }
+
+  async function handleImageUpload(idx: number, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError("");
+    setUploadingImageIdx(idx);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "products");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUploadError(data.error || "Error al subir");
+        return;
+      }
+
+      updateImage(idx, data.url);
+    } catch {
+      setUploadError("Error de conexión");
+    } finally {
+      setUploadingImageIdx(null);
+      e.target.value = "";
+    }
   }
 
   // Video handlers
@@ -371,12 +406,14 @@ export default function AdminProductosPage() {
                     </button>
                   </div>
                   <p className="mb-3 text-xs text-gray-500">
-                    La imagen marcada como "Principal" se mostrará primero. Podés usar URLs de Unsplash, Cloudinary, etc.
+                    Subí imágenes o pegá URLs. La imagen marcada como "Principal" se mostrará primero. Máx. 5MB (JPEG, PNG, WebP, GIF).
                   </p>
-                  
+                  {uploadError && (
+                    <p className="mb-2 text-sm text-red-600">{uploadError}</p>
+                  )}
                   <div className="space-y-3">
                     {form.images.map((img, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
+                      <div key={idx} className="flex flex-wrap items-start gap-3">
                         {/* Preview */}
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                           {img.url ? (
@@ -396,15 +433,28 @@ export default function AdminProductosPage() {
                             </div>
                           )}
                         </div>
-                        
-                        {/* URL input */}
-                        <div className="flex-1">
+
+                        {/* Upload button + URL input */}
+                        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                          <label className="shrink-0 cursor-pointer rounded-lg border border-[#0f3bff] bg-[#0f3bff]/5 px-3 py-2 text-xs font-medium text-[#0f3bff] transition hover:bg-[#0f3bff]/10">
+                            {uploadingImageIdx === idx ? "Subiendo…" : "Subir"}
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              onChange={(e) => handleImageUpload(idx, e)}
+                              disabled={uploadingImageIdx !== null}
+                              className="hidden"
+                            />
+                          </label>
                           <input
                             type="url"
                             value={img.url}
-                            onChange={(e) => updateImage(idx, e.target.value)}
-                            placeholder="https://..."
-                            className="w-full rounded-lg border border-black/20 px-3 py-2 text-sm outline-none focus:border-[#0f3bff]"
+                            onChange={(e) => {
+                              updateImage(idx, e.target.value);
+                              setUploadError("");
+                            }}
+                            placeholder="o pegá URL de imagen"
+                            className="min-w-0 flex-1 rounded-lg border border-black/20 px-3 py-2 text-sm outline-none focus:border-[#0f3bff]"
                           />
                         </div>
                         
@@ -412,7 +462,7 @@ export default function AdminProductosPage() {
                         <button
                           type="button"
                           onClick={() => setPrimaryImage(idx)}
-                          className={`rounded-lg px-3 py-2 text-xs font-medium ${
+                          className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium ${
                             img.isPrimary
                               ? "bg-green-100 text-green-700"
                               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -426,7 +476,7 @@ export default function AdminProductosPage() {
                           type="button"
                           onClick={() => removeImage(idx)}
                           disabled={form.images.length === 1}
-                          className="rounded-lg bg-red-100 px-3 py-2 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                          className="shrink-0 rounded-lg bg-red-100 px-3 py-2 text-red-700 hover:bg-red-200 disabled:opacity-50"
                         >
                           ✕
                         </button>

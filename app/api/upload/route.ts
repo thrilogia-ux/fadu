@@ -14,6 +14,8 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const folder = (formData.get("folder") as string) || "hero-slides";
+    const safeFolder = folder.replace(/[^a-z0-9-_]/gi, "") || "uploads";
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     const ext = file.name.split(".").pop() || "jpg";
-    const pathname = `hero-slides/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const pathname = `${safeFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     const blob = await put(pathname, file, {
       access: "public",
