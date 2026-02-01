@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
+import Image from "next/image";
 
 export default async function DestacadosPage() {
   const categories = await prisma.category.findMany({
@@ -28,8 +29,11 @@ export default async function DestacadosPage() {
       <main className="min-h-screen overflow-x-hidden bg-[#ededed] py-6 pb-12">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-            <h1 className="text-2xl font-bold text-[#1d1d1b]">
-              ⭐ Productos destacados
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-[#1d1d1b]">
+              <div className="relative h-8 w-8">
+                <Image src="/star.png" alt="" fill className="object-contain" unoptimized />
+              </div>
+              Productos destacados
             </h1>
             <p className="mt-2 text-gray-600">
               Los mejores productos seleccionados para vos
