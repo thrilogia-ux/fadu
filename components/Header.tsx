@@ -13,7 +13,12 @@ interface Category {
   slug: string;
 }
 
+const ALLOWED_CATEGORY_SLUGS = ["iluminacion", "escritorio", "decoracion", "diseno", "accesorios"];
+
 export function Header({ categories }: { categories: Category[] }) {
+  const menuCategories = categories
+    .filter((c) => ALLOWED_CATEGORY_SLUGS.includes(c.slug))
+    .sort((a, b) => ALLOWED_CATEGORY_SLUGS.indexOf(a.slug) - ALLOWED_CATEGORY_SLUGS.indexOf(b.slug));
   const { data: session } = useSession();
   const router = useRouter();
   const { itemCount } = useCart();
@@ -230,7 +235,7 @@ export function Header({ categories }: { categories: Category[] }) {
             </button>
             {showCategoriesMenu && (
               <div className="absolute left-0 mt-2 w-56 rounded-xl border border-black/10 bg-white py-2 shadow-xl">
-                {categories.map((cat) => (
+                {menuCategories.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/categoria/${cat.slug}`}
@@ -281,7 +286,7 @@ export function Header({ categories }: { categories: Category[] }) {
               <div className="border-b border-black/10 py-4">
                 <p className="mb-2 text-xs font-medium text-gray-500">Categorías</p>
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((cat) => (
+                  {menuCategories.map((cat) => (
                     <Link
                       key={cat.id}
                       href={`/categoria/${cat.slug}`}
