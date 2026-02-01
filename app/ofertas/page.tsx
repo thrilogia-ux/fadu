@@ -17,7 +17,7 @@ export default async function OfertasPage() {
       active: true,
       compareAtPrice: { not: null },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
     include: {
       category: { select: { name: true, slug: true } },
       images: { where: { isPrimary: true }, take: 1 },

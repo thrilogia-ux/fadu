@@ -14,7 +14,7 @@ export default async function DestacadosPage() {
 
   const products = await prisma.product.findMany({
     where: { active: true, featured: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
     include: {
       category: { select: { name: true, slug: true } },
       images: { where: { isPrimary: true }, take: 1 },

@@ -57,6 +57,12 @@ export default function AdminDashboard() {
       icon: "🎟️",
     },
     {
+      title: "Portada",
+      description: "Ordenar destacados y ofertas del home",
+      href: "/admin/portada",
+      icon: "🏠",
+    },
+    {
       title: "Hero Slides",
       description: "Gestionar los banners del home",
       href: "/admin/hero",

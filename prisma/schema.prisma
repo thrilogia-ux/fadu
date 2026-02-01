@@ -113,6 +113,8 @@ model Product {
   stock          Int      @default(0)
   sku            String?  @unique
   featured       Boolean  @default(false)
+  featuredOrder  Int?     @map("featured_order")  // orden en sección Destacados del home
+  offersOrder    Int?     @map("offers_order")    // orden en sección Ofertas del home
   active         Boolean  @default(true)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
