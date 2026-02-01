@@ -51,7 +51,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
             </p>
             <Link
               href="/ofertas"
-              className="inline-block rounded-lg bg-white px-6 py-3 font-semibold text-[#0f3bff] hover:bg-white/90"
+              className="inline-block rounded-full bg-white px-8 py-3 font-semibold text-[#0f3bff] hover:bg-white/90"
             >
               Ver ofertas
             </Link>
@@ -103,7 +103,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           {slide.buttonText && slide.buttonLink && (
             <Link
               href={slide.buttonLink}
-              className="inline-block rounded-lg bg-white px-6 py-3 font-semibold text-[#0f3bff] transition hover:bg-white/90"
+              className="inline-block rounded-full bg-white px-8 py-3 font-semibold text-[#0f3bff] transition hover:bg-white/90"
             >
               {slide.buttonText}
             </Link>
