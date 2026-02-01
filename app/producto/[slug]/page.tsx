@@ -384,76 +384,6 @@ export default function ProductPage() {
                   </p>
                 </div>
               )}
-              
-              {/* Preguntas y respuestas */}
-              <div className="mt-4 rounded-lg bg-white p-6 shadow-sm">
-                <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
-                  Preguntas y respuestas
-                </h2>
-                
-                {/* Formulario de pregunta */}
-                <form onSubmit={submitQuestion} className="mb-6">
-                  <div className="flex flex-wrap gap-3">
-                    <input
-                      type="text"
-                      value={newQuestion}
-                      onChange={(e) => setNewQuestion(e.target.value)}
-                      placeholder="Escribí tu pregunta..."
-                      className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#0f3bff]"
-                    />
-                    <button
-                      type="submit"
-                      disabled={loadingQuestion || newQuestion.trim().length < 10}
-                      className="rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300"
-                    >
-                      {loadingQuestion ? "..." : "Preguntar"}
-                    </button>
-                  </div>
-                  {questionError && (
-                    <p className="mt-2 text-sm text-red-600">{questionError}</p>
-                  )}
-                  {!session && (
-                    <p className="mt-2 text-sm text-gray-500">
-                      <Link href="/login" className="text-[#0f3bff] hover:underline">
-                        Iniciá sesión
-                      </Link>{" "}
-                      para hacer preguntas
-                    </p>
-                  )}
-                </form>
-                
-                {/* Lista de preguntas */}
-                {questions.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">
-                    Nadie hizo preguntas todavía. ¡Sé el primero!
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {questions.map((q) => (
-                      <div key={q.id} className="border-b border-gray-100 pb-4 last:border-0">
-                        <div className="flex gap-3">
-                          <span className="text-xl">💬</span>
-                          <div className="flex-1">
-                            <p className="text-gray-800">{q.question}</p>
-                            <p className="mt-1 text-xs text-gray-500">
-                              {q.user.name || "Usuario"} · {new Date(q.createdAt).toLocaleDateString("es-AR")}
-                            </p>
-                            
-                            {q.answer && (
-                              <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                                <p className="text-gray-700">{q.answer}</p>
-                                <p className="mt-1 text-xs text-gray-500">
-                                  Respuesta del vendedor · {q.answeredAt && new Date(q.answeredAt).toLocaleDateString("es-AR")}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Columna derecha: Info y compra */}
@@ -580,6 +510,76 @@ export default function ProductPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Preguntas y respuestas - al final (mobile y desktop) */}
+            <div className="mt-4 rounded-lg bg-white p-6 shadow-sm lg:col-span-3">
+              <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
+                Preguntas y respuestas
+              </h2>
+              
+              {/* Formulario de pregunta */}
+              <form onSubmit={submitQuestion} className="mb-6">
+                <div className="flex flex-wrap gap-3">
+                  <input
+                    type="text"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    placeholder="Escribí tu pregunta..."
+                    className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#0f3bff]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loadingQuestion || newQuestion.trim().length < 10}
+                    className="rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300"
+                  >
+                    {loadingQuestion ? "..." : "Preguntar"}
+                  </button>
+                </div>
+                {questionError && (
+                  <p className="mt-2 text-sm text-red-600">{questionError}</p>
+                )}
+                {!session && (
+                  <p className="mt-2 text-sm text-gray-500">
+                    <Link href="/login" className="text-[#0f3bff] hover:underline">
+                      Iniciá sesión
+                    </Link>{" "}
+                    para hacer preguntas
+                  </p>
+                )}
+              </form>
+              
+              {/* Lista de preguntas */}
+              {questions.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  Nadie hizo preguntas todavía. ¡Sé el primero!
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {questions.map((q) => (
+                    <div key={q.id} className="border-b border-gray-100 pb-4 last:border-0">
+                      <div className="flex gap-3">
+                        <span className="text-xl">💬</span>
+                        <div className="flex-1">
+                          <p className="text-gray-800">{q.question}</p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {q.user.name || "Usuario"} · {new Date(q.createdAt).toLocaleDateString("es-AR")}
+                          </p>
+                          
+                          {q.answer && (
+                            <div className="mt-3 rounded-lg bg-gray-50 p-3">
+                              <p className="text-gray-700">{q.answer}</p>
+                              <p className="mt-1 text-xs text-gray-500">
+                                Respuesta del vendedor · {q.answeredAt && new Date(q.answeredAt).toLocaleDateString("es-AR")}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
