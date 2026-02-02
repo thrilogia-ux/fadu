@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -21,6 +21,11 @@ interface HeroSliderProps {
 export function HeroSlider({ slides }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  
+  // Touch/swipe support
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50;
 
   const nextSlide = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length);
@@ -29,6 +34,38 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const prevSlide = useCallback(() => {
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
   }, [slides.length]);
+
+  // Handle touch events for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = null;
+    setIsAutoPlaying(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) {
+      setIsAutoPlaying(true);
+      return;
+    }
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+    
+    touchStartX.current = null;
+    touchEndX.current = null;
+    setIsAutoPlaying(true);
+  };
 
   // Auto-play
   useEffect(() => {
@@ -65,9 +102,12 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative h-[280px] overflow-hidden sm:h-[340px] md:h-[420px] lg:h-[500px]"
+      className="relative h-[280px] overflow-hidden sm:h-[340px] md:h-[420px] lg:h-[500px] touch-pan-y"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Imagen de fondo */}
       {slide.imageUrl ? (
@@ -114,10 +154,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
       {/* Controles de navegación */}
       {slides.length > 1 && (
         <>
-          {/* Flechas */}
+          {/* Flechas - ocultas en mobile, visibles en tablet/desktop */}
           <button
             onClick={prevSlide}
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30 md:left-4 md:p-3"
+            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30 hidden md:flex items-center justify-center"
             aria-label="Slide anterior"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +166,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30 md:right-4 md:p-3"
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30 hidden md:flex items-center justify-center"
             aria-label="Slide siguiente"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
