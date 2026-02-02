@@ -50,7 +50,7 @@ export function ProductCard({ name, slug, price, compareAtPrice, images, categor
         <h3 className="mb-2 line-clamp-2 text-sm font-medium text-[#1d1d1b]">
           {name}
         </h3>
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-col items-start">
           {hasDiscount && (
             <span className="text-xs text-gray-400 line-through">
               ${compareAtPrice.toLocaleString("es-AR")}
