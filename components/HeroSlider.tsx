@@ -21,6 +21,7 @@ interface HeroSliderProps {
 export function HeroSlider({ slides }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(true);
   
   // Touch/swipe support
   const touchStartX = useRef<number | null>(null);
@@ -28,12 +29,19 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const minSwipeDistance = 50;
 
   const nextSlide = useCallback(() => {
+    if (!isTransitioning) setIsTransitioning(true);
     setCurrent((prev) => (prev + 1) % slides.length);
-  }, [slides.length]);
+  }, [slides.length, isTransitioning]);
 
   const prevSlide = useCallback(() => {
+    if (!isTransitioning) setIsTransitioning(true);
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
-  }, [slides.length]);
+  }, [slides.length, isTransitioning]);
+
+  const goToSlide = useCallback((index: number) => {
+    if (!isTransitioning) setIsTransitioning(true);
+    setCurrent(index);
+  }, [isTransitioning]);
 
   // Handle touch events for swipe
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -98,8 +106,6 @@ export function HeroSlider({ slides }: HeroSliderProps) {
     );
   }
 
-  const slide = slides[current];
-
   return (
     <section
       className="relative h-[280px] overflow-hidden sm:h-[340px] md:h-[420px] lg:h-[500px] touch-pan-y"
@@ -109,46 +115,56 @@ export function HeroSlider({ slides }: HeroSliderProps) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Imagen de fondo */}
-      {slide.imageUrl ? (
-        <Image
-          src={slide.imageUrl}
-          alt={slide.title || "Hero"}
-          fill
-          className="object-cover"
-          style={{ objectPosition: slide.imagePosition || "50% 50%" }}
-          priority
-          unoptimized
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f3bff] to-[#0a2699]" />
-      )}
+      {/* Contenedor de slides con transición suave */}
+      <div
+        className={`flex h-full ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""}`}
+        style={{ transform: `translateX(-${current * 100}%)` }}
+      >
+        {slides.map((slide, index) => (
+          <div key={slide.id} className="relative min-w-full h-full flex-shrink-0">
+            {/* Imagen de fondo */}
+            {slide.imageUrl ? (
+              <Image
+                src={slide.imageUrl}
+                alt={slide.title || "Hero"}
+                fill
+                className="object-cover"
+                style={{ objectPosition: slide.imagePosition || "50% 50%" }}
+                priority={index === 0}
+                unoptimized
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0f3bff] to-[#0a2699]" />
+            )}
 
-      {/* Overlay oscuro para legibilidad */}
-      <div className="absolute inset-0 bg-black/40" />
+            {/* Overlay oscuro para legibilidad */}
+            <div className="absolute inset-0 bg-black/40" />
 
-      {/* Contenido */}
-      <div className="relative mx-auto flex h-full max-w-7xl items-center px-4">
-        <div className="max-w-2xl text-white">
-          {slide.title && (
-            <h1 className="mb-2 text-2xl font-bold drop-shadow-lg sm:mb-3 sm:text-3xl md:mb-4 md:text-4xl lg:text-5xl">
-              {slide.title}
-            </h1>
-          )}
-          {slide.subtitle && (
-            <p className="mb-4 text-sm text-white/90 drop-shadow-md sm:mb-5 sm:text-base md:mb-6 md:text-lg">
-              {slide.subtitle}
-            </p>
-          )}
-          {slide.buttonText && slide.buttonLink && (
-            <Link
-              href={slide.buttonLink}
-              className="inline-block rounded-full bg-white px-8 py-3 font-semibold text-[#0f3bff] transition hover:bg-white/90"
-            >
-              {slide.buttonText}
-            </Link>
-          )}
-        </div>
+            {/* Contenido */}
+            <div className="relative mx-auto flex h-full max-w-7xl items-center px-4">
+              <div className="max-w-2xl text-white">
+                {slide.title && (
+                  <h1 className="mb-2 text-2xl font-bold drop-shadow-lg sm:mb-3 sm:text-3xl md:mb-4 md:text-4xl lg:text-5xl">
+                    {slide.title}
+                  </h1>
+                )}
+                {slide.subtitle && (
+                  <p className="mb-4 text-sm text-white/90 drop-shadow-md sm:mb-5 sm:text-base md:mb-6 md:text-lg">
+                    {slide.subtitle}
+                  </p>
+                )}
+                {slide.buttonText && slide.buttonLink && (
+                  <Link
+                    href={slide.buttonLink}
+                    className="inline-block rounded-full bg-white px-8 py-3 font-semibold text-[#0f3bff] transition hover:bg-white/90"
+                  >
+                    {slide.buttonText}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Controles de navegación */}
@@ -157,7 +173,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           {/* Flechas - ocultas en mobile, visibles en tablet/desktop */}
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30 hidden md:flex items-center justify-center"
+            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30 hidden md:flex items-center justify-center"
             aria-label="Slide anterior"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +182,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30 hidden md:flex items-center justify-center"
+            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition hover:bg-white/30 hidden md:flex items-center justify-center"
             aria-label="Slide siguiente"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,12 +191,12 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           </button>
 
           {/* Indicadores */}
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-6">
+          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2 md:bottom-6">
             {slides.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrent(idx)}
-                className={`h-2 rounded-full transition-all ${
+                onClick={() => goToSlide(idx)}
+                className={`h-2 rounded-full transition-all duration-300 ${
                   idx === current ? "w-8 bg-white" : "w-2 bg-white/50"
                 }`}
                 aria-label={`Ir al slide ${idx + 1}`}
