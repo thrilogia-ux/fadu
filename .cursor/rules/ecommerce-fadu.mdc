@@ -1,0 +1,24 @@
+---
+description: E-commerce FADU-style - stack, patrones y convenciones
+alwaysApply: true
+---
+
+# E-commerce (estilo FADU)
+
+## Stack
+- Next.js App Router, React, TypeScript, Tailwind CSS
+- Prisma + PostgreSQL (Supabase)
+- NextAuth (credentials + OAuth)
+- Resend para emails
+- Vercel Blob para imágenes
+
+## Estructura
+- Admin: /admin/* (productos, categorías, cupones, hero, portada, pedidos, preguntas)
+- Storefront: home con hero, categorías, destacados, ofertas
+- Checkout con Mercado Pago y transferencia
+- Retiro en pickup point con validación QR
+
+## UX
+- Diseño inspirado en Mercado Libre
+- Responsive mobile-first
+- Categorías con iconos PNG en public/
