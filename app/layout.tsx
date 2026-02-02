@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SessionProvider } from "@/components/SessionProvider";
 import { CartProvider } from "@/lib/cart-context";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default function RootLayout({
             <div className="min-h-screen overflow-x-hidden bg-[#fafafa] text-[#1d1d1b]">
               {children}
             </div>
+            <WhatsAppButton />
           </CartProvider>
         </SessionProvider>
       </body>
