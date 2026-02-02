@@ -108,20 +108,29 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative h-[280px] overflow-hidden sm:h-[340px] md:h-[420px] lg:h-[500px] touch-pan-y"
+      className="relative h-[280px] sm:h-[340px] md:h-[420px] lg:h-[500px] touch-pan-y"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Contenedor de slides con transición suave */}
-      <div
-        className={`flex h-full ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""}`}
-        style={{ transform: `translateX(-${current * 100}%)` }}
-      >
-        {slides.map((slide, index) => (
-          <div key={slide.id} className="relative min-w-full h-full flex-shrink-0">
+      {/* Contenedor con overflow oculto */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Contenedor de slides con transición suave */}
+        <div
+          className={`flex h-full w-full ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""}`}
+          style={{ 
+            transform: `translateX(-${current * 100}%)`,
+            willChange: "transform"
+          }}
+        >
+          {slides.map((slide, index) => (
+            <div 
+              key={slide.id} 
+              className="relative h-full flex-shrink-0"
+              style={{ width: "100%", minWidth: "100%" }}
+            >
             {/* Imagen de fondo */}
             {slide.imageUrl ? (
               <Image
@@ -165,6 +174,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Controles de navegación */}
