@@ -31,6 +31,20 @@ interface Question {
   user: { name: string | null };
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  user: { name: string | null };
+}
+
+interface ReviewSummary {
+  average: number;
+  total: number;
+  distribution: { stars: number; count: number }[];
+}
+
 type MediaItem = 
   | { type: "image"; id: string; url: string }
   | { type: "video"; id: string; url: string; embedUrl: string };
@@ -109,6 +123,25 @@ export default function ProductPage() {
   const [loadingQuestion, setLoadingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState("");
 
+  // Opiniones (se cargan aparte para no bloquear la página)
+  const initialReviewSummary: ReviewSummary = {
+    average: 0,
+    total: 0,
+    distribution: [
+      { stars: 5, count: 0 },
+      { stars: 4, count: 0 },
+      { stars: 3, count: 0 },
+      { stars: 2, count: 0 },
+      { stars: 1, count: 0 },
+    ],
+  };
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary>(initialReviewSummary);
+  const [newRating, setNewRating] = useState(0);
+  const [newReview, setNewReview] = useState("");
+  const [loadingReview, setLoadingReview] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
   useEffect(() => {
     Promise.all([
       fetch(`/api/products/${params.slug}`).then((r) => r.json()),
@@ -133,6 +166,20 @@ export default function ProductPage() {
       })
       .finally(() => setLoading(false));
   }, [params.slug, router]);
+
+  // Cargar opiniones aparte (si falla, la página sigue funcionando)
+  useEffect(() => {
+    if (!params.slug) return;
+    fetch(`/api/products/${params.slug}/reviews`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.reviews) {
+          setReviews(data.reviews);
+          setReviewSummary(data.summary || initialReviewSummary);
+        }
+      })
+      .catch(() => {});
+  }, [params.slug]);
 
   async function toggleFavorite() {
     if (!session) {
@@ -197,6 +244,58 @@ export default function ProductPage() {
       setQuestionError("Error de conexión");
     }
     setLoadingQuestion(false);
+  }
+
+  async function submitReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!session) {
+      router.push("/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    if (newRating < 1 || newRating > 5) {
+      setReviewError("Seleccioná una calificación de 1 a 5");
+      return;
+    }
+    if (newReview.trim().length > 500) {
+      setReviewError("El comentario no puede superar los 500 caracteres");
+      return;
+    }
+    setLoadingReview(true);
+    setReviewError("");
+    try {
+      const res = await fetch(`/api/products/${params.slug}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: newRating, comment: newReview }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setReviewError(data.error || "Error al enviar opinión");
+      } else {
+        setNewRating(0);
+        setNewReview("");
+        const latest = await fetch(`/api/products/${params.slug}/reviews`).then((r) => r.json());
+        if (latest.reviews) {
+          setReviews(latest.reviews);
+          setReviewSummary(latest.summary || initialReviewSummary);
+        }
+      }
+    } catch {
+      setReviewError("Error de conexión");
+    }
+    setLoadingReview(false);
+  }
+
+  function renderStars(rating: number) {
+    return (
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className={star <= rating ? "text-[#0f3bff]" : "text-gray-300"}>
+            ★
+          </span>
+        ))}
+      </div>
+    );
   }
 
   if (loading) {
@@ -510,6 +609,119 @@ export default function ProductPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Opiniones del producto */}
+            <div className="mt-4 rounded-lg bg-white p-6 shadow-sm lg:col-span-3">
+              <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
+                Opiniones del producto
+              </h2>
+              <div className="grid gap-6 md:grid-cols-3">
+                <div>
+                  <p className="text-5xl font-bold text-[#0f3bff]">
+                    {reviewSummary.average.toFixed(1)}
+                  </p>
+                  <div className="mt-2">{renderStars(Math.round(reviewSummary.average))}</div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {reviewSummary.total} calificaciones
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="space-y-2">
+                    {reviewSummary.distribution.map((item) => {
+                      const percent =
+                        reviewSummary.total > 0
+                          ? Math.round((item.count / reviewSummary.total) * 100)
+                          : 0;
+                      return (
+                        <div key={item.stars} className="flex items-center gap-3">
+                          <span className="w-6 text-sm text-gray-500">{item.stars}</span>
+                          <div className="flex-1 rounded-full bg-gray-100 h-2">
+                            <div
+                              className="h-2 rounded-full bg-[#0f3bff]"
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                          <span className="w-10 text-right text-sm text-gray-500">
+                            {item.count}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {reviewSummary.total === 0 && (
+                <div className="mt-6 rounded-lg border border-black/8 bg-gray-50 p-6 text-center text-gray-600">
+                  Este producto aún no tiene comentarios. ¡Sé el primero!
+                </div>
+              )}
+              <form onSubmit={submitReview} className="mt-6 space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-gray-600">Tu calificación:</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setNewRating(star)}
+                        className={`text-2xl ${
+                          star <= newRating ? "text-[#0f3bff]" : "text-gray-300"
+                        }`}
+                        aria-label={`Calificar con ${star} estrellas`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <textarea
+                  value={newReview}
+                  onChange={(e) => setNewReview(e.target.value)}
+                  placeholder="Dejá una reseña breve (opcional)"
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#0f3bff]"
+                />
+                {reviewError && <p className="text-sm text-red-600">{reviewError}</p>}
+                {!session && (
+                  <p className="text-sm text-gray-500">
+                    <Link href="/login" className="text-[#0f3bff] hover:underline">
+                      Iniciá sesión
+                    </Link>{" "}
+                    para dejar tu opinión
+                  </p>
+                )}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    Las opiniones se publican luego de ser moderadas.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={loadingReview || newRating === 0}
+                    className="rounded-lg bg-[#0f3bff] px-6 py-2 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300"
+                  >
+                    {loadingReview ? "Enviando..." : "Enviar opinión"}
+                  </button>
+                </div>
+              </form>
+              {reviews.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
+                      <div className="flex items-center gap-3">
+                        {renderStars(review.rating)}
+                        <p className="text-xs text-gray-500">
+                          {review.user.name || "Usuario"} ·{" "}
+                          {new Date(review.createdAt).toLocaleDateString("es-AR")}
+                        </p>
+                      </div>
+                      {review.comment && (
+                        <p className="mt-2 text-gray-700">{review.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Preguntas y respuestas - al final (mobile y desktop) */}

@@ -12,7 +12,8 @@ ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "offers_order" INTEGER;
 -- 2) Hero slides: encuadre de imagen
 ALTER TABLE "hero_slides" ADD COLUMN IF NOT EXISTS "image_position" TEXT DEFAULT '50% 50%';
 
--- 3) Reseñas de productos (User = tabla de Prisma sin @@map)
+-- 3) Reseñas de productos
+-- Si falla con "User", probá cambiar "User" por "users" (según tu schema)
 CREATE TABLE IF NOT EXISTS "product_reviews" (
   "id" TEXT PRIMARY KEY,
   "product_id" TEXT NOT NULL REFERENCES "products"("id") ON DELETE CASCADE,
