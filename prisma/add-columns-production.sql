@@ -1,5 +1,28 @@
 -- Ejecutar en Supabase SQL Editor si el sitio da "Application error"
--- Agrega las columnas featured_order y offers_order a la tabla products
+-- Agrega columnas y tablas nuevas usadas en producción
 
+-- 1) Productos: orden en home (Destacados / Ofertas)
 ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "featured_order" INTEGER;
 ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "offers_order" INTEGER;
+
+-- 2) Hero slides: encuadre de imagen
+ALTER TABLE "hero_slides" ADD COLUMN IF NOT EXISTS "image_position" TEXT DEFAULT '50% 50%';
+
+-- 3) Reseñas de productos
+CREATE TABLE IF NOT EXISTS "product_reviews" (
+  "id" TEXT PRIMARY KEY,
+  "product_id" TEXT NOT NULL REFERENCES "products"("id") ON DELETE CASCADE,
+  "user_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "rating" INTEGER NOT NULL,
+  "comment" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'pending',
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "product_reviews_product_user_key"
+  ON "product_reviews" ("product_id", "user_id");
+
+ALTER TABLE "product_reviews"
+  ADD CONSTRAINT "product_reviews_rating_check"
+  CHECK ("rating" BETWEEN 1 AND 5);
