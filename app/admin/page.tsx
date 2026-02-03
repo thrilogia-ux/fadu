@@ -74,6 +74,12 @@ export default function AdminDashboard() {
       href: "/admin/preguntas",
       icon: "💬",
     },
+    {
+      title: "Opiniones",
+      description: "Aprobar o rechazar reseñas",
+      href: "/admin/reseñas",
+      icon: "⭐",
+    },
   ];
 
   return (

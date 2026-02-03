@@ -30,6 +30,7 @@ model User {
   cart             Cart?
   addresses        Address[]
   questions        ProductQuestion[]
+  reviews          ProductReview[]
 }
 
 model Account {
@@ -126,6 +127,7 @@ model Product {
   cartItems    CartItem[]
   favorites    Favorite[]
   questions    ProductQuestion[]
+  reviews      ProductReview[]
 }
 
 model ProductImage {
@@ -281,6 +283,24 @@ model ProductQuestion {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("product_questions")
+}
+
+// --- Reseñas de productos ---
+model ProductReview {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  userId    String   @map("user_id")
+  rating    Int
+  comment   String?  @db.Text
+  status    String   @default("pending") // pending | approved | rejected
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@map("product_reviews")
 }
 
 // --- Hero / Banners ---
