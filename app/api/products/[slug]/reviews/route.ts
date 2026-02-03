@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
+const emptyResponse = () =>
+  NextResponse.json({
+    reviews: [],
+    summary: {
+      average: 0,
+      total: 0,
+      distribution: [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0 })),
+    },
+  });
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -37,8 +47,16 @@ export async function GET(
       reviews,
       summary: { average: avg, total, distribution },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching reviews:", error);
+    const msg = error instanceof Error ? error.message : "";
+    if (
+      msg.includes("product_reviews") ||
+      msg.includes("does not exist") ||
+      msg.includes("relation")
+    ) {
+      return emptyResponse();
+    }
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -113,8 +131,19 @@ export async function POST(
     });
 
     return NextResponse.json(newReview);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error creating review:", error);
+    const msg = error instanceof Error ? error.message : "";
+    if (
+      msg.includes("product_reviews") ||
+      msg.includes("does not exist") ||
+      msg.includes("relation")
+    ) {
+      return NextResponse.json(
+        { error: "Las opiniones aún no están disponibles. Por favor intentá más tarde." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

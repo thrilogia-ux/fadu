@@ -22,8 +22,16 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(reviews);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching reviews:", error);
+    const msg = error instanceof Error ? error.message : "";
+    if (
+      msg.includes("product_reviews") ||
+      msg.includes("does not exist") ||
+      msg.includes("relation")
+    ) {
+      return NextResponse.json([]);
+    }
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
