@@ -303,6 +303,14 @@ model ProductReview {
   @@map("product_reviews")
 }
 
+// --- Newsletter ---
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("newsletter_subscribers")
+}
+
 // --- Hero / Banners ---
 model HeroSlide {
   id            String   @id @default(cuid())

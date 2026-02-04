@@ -7,16 +7,32 @@ import { useState } from "react";
 export function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      // Aquí se integraría con un servicio de newsletter
-      console.log("Suscribir:", email);
-      setSubscribed(true);
-      setEmail("");
-      setTimeout(() => setSubscribed(false), 3000);
+    if (!email) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Error al suscribirte");
+      } else {
+        setSubscribed(true);
+        setEmail("");
+        setTimeout(() => setSubscribed(false), 3000);
+      }
+    } catch {
+      setError("Error de conexión");
     }
+    setLoading(false);
   };
 
   return (
@@ -55,11 +71,13 @@ export function Footer() {
                 />
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white hover:bg-[#0f3bff]/90 transition-colors"
+                  disabled={loading}
+                  className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white hover:bg-[#0f3bff]/90 transition-colors disabled:opacity-70"
                 >
-                  Enviar
+                  {loading ? "Enviando..." : "Enviar"}
                 </button>
               </form>
+              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
               {subscribed && (
                 <p className="mt-2 text-sm text-green-600">
                   ¡Gracias por suscribirte!

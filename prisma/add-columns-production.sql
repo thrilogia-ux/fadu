@@ -27,3 +27,10 @@ CREATE TABLE IF NOT EXISTS "product_reviews" (
 
 CREATE UNIQUE INDEX IF NOT EXISTS "product_reviews_product_user_key"
   ON "product_reviews" ("product_id", "user_id");
+
+-- 4) Newsletter suscriptores
+CREATE TABLE IF NOT EXISTS "newsletter_subscribers" (
+  "id" TEXT PRIMARY KEY,
+  "email" TEXT NOT NULL UNIQUE,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

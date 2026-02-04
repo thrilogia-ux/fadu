@@ -80,6 +80,12 @@ export default function AdminDashboard() {
       href: "/admin/reseñas",
       icon: "⭐",
     },
+    {
+      title: "Newsletter",
+      description: "Ver suscriptores del newsletter",
+      href: "/admin/newsletter",
+      icon: "📧",
+    },
   ];
 
   return (
