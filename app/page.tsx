@@ -33,25 +33,25 @@ export default async function Home() {
   });
   const categories = allCategories.filter((c) => allowedCategorySlugs.includes(c.slug));
 
-  // Productos destacados (orden en admin/portada cuando exista featured_order)
+  // Productos destacados (orden en admin/portada)
   const featured = await prisma.product.findMany({
     where: { active: true, featured: true },
     take: 8,
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
     include: {
       category: { select: { name: true, slug: true } },
       images: { where: { isPrimary: true }, take: 1 },
     },
   });
 
-  // Productos en oferta (orden en admin/portada cuando exista offers_order)
+  // Productos en oferta (orden en admin/portada)
   const offers = await prisma.product.findMany({
     where: {
       active: true,
       compareAtPrice: { not: null },
     },
     take: 8,
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
     include: {
       category: { select: { name: true, slug: true } },
       images: { where: { isPrimary: true }, take: 1 },
