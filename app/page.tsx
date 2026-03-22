@@ -1,33 +1,34 @@
 import {
+  getCategoriesForHome,
   getFeaturedProductsForHome,
   getHeroSlidesForHome,
   getOffersProductsForHome,
 } from "@/lib/home-data";
-import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { HomeHero } from "@/components/HomeHero";
 import { ProductCard } from "@/components/ProductCard";
-import { HeroSlider } from "@/components/HeroSlider";
 import Link from "next/link";
 import Image from "next/image";
 
-export default async function Home() {
-  const [heroSlides, featured, offers] = await Promise.all([
+const ALLOWED_CATEGORY_SLUGS = [
+  "iluminacion",
+  "escritorio",
+  "decoracion",
+  "diseno",
+  "accesorios",
+];
+
+async function HomePageContent() {
+  const [heroSlides, featured, offers, categories] = await Promise.all([
     getHeroSlidesForHome(),
     getFeaturedProductsForHome(),
     getOffersProductsForHome(),
+    getCategoriesForHome(ALLOWED_CATEGORY_SLUGS),
   ]);
-
-  // Categorías activas (solo las 5 del home)
-  const allowedCategorySlugs = ["iluminacion", "escritorio", "decoracion", "diseno", "accesorios"];
-  const allCategories = await prisma.category.findMany({
-    where: { active: true },
-    orderBy: { order: "asc" },
-    select: { id: true, name: true, slug: true },
-  });
-  const categories = allCategories.filter((c) => allowedCategorySlugs.includes(c.slug));
 
   const iconsByCategory: Record<string, string> = {
     iluminacion: "/iluminacion.png",
@@ -42,10 +43,8 @@ export default async function Home() {
       <Header categories={categories} />
 
       <main className="min-w-0 overflow-x-hidden">
-        {/* Hero */}
-        <HeroSlider slides={heroSlides} />
+        <HomeHero slides={heroSlides} />
 
-        {/* Productos destacados - justo después del hero */}
         {featured.length > 0 && (
           <section className="bg-white py-8 md:py-12">
             <div className="mx-auto max-w-7xl px-4">
@@ -64,7 +63,7 @@ export default async function Home() {
                     slug={product.slug}
                     price={Number(product.price)}
                     compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                    images={product.images}
+                    images={(product.images ?? []).map((img) => ({ url: String(img.url) }))}
                     category={product.category}
                   />
                 ))}
@@ -73,11 +72,9 @@ export default async function Home() {
           </section>
         )}
 
-        {/* Categorías - mobile: links, desktop: cards con iconos */}
         <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4">
             <h2 className="mb-6 text-xl font-bold text-[#1d1d1b] md:mb-8 md:text-2xl">Explorar por categoría</h2>
-            {/* Mobile: grid simétrico 3 columnas, fila inferior centrada */}
             <div className="grid grid-cols-3 gap-2 md:hidden">
               {categories.map((cat) => (
                 <Link
@@ -89,7 +86,6 @@ export default async function Home() {
                 </Link>
               ))}
             </div>
-            {/* Desktop: cards con iconos */}
             <div className="hidden md:grid md:grid-cols-5 md:gap-4">
               {categories.map((cat) => (
                 <Link
@@ -113,7 +109,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Beneficios - ordenado y centrado en mobile */}
         <section className="border-t border-black/8 bg-white py-6 md:py-8">
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
@@ -148,7 +143,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Ofertas */}
         {offers.length > 0 && (
           <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
             <div className="mx-auto max-w-7xl px-4">
@@ -167,7 +161,7 @@ export default async function Home() {
                     slug={product.slug}
                     price={Number(product.price)}
                     compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                    images={product.images}
+                    images={(product.images ?? []).map((img) => ({ url: String(img.url) }))}
                     category={product.category}
                   />
                 ))}
@@ -180,4 +174,30 @@ export default async function Home() {
       <Footer />
     </>
   );
+}
+
+export default async function Home() {
+  try {
+    return await HomePageContent();
+  } catch (e) {
+    console.error("[Home] error crítico, modo degradado:", e);
+    return (
+      <>
+        <Header categories={[]} />
+        <main className="min-w-0 px-4 py-12">
+          <div className="mx-auto max-w-lg rounded-lg border border-black/10 bg-white p-6 text-center shadow-sm">
+            <h1 className="text-lg font-semibold text-[#1d1d1b]">No pudimos cargar el inicio</h1>
+            <p className="mt-2 text-sm text-gray-600">Probá actualizar la página o entrá más tarde.</p>
+            <Link
+              href="/productos"
+              className="mt-6 inline-block rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white"
+            >
+              Ver productos
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 }
