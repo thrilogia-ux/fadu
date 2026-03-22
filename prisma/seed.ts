@@ -105,18 +105,32 @@ async function main() {
     console.log("Productos de prueba creados: 3");
   }
 
-  // Mensaje inicial franja superior (marquesina)
-  const bannerCount = await prisma.topBannerMessage.count();
-  if (bannerCount === 0) {
-    await prisma.topBannerMessage.create({
-      data: {
-        text: "Retirás tu compra en el Pickup Point en FADU",
-        order: 0,
-        active: true,
-      },
+  // Franja superior (marquesina): IDs fijos; upsert solo crea si no existen (no pisa textos editados en admin)
+  const bannerDefaults: { id: string; text: string; order: number }[] = [
+    {
+      id: "seed_topbanner_pickup",
+      text: "Retirás tu compra en el Pickup Point en FADU",
+      order: 0,
+    },
+    {
+      id: "seed_topbanner_fadu15",
+      text: "Usa el Cupón FADU15 para tener un 15% OFF en tu compra",
+      order: 1,
+    },
+    {
+      id: "seed_topbanner_vivi",
+      text: "Viví tu identidad FADU en la nueva tienda FADU.Store",
+      order: 2,
+    },
+  ];
+  for (const b of bannerDefaults) {
+    await prisma.topBannerMessage.upsert({
+      where: { id: b.id },
+      update: {},
+      create: { id: b.id, text: b.text, order: b.order, active: true },
     });
-    console.log("Mensaje franja superior por defecto creado");
   }
+  console.log("Franja superior: mensajes por defecto sincronizados (3)");
 }
 
 main()

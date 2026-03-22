@@ -19,18 +19,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Marquesina franja azul del header */
+/* Marquesina: el carril se mueve hacia la izquierda (el texto se lee pasando de derecha a izquierda) */
 @keyframes top-banner-marquee {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .top-banner-marquee-track {
-  animation: top-banner-marquee 50s linear infinite;
+  animation: top-banner-marquee 32s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
