@@ -93,7 +93,7 @@ export function Header({ categories }: { categories: Category[] }) {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0" onClick={closeMenus}>
             <Image
-              src="/fadustore.svg"
+              src="/fadustore2.svg"
               alt="Fadu.store"
               width={120}
               height={24}

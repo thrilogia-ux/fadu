@@ -44,7 +44,7 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="inline-block mb-6">
               <Image
-                src="/fadustoregris.svg"
+                src="/fadustore2gris.svg"
                 alt="Fadu.store"
                 width={140}
                 height={26}
