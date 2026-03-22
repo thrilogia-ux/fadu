@@ -89,21 +89,21 @@ export function Header({ categories }: { categories: Category[] }) {
       {/* Header principal */}
       <div className="mx-auto max-w-7xl px-4">
         {/* Fila: Logo, Búsqueda (desktop), Acciones */}
-        <div className="flex items-center gap-3 py-3 md:gap-6">
+        <div className="flex items-center gap-3 py-3 md:gap-5 md:py-4">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0" onClick={closeMenus}>
             <Image
               src="/fadustore2.svg"
               alt="Fadu.store"
-              width={120}
-              height={24}
+              width={240}
+              height={48}
               priority
-              className="h-7 w-auto md:h-8 md:w-[140px]"
+              className="h-14 w-auto md:h-16 md:max-w-[300px]"
             />
           </Link>
 
-          {/* Búsqueda - Desktop */}
-          <form onSubmit={handleSearch} className="hidden flex-1 max-w-xl md:flex">
+          {/* Búsqueda - Desktop (un poco más corta para compensar logo grande) */}
+          <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 max-w-md md:flex lg:max-w-lg">
             <input
               type="search"
               value={searchQuery}

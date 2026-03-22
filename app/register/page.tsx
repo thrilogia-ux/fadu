@@ -58,7 +58,7 @@ export default function RegisterPage() {
       <header className="border-b border-black/5 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center px-4">
           <Link href="/" className="flex items-center">
-            <Image src="/fadustore2.svg" alt="Fadu.store" width={120} height={24} className="h-6 w-auto" />
+            <Image src="/fadustore2.svg" alt="Fadu.store" width={240} height={48} className="h-12 w-auto md:h-14" />
           </Link>
         </div>
       </header>

@@ -46,9 +46,9 @@ export function Footer() {
               <Image
                 src="/fadustore2gris.svg"
                 alt="Fadu.store"
-                width={140}
-                height={26}
-                className="h-7 w-auto opacity-90"
+                width={280}
+                height={52}
+                className="h-14 w-auto opacity-90 md:h-16 md:max-w-[320px]"
               />
             </Link>
             
