@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
+import { TopBannerMarquee } from "@/components/TopBannerMarquee";
 
 interface Category {
   id: string;
@@ -82,8 +83,8 @@ export function Header({ categories }: { categories: Category[] }) {
   return (
     <header className="sticky top-0 z-50 border-b border-black/8 bg-white shadow-sm">
       {/* Barra superior */}
-      <div className="bg-[#0f3bff] px-4 py-2 text-center text-sm font-medium text-white">
-        Retiras tu compra en el Pickup Point en FADU
+      <div className="bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white">
+        <TopBannerMarquee />
       </div>
 
       {/* Header principal */}

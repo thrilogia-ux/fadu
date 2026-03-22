@@ -327,3 +327,14 @@ model HeroSlide {
 
   @@map("hero_slides")
 }
+
+// --- Franja azul superior del header (marquesina) ---
+model TopBannerMessage {
+  id        String   @id @default(cuid())
+  text      String   @db.VarChar(500)
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("top_banner_messages")
+}

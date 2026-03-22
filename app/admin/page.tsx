@@ -69,6 +69,12 @@ export default function AdminDashboard() {
       icon: "🖼️",
     },
     {
+      title: "Franja superior",
+      description: "Mensajes de la barra azul (marquesina del header)",
+      href: "/admin/franja-superior",
+      icon: "📣",
+    },
+    {
       title: "Preguntas",
       description: "Responder preguntas de clientes",
       href: "/admin/preguntas",

@@ -18,3 +18,24 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Marquesina franja azul del header */
+@keyframes top-banner-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.top-banner-marquee-track {
+  animation: top-banner-marquee 50s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-banner-marquee-track {
+    animation: none;
+    transform: none;
+  }
+}

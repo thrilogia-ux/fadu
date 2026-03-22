@@ -104,6 +104,19 @@ async function main() {
     });
     console.log("Productos de prueba creados: 3");
   }
+
+  // Mensaje inicial franja superior (marquesina)
+  const bannerCount = await prisma.topBannerMessage.count();
+  if (bannerCount === 0) {
+    await prisma.topBannerMessage.create({
+      data: {
+        text: "Retirás tu compra en el Pickup Point en FADU",
+        order: 0,
+        active: true,
+      },
+    });
+    console.log("Mensaje franja superior por defecto creado");
+  }
 }
 
 main()

@@ -34,3 +34,12 @@ CREATE TABLE IF NOT EXISTS "newsletter_subscribers" (
   "email" TEXT NOT NULL UNIQUE,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 5) Mensajes marquesina franja superior del header
+CREATE TABLE IF NOT EXISTS "top_banner_messages" (
+  "id" TEXT PRIMARY KEY,
+  "text" VARCHAR(500) NOT NULL,
+  "order" INTEGER NOT NULL DEFAULT 0,
+  "active" BOOLEAN NOT NULL DEFAULT true,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
