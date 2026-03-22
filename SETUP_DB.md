@@ -25,3 +25,12 @@ Eso crea:
 - 3 productos de ejemplo
 
 Luego refrescá http://localhost:3000 y probá iniciar sesión.
+
+## Vercel: "Application error" / Digest al abrir el sitio
+
+Suele pasar si el código nuevo usa columnas o tablas que **todavía no existen** en Supabase.
+
+1. Abrí **Supabase → SQL Editor** y ejecutá todo el script [`prisma/add-columns-production.sql`](prisma/add-columns-production.sql) (incluye `featured_order`, `offers_order`, `image_position`, `top_banner_messages`, etc.).
+2. Volvé a cargar **fadustore.vercel.app**.
+
+El home ahora intenta **consultas de respaldo** si faltan columnas de orden o `image_position`, pero conviene tener la DB al día para portada, hero y marquesina.

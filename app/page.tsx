@@ -1,3 +1,8 @@
+import {
+  getFeaturedProductsForHome,
+  getHeroSlidesForHome,
+  getOffersProductsForHome,
+} from "@/lib/home-data";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -9,20 +14,11 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default async function Home() {
-  // Hero slides activos
-  const heroSlides = await prisma.heroSlide.findMany({
-    where: { active: true },
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      title: true,
-      subtitle: true,
-      buttonText: true,
-      buttonLink: true,
-      imageUrl: true,
-      imagePosition: true,
-    },
-  });
+  const [heroSlides, featured, offers] = await Promise.all([
+    getHeroSlidesForHome(),
+    getFeaturedProductsForHome(),
+    getOffersProductsForHome(),
+  ]);
 
   // Categorías activas (solo las 5 del home)
   const allowedCategorySlugs = ["iluminacion", "escritorio", "decoracion", "diseno", "accesorios"];
@@ -32,31 +28,6 @@ export default async function Home() {
     select: { id: true, name: true, slug: true },
   });
   const categories = allCategories.filter((c) => allowedCategorySlugs.includes(c.slug));
-
-  // Productos destacados (orden en admin/portada)
-  const featured = await prisma.product.findMany({
-    where: { active: true, featured: true },
-    take: 8,
-    orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
-    include: {
-      category: { select: { name: true, slug: true } },
-      images: { where: { isPrimary: true }, take: 1 },
-    },
-  });
-
-  // Productos en oferta (orden en admin/portada)
-  const offers = await prisma.product.findMany({
-    where: {
-      active: true,
-      compareAtPrice: { not: null },
-    },
-    take: 8,
-    orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
-    include: {
-      category: { select: { name: true, slug: true } },
-      images: { where: { isPrimary: true }, take: 1 },
-    },
-  });
 
   const iconsByCategory: Record<string, string> = {
     iluminacion: "/iluminacion.png",
