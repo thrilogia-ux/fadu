@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/lib/cart-context";
+import { ProductCard } from "@/components/ProductCard";
 
 interface Product {
   id: string;
@@ -73,6 +74,40 @@ function getVideoThumbnail(url: string): string {
   }
   // Para Vimeo y otros, usamos un placeholder
   return "";
+}
+
+type RelatedCardProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  compareAtPrice: number | null;
+  images: { url: string }[];
+  category: { name: string; slug: string };
+};
+
+function normalizeRelatedProduct(p: unknown): RelatedCardProduct | null {
+  if (!p || typeof p !== "object") return null;
+  const o = p as Record<string, unknown>;
+  const cat = o.category as { name?: string; slug?: string } | undefined;
+  const rawImages = Array.isArray(o.images) ? o.images : [];
+  const images = rawImages
+    .map((img) => ({ url: String((img as { url?: string }).url ?? "") }))
+    .filter((i) => i.url.length > 0);
+  if (typeof o.id !== "string" || typeof o.name !== "string" || typeof o.slug !== "string") return null;
+  return {
+    id: o.id,
+    name: o.name,
+    slug: o.slug,
+    price: Number(o.price),
+    compareAtPrice:
+      o.compareAtPrice != null && o.compareAtPrice !== "" ? Number(o.compareAtPrice) : null,
+    images,
+    category:
+      cat?.name && cat?.slug
+        ? { name: cat.name, slug: cat.slug }
+        : { name: "Productos", slug: "productos" },
+  };
 }
 
 export default function ProductPage() {
@@ -145,6 +180,7 @@ export default function ProductPage() {
   const [newReview, setNewReview] = useState("");
   const [loadingReview, setLoadingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
+  const [relatedProducts, setRelatedProducts] = useState<RelatedCardProduct[]>([]);
 
   useEffect(() => {
     if (!slug) {
@@ -208,6 +244,59 @@ export default function ProductPage() {
       })
       .catch(() => {});
   }, [slug]);
+
+  /* Misma categoría → ofertas → catálogo; sin duplicar el producto actual */
+  useEffect(() => {
+    if (!product?.slug || !product?.category?.slug) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    let cancelled = false;
+    const target = 8;
+    const ex = encodeURIComponent(product.slug);
+    const cat = encodeURIComponent(product.category.slug);
+
+    async function mergeFromUrl(
+      url: string,
+      picked: Map<string, RelatedCardProduct>
+    ): Promise<void> {
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        for (const raw of data) {
+          if (picked.size >= target) return;
+          const item = normalizeRelatedProduct(raw);
+          if (!item || item.slug === product!.slug) continue;
+          if (!picked.has(item.slug)) picked.set(item.slug, item);
+        }
+      } catch {
+        /* ignorar: la ficha principal sigue */
+      }
+    }
+
+    (async () => {
+      const picked = new Map<string, RelatedCardProduct>();
+      await mergeFromUrl(
+        `/api/products?category=${cat}&limit=14&excludeSlug=${ex}`,
+        picked
+      );
+      if (picked.size < target) {
+        await mergeFromUrl(`/api/products?onSale=true&limit=14&excludeSlug=${ex}`, picked);
+      }
+      if (picked.size < target) {
+        await mergeFromUrl(`/api/products?limit=14&excludeSlug=${ex}`, picked);
+      }
+      if (!cancelled) {
+        setRelatedProducts(Array.from(picked.values()).slice(0, target));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.slug, product?.category?.slug]);
 
   async function toggleFavorite() {
     if (!session) {
@@ -849,6 +938,42 @@ export default function ProductPage() {
                 </div>
               )}
             </div>
+
+            {relatedProducts.length > 0 && (
+              <section
+                className="mt-4 rounded-lg border border-black/8 bg-white p-6 shadow-sm lg:col-span-3"
+                aria-label="Productos relacionados"
+              >
+                <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-[#1d1d1b]">También te puede interesar</h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      De la misma categoría, ofertas y novedades.
+                    </p>
+                  </div>
+                  <Link
+                    href={`/categoria/${product.category.slug}`}
+                    className="text-sm font-medium text-[#0f3bff] hover:underline"
+                  >
+                    Ver categoría {product.category.name}
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+                  {relatedProducts.map((rp) => (
+                    <ProductCard
+                      key={rp.id}
+                      id={rp.id}
+                      name={rp.name}
+                      slug={rp.slug}
+                      price={rp.price}
+                      compareAtPrice={rp.compareAtPrice}
+                      images={rp.images}
+                      category={rp.category}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </main>

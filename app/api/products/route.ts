@@ -8,9 +8,11 @@ export async function GET(request: Request) {
   const categorySlug = searchParams.get("category");
   const q = searchParams.get("q");
   const limit = parseInt(searchParams.get("limit") ?? "20", 10);
+  const excludeSlug = searchParams.get("excludeSlug")?.trim() || undefined;
 
   const where: {
     active: boolean;
+    slug?: { not: string };
     featured?: boolean;
     categoryId?: string;
     compareAtPrice?: { not: null };
@@ -19,6 +21,10 @@ export async function GET(request: Request) {
       description?: { contains: string; mode: "insensitive" };
     }[];
   } = { active: true };
+
+  if (excludeSlug) {
+    where.slug = { not: excludeSlug };
+  }
 
   if (q && q.trim()) {
     const term = q.trim();
