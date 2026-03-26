@@ -7,6 +7,7 @@ import {
 import { mergeHomeCategories } from "@/lib/home-fallback";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";

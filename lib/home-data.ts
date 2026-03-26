@@ -9,11 +9,14 @@ const productHomeInclude = {
 
 type ProductHomeRow = Awaited<ReturnType<typeof getFeaturedProductsForHomeRaw>>[number];
 
+/**
+ * Solo createdAt: no depender de columnas featured_order (migraciones viejas / DB distinta).
+ */
 async function getFeaturedProductsForHomeRaw() {
   return prisma.product.findMany({
     where: { active: true, featured: true },
     take: 8,
-    orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
+    orderBy: { createdAt: "desc" },
     include: productHomeInclude,
   });
 }
@@ -123,19 +126,11 @@ export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> 
     rows = await getRecentActiveProducts(8);
   }
   if (rows.length === 0) {
-    const fallback = await runWithDbRetries("home.products.featuredFallback", () =>
-      prisma.product.findMany({
-        where: { active: true, featured: true },
-        take: 8,
-        orderBy: { createdAt: "desc" },
-        include: productHomeInclude,
-      })
-    );
-    rows = fallback ?? [];
-    if (rows.length === 0) {
-      rows = await getRecentActiveProducts(8);
-    }
+    const { loadFeaturedFromApi } = await import("@/lib/home-api-fallback");
+    const viaApi = await loadFeaturedFromApi();
+    if (viaApi.length > 0) return viaApi;
   }
+
   return rows.map(toHomeProductPlain);
 }
 
@@ -145,21 +140,15 @@ export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
       prisma.product.findMany({
         where: { active: true, compareAtPrice: { not: null } },
         take: 8,
-        orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
+        orderBy: { createdAt: "desc" },
         include: productHomeInclude,
       })
     )) ?? [];
 
   if (rows.length === 0) {
-    rows =
-      (await runWithDbRetries("home.products.offersFallback", () =>
-        prisma.product.findMany({
-          where: { active: true, compareAtPrice: { not: null } },
-          take: 8,
-          orderBy: { createdAt: "desc" },
-          include: productHomeInclude,
-        })
-      )) ?? [];
+    const { loadOffersFromApi } = await import("@/lib/home-api-fallback");
+    const viaApi = await loadOffersFromApi();
+    if (viaApi.length > 0) return viaApi;
   }
 
   return rows.map(toHomeProductPlain);
@@ -168,14 +157,18 @@ export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
 export type HomeCategory = { id: string; name: string; slug: string };
 
 export async function getCategoriesForHome(allowedSlugs: string[]): Promise<HomeCategory[]> {
-  const all = await runWithDbRetries("home.categories", () =>
+  let all = await runWithDbRetries("home.categories", () =>
     prisma.category.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
       select: { id: true, name: true, slug: true },
     })
   );
-  if (!all) return [];
-  const curated = all.filter((c) => allowedSlugs.includes(c.slug));
-  return curated.length > 0 ? curated : all;
+  let list = all ?? [];
+  if (list.length === 0) {
+    const { loadCategoriesFromApi } = await import("@/lib/home-api-fallback");
+    list = await loadCategoriesFromApi();
+  }
+  const curated = list.filter((c) => allowedSlugs.includes(c.slug));
+  return curated.length > 0 ? curated : list;
 }

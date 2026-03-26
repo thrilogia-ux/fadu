@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     active: boolean;
     featured?: boolean;
     categoryId?: string;
+    compareAtPrice?: { not: null };
     OR?: {
       name?: { contains: string; mode: "insensitive" };
       description?: { contains: string; mode: "insensitive" };
@@ -27,6 +28,9 @@ export async function GET(request: Request) {
     ];
   } else {
     if (featured === "true") where.featured = true;
+    if (searchParams.get("onSale") === "true") {
+      where.compareAtPrice = { not: null };
+    }
   }
 
   const products = await runWithDbRetries("api.products.list", async () => {
