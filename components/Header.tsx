@@ -21,9 +21,12 @@ const tapIcon =
 
 export function Header({ categories }: { categories: Category[] }) {
   const safeCategories = Array.isArray(categories) ? categories : [];
-  const menuCategories = safeCategories
+  const curated = safeCategories
     .filter((c) => ALLOWED_CATEGORY_SLUGS.includes(c.slug))
     .sort((a, b) => ALLOWED_CATEGORY_SLUGS.indexOf(a.slug) - ALLOWED_CATEGORY_SLUGS.indexOf(b.slug));
+  /* Sin coincidencias con la lista fija (slugs distintos en producción): usar todas las categorías recibidas */
+  const menuCategories =
+    curated.length > 0 ? curated : [...safeCategories].sort((a, b) => a.name.localeCompare(b.name, "es"));
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();

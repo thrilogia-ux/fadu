@@ -36,7 +36,9 @@ function toHomeProductPlain(p: ProductHomeRow): HomeProductPlain {
     price: Number(p.price),
     compareAtPrice: p.compareAtPrice != null ? Number(p.compareAtPrice) : null,
     images: (p.images ?? []).map((img) => ({ url: String(img.url) })),
-    category: { name: p.category.name, slug: p.category.slug },
+    category: p.category
+      ? { name: p.category.name, slug: p.category.slug }
+      : { name: "Productos", slug: "productos" },
   };
 }
 
@@ -104,19 +106,34 @@ export async function getHeroSlidesForHome(): Promise<HomeHeroSlide[]> {
   }
 }
 
+async function getRecentActiveProducts(take: number): Promise<ProductHomeRow[]> {
+  return prisma.product.findMany({
+    where: { active: true },
+    take,
+    orderBy: { createdAt: "desc" },
+    include: productHomeInclude,
+  });
+}
+
 export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> {
   try {
-    const rows = await getFeaturedProductsForHomeRaw();
+    let rows = await getFeaturedProductsForHomeRaw();
+    if (rows.length === 0) {
+      rows = await getRecentActiveProducts(8);
+    }
     return rows.map(toHomeProductPlain);
   } catch (e) {
     console.error("[home] featuredOrder falló, fallback createdAt:", e);
     try {
-      const rows = await prisma.product.findMany({
+      let rows = await prisma.product.findMany({
         where: { active: true, featured: true },
         take: 8,
         orderBy: { createdAt: "desc" },
         include: productHomeInclude,
       });
+      if (rows.length === 0) {
+        rows = await getRecentActiveProducts(8);
+      }
       return rows.map(toHomeProductPlain);
     } catch (e2) {
       console.error("[home] destacados no disponibles:", e2);
@@ -162,7 +179,9 @@ export async function getCategoriesForHome(
       orderBy: { order: "asc" },
       select: { id: true, name: true, slug: true },
     });
-    return all.filter((c) => allowedSlugs.includes(c.slug));
+    const curated = all.filter((c) => allowedSlugs.includes(c.slug));
+    /* Si los slugs de producción no coinciden con la lista fija, mostrar todas las activas */
+    return curated.length > 0 ? curated : all;
   } catch (e) {
     console.error("[home] categorías falló:", e);
     return [];
