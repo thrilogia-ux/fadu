@@ -26,7 +26,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     return NextResponse.json(questions);
   } catch (error) {
     console.error("Error fetching questions:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    /* Tabla product_questions u otra tabla ausente: la ficha igual debe cargar */
+    return NextResponse.json([]);
   }
 }
 

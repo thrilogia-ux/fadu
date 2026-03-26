@@ -80,10 +80,14 @@ export default function ProductPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const { addItem } = useCart();
-  
+
+  const slug =
+    typeof params.slug === "string" ? params.slug : Array.isArray(params.slug) ? params.slug[0] : undefined;
+
   const [product, setProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -143,34 +147,58 @@ export default function ProductPage() {
   const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      setNotFound(true);
+      return;
+    }
+
+    setNotFound(false);
+    setLoading(true);
+
     Promise.all([
-      fetch(`/api/products/${params.slug}`).then((r) => r.json()),
+      fetch(`/api/products/${encodeURIComponent(slug)}`).then((r) => r.json()),
       fetch("/api/categories").then((r) => r.json()),
-      fetch(`/api/products/${params.slug}/questions`).then((r) => r.json()),
+      fetch(`/api/products/${encodeURIComponent(slug)}/questions`).then((r) => r.json()),
     ])
       .then(([productData, categoriesData, questionsData]) => {
-        if (productData.error) {
-          router.push("/");
+        if (productData?.error) {
+          setNotFound(true);
+          setProduct(null);
+          setCategories(Array.isArray(categoriesData) ? categoriesData : []);
           return;
         }
-        setProduct(productData);
+        const normalized: Product = {
+          ...productData,
+          price: Number(productData.price),
+          compareAtPrice:
+            productData.compareAtPrice != null && productData.compareAtPrice !== ""
+              ? Number(productData.compareAtPrice)
+              : null,
+          videos: Array.isArray(productData.videos) ? productData.videos : [],
+          images: Array.isArray(productData.images) ? productData.images : [],
+        };
+        setProduct(normalized);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setQuestions(Array.isArray(questionsData) ? questionsData : []);
-        
-        // Verificar si está en favoritos
-        if (productData.id) {
-          fetch(`/api/favorites/check?productId=${productData.id}`)
+
+        if (normalized.id) {
+          fetch(`/api/favorites/check?productId=${normalized.id}`)
             .then((r) => r.json())
-            .then((data) => setIsFavorite(data.isFavorite));
+            .then((data) => setIsFavorite(Boolean(data.isFavorite)));
         }
       })
+      .catch(() => {
+        setNotFound(true);
+        setProduct(null);
+      })
       .finally(() => setLoading(false));
-  }, [params.slug, router]);
+  }, [slug]);
 
   // Cargar opiniones aparte (si falla, la página sigue funcionando)
   useEffect(() => {
-    if (!params.slug) return;
-    fetch(`/api/products/${params.slug}/reviews`)
+    if (!slug) return;
+    fetch(`/api/products/${encodeURIComponent(slug)}/reviews`)
       .then((r) => r.json())
       .then((data) => {
         if (data.reviews) {
@@ -179,7 +207,7 @@ export default function ProductPage() {
         }
       })
       .catch(() => {});
-  }, [params.slug]);
+  }, [slug]);
 
   async function toggleFavorite() {
     if (!session) {
@@ -226,7 +254,7 @@ export default function ProductPage() {
     setQuestionError("");
     
     try {
-      const res = await fetch(`/api/products/${params.slug}/questions`, {
+      const res = await fetch(`/api/products/${encodeURIComponent(slug!)}/questions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: newQuestion }),
@@ -263,7 +291,7 @@ export default function ProductPage() {
     setLoadingReview(true);
     setReviewError("");
     try {
-      const res = await fetch(`/api/products/${params.slug}/reviews`, {
+      const res = await fetch(`/api/products/${encodeURIComponent(slug!)}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating: newRating, comment: newReview }),
@@ -274,7 +302,9 @@ export default function ProductPage() {
       } else {
         setNewRating(0);
         setNewReview("");
-        const latest = await fetch(`/api/products/${params.slug}/reviews`).then((r) => r.json());
+        const latest = await fetch(`/api/products/${encodeURIComponent(slug!)}/reviews`).then((r) =>
+          r.json()
+        );
         if (latest.reviews) {
           setReviews(latest.reviews);
           setReviewSummary(latest.summary || initialReviewSummary);
@@ -306,7 +336,33 @@ export default function ProductPage() {
     );
   }
 
-  if (!product) return null;
+  if (notFound || !product) {
+    return (
+      <>
+        <Header categories={categories} />
+        <main className="min-h-screen overflow-x-hidden bg-[#ededed] px-4 py-12">
+          <div className="mx-auto max-w-lg rounded-lg border border-black/10 bg-white p-6 text-center shadow-sm">
+            <h1 className="text-lg font-semibold text-[#1d1d1b]">Producto no encontrado</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Puede no existir o hubo un error al cargarlo. Volvé al inicio o al listado.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link href="/" className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white">
+                Inicio
+              </Link>
+              <Link
+                href="/productos"
+                className="rounded-lg border border-black/15 px-4 py-2 text-sm font-medium text-[#1d1d1b]"
+              >
+                Ver productos
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   const compareAt = product.compareAtPrice;
   const hasDiscount = compareAt != null && compareAt > product.price;

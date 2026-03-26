@@ -49,15 +49,8 @@ export async function GET(
     });
   } catch (error: unknown) {
     console.error("Error fetching reviews:", error);
-    const msg = error instanceof Error ? error.message : "";
-    if (
-      msg.includes("product_reviews") ||
-      msg.includes("does not exist") ||
-      msg.includes("relation")
-    ) {
-      return emptyResponse();
-    }
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    /* Cualquier error de esquema / BD: mostrar ficha sin bloque de opiniones */
+    return emptyResponse();
   }
 }
 

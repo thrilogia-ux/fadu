@@ -35,6 +35,17 @@ CREATE TABLE IF NOT EXISTS "newsletter_subscribers" (
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 5b) Videos embebidos en ficha de producto (si falta, /api/products/[slug] devolvía 500)
+CREATE TABLE IF NOT EXISTS "product_videos" (
+  "id" TEXT NOT NULL,
+  "product_id" TEXT NOT NULL,
+  "url" TEXT,
+  "file_path" TEXT,
+  "type" TEXT NOT NULL DEFAULT 'url',
+  CONSTRAINT "product_videos_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "product_videos_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 -- 5) Mensajes marquesina franja superior del header
 CREATE TABLE IF NOT EXISTS "top_banner_messages" (
   "id" TEXT PRIMARY KEY,
