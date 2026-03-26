@@ -61,9 +61,9 @@ async function HomePageContent() {
                     id={product.id}
                     name={product.name}
                     slug={product.slug}
-                    price={Number(product.price)}
-                    compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                    images={(product.images ?? []).map((img) => ({ url: String(img.url) }))}
+                    price={product.price}
+                    compareAtPrice={product.compareAtPrice}
+                    images={product.images}
                     category={product.category}
                   />
                 ))}
@@ -159,9 +159,9 @@ async function HomePageContent() {
                     id={product.id}
                     name={product.name}
                     slug={product.slug}
-                    price={Number(product.price)}
-                    compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                    images={(product.images ?? []).map((img) => ({ url: String(img.url) }))}
+                    price={product.price}
+                    compareAtPrice={product.compareAtPrice}
+                    images={product.images}
                     category={product.category}
                   />
                 ))}
