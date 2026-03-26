@@ -12,9 +12,26 @@ export const maxDuration = 60;
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HomeHero } from "@/components/HomeHero";
-import { ProductCard } from "@/components/ProductCard";
+import {
+  HomeProductShelfClient,
+  HomeShelfEmptyDestacados,
+  HomeShelfEmptyOfertas,
+} from "@/components/HomeProductShelfClient";
 import Link from "next/link";
 import Image from "next/image";
+
+/** Misma referencia en cada render para no re-disparar el efecto del cliente. */
+const HYDRATE_FEATURED_URLS = [
+  "/api/products?limit=8&featured=true",
+  "/api/products?limit=8&onSale=true",
+  "/api/products?limit=8",
+];
+
+const HYDRATE_OFFERS_URLS = [
+  "/api/products?limit=8&onSale=true",
+  "/api/products?limit=8&featured=true",
+  "/api/products?limit=8",
+];
 
 const ALLOWED_CATEGORY_SLUGS = [
   "iluminacion",
@@ -57,31 +74,11 @@ async function HomePageContent() {
                 Ver todos
               </Link>
             </div>
-            {featured.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-                {featured.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    slug={product.slug}
-                    price={product.price}
-                    compareAtPrice={product.compareAtPrice}
-                    images={product.images}
-                    category={product.category}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-black/10 bg-gray-50 px-4 py-8 text-center">
-                <p className="text-sm text-gray-600">
-                  No pudimos cargar los destacados ahora.{" "}
-                  <Link href="/productos" className="font-medium text-[#0f3bff] hover:underline">
-                    Ver todos los productos
-                  </Link>
-                </p>
-              </div>
-            )}
+            <HomeProductShelfClient
+              initial={featured}
+              hydrateUrls={HYDRATE_FEATURED_URLS}
+              emptyFallback={<HomeShelfEmptyDestacados />}
+            />
           </div>
         </section>
 
@@ -164,31 +161,11 @@ async function HomePageContent() {
                 Ver todas
               </Link>
             </div>
-            {offers.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-                {offers.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    slug={product.slug}
-                    price={product.price}
-                    compareAtPrice={product.compareAtPrice}
-                    images={product.images}
-                    category={product.category}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-black/10 bg-white px-4 py-8 text-center shadow-sm">
-                <p className="text-sm text-gray-600">
-                  Ofertas no disponibles en este momento.{" "}
-                  <Link href="/ofertas" className="font-medium text-[#0f3bff] hover:underline">
-                    Ir a ofertas
-                  </Link>
-                </p>
-              </div>
-            )}
+            <HomeProductShelfClient
+              initial={offers}
+              hydrateUrls={HYDRATE_OFFERS_URLS}
+              emptyFallback={<HomeShelfEmptyOfertas />}
+            />
           </div>
         </section>
       </main>

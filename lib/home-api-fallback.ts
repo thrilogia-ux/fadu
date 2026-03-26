@@ -1,29 +1,22 @@
 import type { HomeCategory, HomeProductPlain } from "@/lib/home-data";
 import { getInternalApiOrigin } from "@/lib/internal-api-origin";
+import { normalizeApiProductList } from "@/lib/normalize-api-product";
 
 const FETCH_MS = 15_000;
 
-function toPlainFromApiJson(p: unknown): HomeProductPlain | null {
-  if (!p || typeof p !== "object") return null;
-  const o = p as Record<string, unknown>;
-  const cat = o.category as { name?: string; slug?: string } | undefined;
-  const rawImages = Array.isArray(o.images) ? o.images : [];
-  const images = rawImages
-    .map((img) => ({ url: String((img as { url?: string }).url ?? "") }))
-    .filter((i) => i.url.length > 0);
-  return {
-    id: String(o.id),
-    name: String(o.name),
-    slug: String(o.slug),
-    price: Number(o.price),
-    compareAtPrice:
-      o.compareAtPrice != null && o.compareAtPrice !== "" ? Number(o.compareAtPrice) : null,
-    images,
-    category:
-      cat?.name && cat?.slug
-        ? { name: cat.name, slug: cat.slug }
-        : { name: "Productos", slug: "productos" },
-  };
+async function apiOriginCandidates(): Promise<string[]> {
+  let requestOrigin: string | null = null;
+  try {
+    const { getRequestOrigin } = await import("@/lib/request-origin");
+    requestOrigin = await getRequestOrigin();
+  } catch {
+    /* headers() no disponible en este contexto */
+  }
+  const internal = getInternalApiOrigin();
+  const set = new Set<string>();
+  if (requestOrigin) set.add(requestOrigin.replace(/\/$/, ""));
+  if (internal) set.add(internal.replace(/\/$/, ""));
+  return Array.from(set);
 }
 
 async function safeJsonFetch(url: string): Promise<unknown> {
@@ -36,47 +29,49 @@ async function safeJsonFetch(url: string): Promise<unknown> {
   return res.json();
 }
 
-/** Si Prisma en RSC falla, otra invocación HTTP a veces obtiene datos igual. */
-export async function loadFeaturedFromApi(): Promise<HomeProductPlain[]> {
-  try {
-    const base = getInternalApiOrigin();
-    const data = await safeJsonFetch(`${base}/api/products?limit=8&featured=true`);
-    if (!Array.isArray(data)) return [];
-    return data.map(toPlainFromApiJson).filter((x): x is HomeProductPlain => x != null);
-  } catch (e) {
-    console.error("[home-api-fallback] featured:", e);
-    return [];
+async function fetchProductsWithBases(pathAndQuery: string): Promise<HomeProductPlain[]> {
+  for (const base of await apiOriginCandidates()) {
+    try {
+      const data = await safeJsonFetch(`${base}${pathAndQuery}`);
+      const list = normalizeApiProductList(data, 8);
+      if (list.length > 0) return list;
+    } catch (e) {
+      console.error("[home-api-fallback]", pathAndQuery, base, e);
+    }
   }
+  return [];
+}
+
+async function fetchCategoriesWithBases(): Promise<HomeCategory[]> {
+  for (const base of await apiOriginCandidates()) {
+    try {
+      const data = await safeJsonFetch(`${base}/api/categories`);
+      if (!Array.isArray(data)) continue;
+      const list = data
+        .map((c: unknown) => {
+          if (!c || typeof c !== "object") return null;
+          const o = c as Record<string, unknown>;
+          if (typeof o.id !== "string" || typeof o.name !== "string" || typeof o.slug !== "string")
+            return null;
+          return { id: o.id, name: o.name, slug: o.slug };
+        })
+        .filter((x): x is HomeCategory => x != null);
+      if (list.length > 0) return list;
+    } catch (e) {
+      console.error("[home-api-fallback] categories", base, e);
+    }
+  }
+  return [];
+}
+
+export async function loadFeaturedFromApi(): Promise<HomeProductPlain[]> {
+  return fetchProductsWithBases("/api/products?limit=8&featured=true");
 }
 
 export async function loadOffersFromApi(): Promise<HomeProductPlain[]> {
-  try {
-    const base = getInternalApiOrigin();
-    const data = await safeJsonFetch(`${base}/api/products?limit=8&onSale=true`);
-    if (!Array.isArray(data)) return [];
-    return data.map(toPlainFromApiJson).filter((x): x is HomeProductPlain => x != null);
-  } catch (e) {
-    console.error("[home-api-fallback] offers:", e);
-    return [];
-  }
+  return fetchProductsWithBases("/api/products?limit=8&onSale=true");
 }
 
 export async function loadCategoriesFromApi(): Promise<HomeCategory[]> {
-  try {
-    const base = getInternalApiOrigin();
-    const data = await safeJsonFetch(`${base}/api/categories`);
-    if (!Array.isArray(data)) return [];
-    return data
-      .map((c: unknown) => {
-        if (!c || typeof c !== "object") return null;
-        const o = c as Record<string, unknown>;
-        if (typeof o.id !== "string" || typeof o.name !== "string" || typeof o.slug !== "string")
-          return null;
-        return { id: o.id, name: o.name, slug: o.slug };
-      })
-      .filter((x): x is HomeCategory => x != null);
-  } catch (e) {
-    console.error("[home-api-fallback] categories:", e);
-    return [];
-  }
+  return fetchCategoriesWithBases();
 }
