@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { runWithDbRetries } from "@/lib/db-retry";
+import { mergeHomeCategories } from "@/lib/home-fallback";
 
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
@@ -6,20 +8,28 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 
 export default async function ProductosPage() {
-  const categories = await prisma.category.findMany({
-    where: { active: true },
-    orderBy: { order: "asc" },
-    select: { id: true, name: true, slug: true },
-  });
+  const categoriesRaw =
+    (await runWithDbRetries("productos.categories", () =>
+      prisma.category.findMany({
+        where: { active: true },
+        orderBy: { order: "asc" },
+        select: { id: true, name: true, slug: true },
+      })
+    )) ?? [];
 
-  const products = await prisma.product.findMany({
-    where: { active: true },
-    orderBy: { createdAt: "desc" },
-    include: {
-      category: { select: { name: true, slug: true } },
-      images: { where: { isPrimary: true }, take: 1 },
-    },
-  });
+  const products =
+    (await runWithDbRetries("productos.products", () =>
+      prisma.product.findMany({
+        where: { active: true },
+        orderBy: { createdAt: "desc" },
+        include: {
+          category: { select: { name: true, slug: true } },
+          images: { where: { isPrimary: true }, take: 1 },
+        },
+      })
+    )) ?? [];
+
+  const categories = mergeHomeCategories(categoriesRaw);
 
   return (
     <>
@@ -38,7 +48,10 @@ export default async function ProductosPage() {
 
           {products.length === 0 ? (
             <div className="rounded-lg bg-white p-12 text-center shadow-sm">
-              <p className="text-gray-600">No hay productos disponibles</p>
+              <p className="text-gray-600">
+                No pudimos cargar el catálogo ahora. Probá actualizar la página; si sigue vacío, el
+                servidor no está pudiendo conectar con la base de datos.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

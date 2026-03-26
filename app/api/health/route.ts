@@ -19,6 +19,12 @@ export async function GET() {
     message: "Fadu.store API OK",
     database,
     databaseUrlConfigured: hasUrl,
+    /** Si `database` !== ok: revisá Vercel DATABASE_URL (pooler Supabase 6543, pgbouncer=true) y que el proyecto Supabase no esté pausado. */
+    ...(database !== "ok"
+      ? {
+          check: "GET /api/products con lista vacía y home sin destacados suele ser esta conexión.",
+        }
+      : {}),
   };
 
   return NextResponse.json(body, { status: database === "ok" ? 200 : 503 });
