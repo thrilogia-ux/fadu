@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { HomeHeroSlide } from "@/components/HomeHero";
+import { runWithDbRetries } from "@/lib/db-retry";
 
 const productHomeInclude = {
   category: { select: { name: true, slug: true } as const },
@@ -68,8 +69,8 @@ function mapHeroRows(
  * Slides para HomeHero (cliente): solo objetos planos. Nunca lanza.
  */
 export async function getHeroSlidesForHome(): Promise<HomeHeroSlide[]> {
-  try {
-    const rows = await prisma.heroSlide.findMany({
+  const rows = await runWithDbRetries("home.heroSlide", () =>
+    prisma.heroSlide.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
       select: {
@@ -81,109 +82,100 @@ export async function getHeroSlidesForHome(): Promise<HomeHeroSlide[]> {
         imageUrl: true,
         imagePosition: true,
       },
-    });
-    return mapHeroRows(rows);
-  } catch (e) {
-    console.error("[home] heroSlide con imagePosition falló, fallback:", e);
-    try {
-      const rows = await prisma.heroSlide.findMany({
-        where: { active: true },
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          title: true,
-          subtitle: true,
-          buttonText: true,
-          buttonLink: true,
-          imageUrl: true,
-        },
-      });
-      return mapHeroRows(rows);
-    } catch (e2) {
-      console.error("[home] heroSlide fallback falló:", e2);
-      return [];
-    }
-  }
+    })
+  );
+  if (rows && rows.length > 0) return mapHeroRows(rows);
+
+  const rowsNoPos = await runWithDbRetries("home.heroSlide.noImagePosition", () =>
+    prisma.heroSlide.findMany({
+      where: { active: true },
+      orderBy: { order: "asc" },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        buttonText: true,
+        buttonLink: true,
+        imageUrl: true,
+      },
+    })
+  );
+  if (rowsNoPos && rowsNoPos.length > 0) return mapHeroRows(rowsNoPos);
+  return [];
 }
 
 async function getRecentActiveProducts(take: number): Promise<ProductHomeRow[]> {
-  return prisma.product.findMany({
-    where: { active: true },
-    take,
-    orderBy: { createdAt: "desc" },
-    include: productHomeInclude,
-  });
+  const r = await runWithDbRetries("home.products.recent", () =>
+    prisma.product.findMany({
+      where: { active: true },
+      take,
+      orderBy: { createdAt: "desc" },
+      include: productHomeInclude,
+    })
+  );
+  return r ?? [];
 }
 
 export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> {
-  try {
-    let rows = await getFeaturedProductsForHomeRaw();
-    if (rows.length === 0) {
-      rows = await getRecentActiveProducts(8);
-    }
-    return rows.map(toHomeProductPlain);
-  } catch (e) {
-    console.error("[home] featuredOrder falló, fallback createdAt:", e);
-    try {
-      let rows = await prisma.product.findMany({
+  let rows =
+    (await runWithDbRetries("home.products.featured", () => getFeaturedProductsForHomeRaw())) ?? [];
+  if (rows.length === 0) {
+    rows = await getRecentActiveProducts(8);
+  }
+  if (rows.length === 0) {
+    const fallback = await runWithDbRetries("home.products.featuredFallback", () =>
+      prisma.product.findMany({
         where: { active: true, featured: true },
         take: 8,
         orderBy: { createdAt: "desc" },
         include: productHomeInclude,
-      });
-      if (rows.length === 0) {
-        rows = await getRecentActiveProducts(8);
-      }
-      return rows.map(toHomeProductPlain);
-    } catch (e2) {
-      console.error("[home] destacados no disponibles:", e2);
-      return [];
+      })
+    );
+    rows = fallback ?? [];
+    if (rows.length === 0) {
+      rows = await getRecentActiveProducts(8);
     }
   }
+  return rows.map(toHomeProductPlain);
 }
 
 export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
-  try {
-    const rows = await prisma.product.findMany({
-      where: { active: true, compareAtPrice: { not: null } },
-      take: 8,
-      orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
-      include: productHomeInclude,
-    });
-    return rows.map(toHomeProductPlain);
-  } catch (e) {
-    console.error("[home] offersOrder falló, fallback createdAt:", e);
-    try {
-      const rows = await prisma.product.findMany({
+  let rows =
+    (await runWithDbRetries("home.products.offers", () =>
+      prisma.product.findMany({
         where: { active: true, compareAtPrice: { not: null } },
         take: 8,
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
         include: productHomeInclude,
-      });
-      return rows.map(toHomeProductPlain);
-    } catch (e2) {
-      console.error("[home] ofertas no disponibles:", e2);
-      return [];
-    }
+      })
+    )) ?? [];
+
+  if (rows.length === 0) {
+    rows =
+      (await runWithDbRetries("home.products.offersFallback", () =>
+        prisma.product.findMany({
+          where: { active: true, compareAtPrice: { not: null } },
+          take: 8,
+          orderBy: { createdAt: "desc" },
+          include: productHomeInclude,
+        })
+      )) ?? [];
   }
+
+  return rows.map(toHomeProductPlain);
 }
 
 export type HomeCategory = { id: string; name: string; slug: string };
 
-export async function getCategoriesForHome(
-  allowedSlugs: string[]
-): Promise<HomeCategory[]> {
-  try {
-    const all = await prisma.category.findMany({
+export async function getCategoriesForHome(allowedSlugs: string[]): Promise<HomeCategory[]> {
+  const all = await runWithDbRetries("home.categories", () =>
+    prisma.category.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
       select: { id: true, name: true, slug: true },
-    });
-    const curated = all.filter((c) => allowedSlugs.includes(c.slug));
-    /* Si los slugs de producción no coinciden con la lista fija, mostrar todas las activas */
-    return curated.length > 0 ? curated : all;
-  } catch (e) {
-    console.error("[home] categorías falló:", e);
-    return [];
-  }
+    })
+  );
+  if (!all) return [];
+  const curated = all.filter((c) => allowedSlugs.includes(c.slug));
+  return curated.length > 0 ? curated : all;
 }

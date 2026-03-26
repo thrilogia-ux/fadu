@@ -4,6 +4,7 @@ import {
   getHeroSlidesForHome,
   getOffersProductsForHome,
 } from "@/lib/home-data";
+import { mergeHomeCategories } from "@/lib/home-fallback";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +24,14 @@ const ALLOWED_CATEGORY_SLUGS = [
 ];
 
 async function HomePageContent() {
-  const [heroSlides, featured, offers, categories] = await Promise.all([
+  const [heroSlides, featured, offers, categoriesRaw] = await Promise.all([
     getHeroSlidesForHome(),
     getFeaturedProductsForHome(),
     getOffersProductsForHome(),
     getCategoriesForHome(ALLOWED_CATEGORY_SLUGS),
   ]);
+
+  const categories = mergeHomeCategories(categoriesRaw);
 
   const iconsByCategory: Record<string, string> = {
     iluminacion: "/iluminacion.png",
@@ -45,15 +48,15 @@ async function HomePageContent() {
       <main className="min-w-0 overflow-x-hidden">
         <HomeHero slides={heroSlides} />
 
-        {featured.length > 0 && (
-          <section className="bg-white py-8 md:py-12">
-            <div className="mx-auto max-w-7xl px-4">
-              <div className="mb-6 flex items-center justify-between md:mb-8">
-                <h2 className="text-xl font-bold text-[#1d1d1b] md:text-2xl">Destacados</h2>
-                <Link href="/destacados" className="text-sm font-medium text-[#0f3bff] hover:underline">
-                  Ver todos
-                </Link>
-              </div>
+        <section className="bg-white py-8 md:py-12">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="mb-6 flex items-center justify-between md:mb-8">
+              <h2 className="text-xl font-bold text-[#1d1d1b] md:text-2xl">Destacados</h2>
+              <Link href="/destacados" className="text-sm font-medium text-[#0f3bff] hover:underline">
+                Ver todos
+              </Link>
+            </div>
+            {featured.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
                 {featured.map((product) => (
                   <ProductCard
@@ -68,9 +71,18 @@ async function HomePageContent() {
                   />
                 ))}
               </div>
-            </div>
-          </section>
-        )}
+            ) : (
+              <div className="rounded-lg border border-black/10 bg-gray-50 px-4 py-8 text-center">
+                <p className="text-sm text-gray-600">
+                  No pudimos cargar los destacados ahora.{" "}
+                  <Link href="/productos" className="font-medium text-[#0f3bff] hover:underline">
+                    Ver todos los productos
+                  </Link>
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4">
@@ -143,15 +155,15 @@ async function HomePageContent() {
           </div>
         </section>
 
-        {offers.length > 0 && (
-          <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
-            <div className="mx-auto max-w-7xl px-4">
-              <div className="mb-6 flex items-center justify-between md:mb-8">
-                <h2 className="text-xl font-bold text-[#1d1d1b] md:text-2xl">Ofertas imperdibles</h2>
-                <Link href="/ofertas" className="text-sm font-medium text-[#0f3bff] hover:underline">
-                  Ver todas
-                </Link>
-              </div>
+        <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="mb-6 flex items-center justify-between md:mb-8">
+              <h2 className="text-xl font-bold text-[#1d1d1b] md:text-2xl">Ofertas imperdibles</h2>
+              <Link href="/ofertas" className="text-sm font-medium text-[#0f3bff] hover:underline">
+                Ver todas
+              </Link>
+            </div>
+            {offers.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
                 {offers.map((product) => (
                   <ProductCard
@@ -166,9 +178,18 @@ async function HomePageContent() {
                   />
                 ))}
               </div>
-            </div>
-          </section>
-        )}
+            ) : (
+              <div className="rounded-lg border border-black/10 bg-white px-4 py-8 text-center shadow-sm">
+                <p className="text-sm text-gray-600">
+                  Ofertas no disponibles en este momento.{" "}
+                  <Link href="/ofertas" className="font-medium text-[#0f3bff] hover:underline">
+                    Ir a ofertas
+                  </Link>
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       <Footer />
@@ -183,7 +204,7 @@ export default async function Home() {
     console.error("[Home] error crítico, modo degradado:", e);
     return (
       <>
-        <Header categories={[]} />
+        <Header categories={mergeHomeCategories([])} />
         <main className="min-w-0 px-4 py-12">
           <div className="mx-auto max-w-lg rounded-lg border border-black/10 bg-white p-6 text-center shadow-sm">
             <h1 className="text-lg font-semibold text-[#1d1d1b]">No pudimos cargar el inicio</h1>
