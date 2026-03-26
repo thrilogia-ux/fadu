@@ -123,6 +123,8 @@ export default function ProductPage() {
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  /** 503 desde /api/products/[slug] (DB intermitente); distinto de 404 real */
+  const [serverError, setServerError] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -186,49 +188,105 @@ export default function ProductPage() {
     if (!slug) {
       setLoading(false);
       setNotFound(true);
+      setServerError(false);
       return;
     }
 
     setNotFound(false);
+    setServerError(false);
     setLoading(true);
 
-    Promise.all([
-      fetch(`/api/products/${encodeURIComponent(slug)}`).then((r) => r.json()),
-      fetch("/api/categories").then((r) => r.json()),
-      fetch(`/api/products/${encodeURIComponent(slug)}/questions`).then((r) => r.json()),
-    ])
-      .then(([productData, categoriesData, questionsData]) => {
-        if (productData?.error) {
-          setNotFound(true);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [productRes, categoriesRes] = await Promise.all([
+          fetch(`/api/products/${encodeURIComponent(slug)}`, { cache: "no-store" }),
+          fetch("/api/categories", { cache: "no-store" }),
+        ]);
+
+        let categoriesData: unknown = [];
+        try {
+          categoriesData = await categoriesRes.json();
+        } catch {
+          categoriesData = [];
+        }
+
+        let productData: Record<string, unknown> = {};
+        try {
+          productData = (await productRes.json()) as Record<string, unknown>;
+        } catch {
+          productData = {};
+        }
+
+        if (cancelled) return;
+
+        const cats = Array.isArray(categoriesData) ? categoriesData : [];
+        setCategories(cats);
+
+        const errMsg = typeof productData.error === "string" ? productData.error : "";
+        const isDbOutage =
+          productRes.status === 503 ||
+          errMsg === "Error al obtener producto";
+
+        if (isDbOutage) {
+          setServerError(true);
+          setNotFound(false);
           setProduct(null);
-          setCategories(Array.isArray(categoriesData) ? categoriesData : []);
           return;
         }
+
+        if (!productRes.ok || errMsg) {
+          setNotFound(true);
+          setProduct(null);
+          return;
+        }
+
         const normalized: Product = {
-          ...productData,
+          ...(productData as unknown as Product),
           price: Number(productData.price),
           compareAtPrice:
             productData.compareAtPrice != null && productData.compareAtPrice !== ""
-              ? Number(productData.compareAtPrice)
+              ? Number(productData.compareAtPrice as number | string)
               : null,
-          videos: Array.isArray(productData.videos) ? productData.videos : [],
-          images: Array.isArray(productData.images) ? productData.images : [],
+          videos: Array.isArray(productData.videos) ? (productData.videos as Product["videos"]) : [],
+          images: Array.isArray(productData.images) ? (productData.images as Product["images"]) : [],
         };
         setProduct(normalized);
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-        setQuestions(Array.isArray(questionsData) ? questionsData : []);
+
+        try {
+          const questionsRes = await fetch(`/api/products/${encodeURIComponent(slug)}/questions`, {
+            cache: "no-store",
+          });
+          const questionsData = await questionsRes.json();
+          if (!cancelled && Array.isArray(questionsData)) {
+            setQuestions(questionsData);
+          }
+        } catch {
+          if (!cancelled) setQuestions([]);
+        }
 
         if (normalized.id) {
           fetch(`/api/favorites/check?productId=${normalized.id}`)
             .then((r) => r.json())
-            .then((data) => setIsFavorite(Boolean(data.isFavorite)));
+            .then((data) => {
+              if (!cancelled) setIsFavorite(Boolean(data.isFavorite));
+            })
+            .catch(() => {});
         }
-      })
-      .catch(() => {
-        setNotFound(true);
-        setProduct(null);
-      })
-      .finally(() => setLoading(false));
+      } catch {
+        if (!cancelled) {
+          setNotFound(true);
+          setProduct(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   // Cargar opiniones aparte (si falla, la página sigue funcionando)
@@ -422,6 +480,39 @@ export default function ProductPage() {
       <div className="flex min-h-screen items-center justify-center">
         <p>Cargando...</p>
       </div>
+    );
+  }
+
+  if (serverError) {
+    return (
+      <>
+        <Header categories={categories} />
+        <main className="min-h-screen overflow-x-hidden bg-[#ededed] px-4 py-12">
+          <div className="mx-auto max-w-lg rounded-lg border border-black/10 bg-white p-6 text-center shadow-sm">
+            <h1 className="text-lg font-semibold text-[#1d1d1b]">No pudimos cargar el producto</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Hubo un fallo temporal al conectar con el catálogo. Probá actualizar la página en unos
+              segundos.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white"
+              >
+                Reintentar
+              </button>
+              <Link
+                href="/"
+                className="rounded-lg border border-black/15 px-4 py-2 text-sm font-medium text-[#1d1d1b]"
+              >
+                Inicio
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
     );
   }
 
