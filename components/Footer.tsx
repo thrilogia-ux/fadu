@@ -60,29 +60,55 @@ export function Footer() {
               <p className="text-sm text-[#1d1d1b]/60 mb-3">
                 Recibí novedades y ofertas exclusivas
               </p>
-              <form onSubmit={handleSubscribe} className="flex gap-2">
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
                 <input
+                  id="footer-newsletter-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Tu email"
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-[#0f3bff] focus:outline-none focus:ring-1 focus:ring-[#0f3bff]"
+                  autoComplete="email"
+                  inputMode="email"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={
+                    error ? "footer-newsletter-error" : subscribed ? "footer-newsletter-success" : undefined
+                  }
+                  className="min-h-[44px] w-full flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-base focus:border-[#0f3bff] focus:outline-none focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-sm"
                   required
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white hover:bg-[#0f3bff]/90 transition-colors disabled:opacity-70"
+                  className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg bg-[#0f3bff] px-5 text-sm font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8] disabled:opacity-60"
                 >
-                  {loading ? "Enviando..." : "Enviar"}
+                  {loading ? "Enviando…" : "Enviar"}
                 </button>
               </form>
-              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+              {error && (
+                <p id="footer-newsletter-error" className="mt-2 text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
               {subscribed && (
-                <p className="mt-2 text-sm text-green-600">
+                <p id="footer-newsletter-success" className="mt-2 text-sm text-green-600">
                   ¡Gracias por suscribirte!
                 </p>
               )}
+              <p className="mt-4 text-sm text-[#1d1d1b]/70">
+                ¿Consultas?{" "}
+                <a
+                  href="https://wa.me/5491168333363?text=Hola%2C%20consulta%20desde%20Fadu.store"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-[#0f3bff] underline-offset-2 hover:underline"
+                >
+                  Escribinos por WhatsApp
+                </a>
+                {" · "}
+                <Link href="/retiro" className="font-medium text-[#0f3bff] underline-offset-2 hover:underline">
+                  Retiro en FADU
+                </Link>
+              </p>
             </div>
           </div>
 

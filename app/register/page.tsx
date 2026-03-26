@@ -78,7 +78,7 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="name"
-                className="w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20"
+                className="min-h-[48px] w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[16px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-[15px]"
                 placeholder="Tu nombre"
               />
             </div>
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20"
+                className="min-h-[48px] w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[16px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-[15px]"
                 placeholder="tu@email.com"
               />
             </div>
@@ -109,15 +109,19 @@ export default function RegisterPage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20"
+                className="min-h-[48px] w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[16px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-[15px]"
                 placeholder="Mínimo 6 caracteres"
               />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && (
+              <p className="text-sm text-red-600" role="alert">
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#0f3bff] py-3 text-[15px] font-medium text-white hover:opacity-90 disabled:opacity-60"
+              className="w-full min-h-[48px] rounded-xl bg-[#0f3bff] py-3 text-[15px] font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8] disabled:opacity-60"
             >
               {loading ? "Creando cuenta…" : "Crear cuenta"}
             </button>

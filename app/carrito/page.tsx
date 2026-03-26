@@ -58,14 +58,28 @@ export default function CarritoPage() {
           <h1 className="mb-6 text-2xl font-bold text-[#1d1d1b] text-center md:mb-8 md:text-left md:text-3xl">Carrito de compras</h1>
 
           {items.length === 0 ? (
-            <div className="rounded-lg border border-black/8 bg-white p-12 text-center">
-              <p className="mb-4 text-gray-600">Tu carrito está vacío</p>
-              <Link
-                href="/"
-                className="inline-block rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc]"
-              >
-                Ver productos
-              </Link>
+            <div className="rounded-lg border border-black/8 bg-white px-6 py-14 text-center shadow-sm sm:py-16">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-3xl" aria-hidden>
+                🛒
+              </div>
+              <h2 className="text-lg font-semibold text-[#1d1d1b]">Tu carrito está vacío</h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-gray-600">
+                Explorá el catálogo y sumá productos. Retirás tu pedido en el Pickup Point en FADU.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/productos"
+                  className="inline-flex min-h-[48px] min-w-[200px] items-center justify-center rounded-lg bg-[#0f3bff] px-6 font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
+                >
+                  Ver todos los productos
+                </Link>
+                <Link
+                  href="/"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-black/15 px-6 font-medium text-[#1d1d1b] transition hover:bg-gray-50"
+                >
+                  Volver al inicio
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="grid gap-8 lg:grid-cols-3">
@@ -102,15 +116,19 @@ export default function CarritoPage() {
                         <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
                           <div className="flex items-center gap-2">
                             <button
+                              type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/20 hover:bg-black/5"
+                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/20 text-lg transition hover:bg-black/5 active:bg-black/10"
+                              aria-label="Quitar una unidad"
                             >
-                              -
+                              −
                             </button>
-                            <span className="w-6 text-center text-sm sm:w-8">{item.quantity}</span>
+                            <span className="min-w-[2rem] text-center text-sm font-medium">{item.quantity}</span>
                             <button
+                              type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/20 hover:bg-black/5"
+                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/20 text-lg transition hover:bg-black/5 active:bg-black/10"
+                              aria-label="Agregar una unidad"
                             >
                               +
                             </button>
@@ -166,12 +184,12 @@ export default function CarritoPage() {
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         placeholder="CODIGO"
-                        className="min-w-0 flex-1 rounded-lg border border-black/20 px-3 py-2 text-sm outline-none focus:border-[#0f3bff]"
+                        className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-black/20 px-3 py-2 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
                       />
                       <button
                         onClick={applyCoupon}
                         disabled={loading || !couponCode.trim()}
-                        className="w-full shrink-0 rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 disabled:bg-gray-300 sm:w-auto"
+                        className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center rounded-lg bg-gray-800 px-4 text-sm font-semibold text-white transition hover:bg-gray-900 active:bg-black disabled:bg-gray-300 sm:w-auto"
                       >
                         Aplicar
                       </button>
@@ -183,8 +201,9 @@ export default function CarritoPage() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => router.push("/checkout")}
-                    className="w-full rounded-lg bg-[#0f3bff] py-3 font-semibold text-white hover:bg-[#0d32cc]"
+                    className="w-full min-h-[48px] rounded-lg bg-[#0f3bff] py-3 font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
                   >
                     Ir al checkout
                   </button>

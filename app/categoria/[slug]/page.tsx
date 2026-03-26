@@ -53,11 +53,16 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       <main className="min-h-screen overflow-x-hidden bg-[#ededed] py-6 pb-12">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           {/* Breadcrumbs */}
-          <nav className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 overflow-x-auto pb-1 text-sm text-gray-600">
+          <nav
+            className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 overflow-x-auto pb-1 text-sm text-gray-600"
+            aria-label="Migas de pan"
+          >
             <Link href="/" className="shrink-0 hover:text-[#0f3bff]">
               Inicio
             </Link>
-            <span className="text-gray-400">›</span>
+            <span className="text-gray-400" aria-hidden>
+              ›
+            </span>
             <span className="text-gray-800">{category.name}</span>
           </nav>
 
@@ -83,11 +88,23 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           </div>
 
           {products.length === 0 ? (
-            <div className="rounded-lg bg-white p-12 text-center shadow-sm">
-              <p className="text-gray-600">No hay productos en esta categoría</p>
-              <Link href="/" className="mt-4 inline-block text-[#0f3bff] hover:underline">
-                ← Volver al inicio
-              </Link>
+            <div className="rounded-lg bg-white px-6 py-14 text-center shadow-sm sm:py-16">
+              <p className="font-medium text-[#1d1d1b]">Todavía no hay productos en {category.name}</p>
+              <p className="mt-2 text-sm text-gray-600">Volvé pronto o explorá el resto del catálogo.</p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/productos"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#0f3bff] px-6 font-semibold text-white transition hover:bg-[#0d32cc]"
+                >
+                  Ver todos los productos
+                </Link>
+                <Link
+                  href="/"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-black/15 px-6 font-medium text-[#1d1d1b] hover:bg-gray-50"
+                >
+                  Ir al inicio
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

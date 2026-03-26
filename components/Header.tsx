@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { TopBannerMarquee } from "@/components/TopBannerMarquee";
 
@@ -16,12 +16,16 @@ interface Category {
 
 const ALLOWED_CATEGORY_SLUGS = ["iluminacion", "escritorio", "decoracion", "diseno", "accesorios"];
 
+const tapIcon =
+  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[#1d1d1b] transition hover:bg-black/5 active:bg-black/10";
+
 export function Header({ categories }: { categories: Category[] }) {
   const menuCategories = categories
     .filter((c) => ALLOWED_CATEGORY_SLUGS.includes(c.slug))
     .sort((a, b) => ALLOWED_CATEGORY_SLUGS.indexOf(a.slug) - ALLOWED_CATEGORY_SLUGS.indexOf(b.slug));
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const { itemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
@@ -40,6 +44,22 @@ export function Header({ categories }: { categories: Category[] }) {
         window.removeEventListener("resize", handleClose);
       };
     }
+  }, [showMobileMenu]);
+
+  useEffect(() => {
+    setShowMobileMenu(false);
+    setShowMobileSearch(false);
+    setShowCategoriesMenu(false);
+    setShowAccountMenu(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!showMobileMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMenus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [showMobileMenu]);
 
   function handleSearch(e: React.FormEvent) {
@@ -65,12 +85,12 @@ export function Header({ categories }: { categories: Category[] }) {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Buscar productos..."
-        className="flex-1 rounded-xl border border-black/15 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-[#0f3bff] focus:bg-white focus:ring-2 focus:ring-[#0f3bff]/20"
+        className="min-h-[44px] flex-1 rounded-xl border border-black/15 bg-gray-50 px-4 py-3 text-base outline-none transition focus:border-[#0f3bff] focus:bg-white focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-sm"
         autoFocus={showMobileSearch}
       />
       <button
         type="submit"
-        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#0f3bff] text-white transition hover:bg-[#0d32cc]"
+        className="flex h-12 min-w-[48px] flex-shrink-0 items-center justify-center rounded-xl bg-[#0f3bff] text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
         aria-label="Buscar"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,11 +130,11 @@ export function Header({ categories }: { categories: Category[] }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar productos, marcas..."
-              className="w-full rounded-xl border border-black/15 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#0f3bff] focus:bg-white focus:ring-2 focus:ring-[#0f3bff]/20"
+              className="min-h-[44px] w-full rounded-xl border border-black/15 bg-gray-50 px-4 py-2.5 text-base outline-none transition focus:border-[#0f3bff] focus:bg-white focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-sm"
             />
             <button
               type="submit"
-              className="ml-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#0f3bff] text-white transition hover:bg-[#0d32cc]"
+              className="ml-2 flex h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#0f3bff] text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
               aria-label="Buscar"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +149,7 @@ export function Header({ categories }: { categories: Category[] }) {
           {/* Carrito - siempre visible */}
           <Link
             href="/carrito"
-            className="relative flex items-center justify-center rounded-lg p-2 hover:bg-black/5"
+            className={`relative ${tapIcon}`}
             onClick={closeMenus}
             aria-label="Carrito"
           >
@@ -145,9 +165,11 @@ export function Header({ categories }: { categories: Category[] }) {
 
           {/* Mobile: botón búsqueda */}
           <button
+            type="button"
             onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className="rounded-lg p-2 hover:bg-black/5 md:hidden"
+            className={`${tapIcon} md:hidden`}
             aria-label="Buscar"
+            aria-expanded={showMobileSearch}
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -156,9 +178,11 @@ export function Header({ categories }: { categories: Category[] }) {
 
           {/* Mobile: menú hamburguesa */}
           <button
+            type="button"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="rounded-lg p-2 hover:bg-black/5 md:hidden"
-            aria-label="Menú"
+            className={`${tapIcon} md:hidden`}
+            aria-label={showMobileMenu ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={showMobileMenu}
           >
             {showMobileMenu ? (
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,8 +198,11 @@ export function Header({ categories }: { categories: Category[] }) {
           {/* Desktop: Cuenta */}
           <div className="relative hidden md:block">
             <button
+              type="button"
               onClick={() => setShowAccountMenu(!showAccountMenu)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-black/5"
+              className="flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-black/5 active:bg-black/10"
+              aria-expanded={showAccountMenu}
+              aria-haspopup="true"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -196,7 +223,11 @@ export function Header({ categories }: { categories: Category[] }) {
                       Mis pedidos
                     </Link>
                     <hr className="my-2 border-black/10" />
-                    <button onClick={() => signOut({ callbackUrl: "/" })} className="block w-full px-4 py-2 text-left text-sm hover:bg-black/5">
+                    <button
+                      type="button"
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="block w-full px-4 py-2 text-left text-sm hover:bg-black/5"
+                    >
                       Cerrar sesión
                     </button>
                   </>
@@ -226,8 +257,11 @@ export function Header({ categories }: { categories: Category[] }) {
         <nav className="hidden items-center gap-6 border-t border-black/8 py-2 text-sm md:flex">
           <div className="relative">
             <button
+              type="button"
               onClick={() => setShowCategoriesMenu(!showCategoriesMenu)}
-              className="flex items-center gap-1 font-medium text-[#0f3bff] hover:underline"
+              className="flex min-h-[40px] items-center gap-1 rounded-md px-1 font-medium text-[#0f3bff] hover:underline hover:bg-[#0f3bff]/5"
+              aria-expanded={showCategoriesMenu}
+              aria-haspopup="true"
             >
               Categorías
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,12 +288,32 @@ export function Header({ categories }: { categories: Category[] }) {
 
       {/* Menú lateral mobile */}
       {showMobileMenu && (
-        <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={closeMenus} aria-hidden="true">
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={closeMenus}
+          aria-hidden="true"
+        >
           <div
-            className="h-full w-[280px] max-w-[85vw] bg-white shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú de navegación"
+            className="h-full w-[300px] max-w-[90vw] bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col p-4">
+              <div className="mb-4 flex items-center justify-between gap-2 border-b border-black/10 pb-3">
+                <span className="text-sm font-semibold text-[#1d1d1b]">Menú</span>
+                <button
+                  type="button"
+                  onClick={closeMenus}
+                  className={`${tapIcon} text-gray-600`}
+                  aria-label="Cerrar menú"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               <div className="mb-4">
                 <SearchForm />
               </div>
@@ -273,12 +327,30 @@ export function Header({ categories }: { categories: Category[] }) {
                     <Link href="/cuenta" className="block py-2 text-sm text-[#0f3bff]" onClick={closeMenus}>Mi perfil</Link>
                     <Link href="/cuenta/favoritos" className="block py-2 text-sm text-[#0f3bff]" onClick={closeMenus}>Favoritos</Link>
                     <Link href="/cuenta/pedidos" className="block py-2 text-sm text-[#0f3bff]" onClick={closeMenus}>Mis pedidos</Link>
-                    <button onClick={() => signOut({ callbackUrl: "/" })} className="block py-2 text-left text-sm text-red-600">Cerrar sesión</button>
+                    <button
+                      type="button"
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="block py-2 text-left text-sm text-red-600 hover:underline"
+                    >
+                      Cerrar sesión
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex gap-2">
-                    <Link href="/login" className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium" onClick={closeMenus}>Entrar</Link>
-                    <Link href="/register" className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white" onClick={closeMenus}>Registrarse</Link>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Link
+                      href="/login"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gray-100 px-4 text-sm font-medium transition hover:bg-gray-200 active:bg-gray-300"
+                      onClick={closeMenus}
+                    >
+                      Entrar
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#0f3bff] px-4 text-sm font-medium text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
+                      onClick={closeMenus}
+                    >
+                      Registrarse
+                    </Link>
                   </div>
                 )}
               </div>
@@ -286,18 +358,19 @@ export function Header({ categories }: { categories: Category[] }) {
               {/* Categorías - solo links */}
               <div className="border-b border-black/10 py-4">
                 <p className="mb-2 text-xs font-medium text-gray-500">Categorías</p>
-                <div className="flex flex-wrap gap-2">
+                <ul className="flex flex-col gap-1">
                   {menuCategories.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      href={`/categoria/${cat.slug}`}
-                      className="rounded-lg bg-gray-100 px-3 py-2 text-sm"
-                      onClick={closeMenus}
-                    >
-                      {cat.name}
-                    </Link>
+                    <li key={cat.id}>
+                      <Link
+                        href={`/categoria/${cat.slug}`}
+                        className="flex min-h-[44px] items-center rounded-lg px-3 py-2 text-sm font-medium text-[#1d1d1b] transition hover:bg-gray-100 active:bg-gray-200"
+                        onClick={closeMenus}
+                      >
+                        {cat.name}
+                      </Link>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
 
               {/* Links */}

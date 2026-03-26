@@ -20,7 +20,7 @@ export function ProductCard({ name, slug, price, compareAtPrice, images, categor
   return (
     <Link
       href={`/producto/${slug}`}
-      className="group block min-w-0 overflow-hidden rounded-lg border border-black/8 bg-white transition hover:shadow-lg"
+      className="group block min-w-0 overflow-hidden rounded-lg border border-black/8 bg-white shadow-sm transition hover:shadow-lg hover:border-black/12 active:scale-[0.99]"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         {images[0] ? (
@@ -43,24 +43,26 @@ export function ProductCard({ name, slug, price, compareAtPrice, images, categor
           </span>
         )}
       </div>
-      <div className="p-4">
+      <div className="flex min-h-[5.5rem] flex-col p-3 sm:p-4">
         {category && (
-          <p className="mb-1 text-xs text-gray-500">{category.name}</p>
+          <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:text-xs">
+            {category.name}
+          </p>
         )}
-        <h3 className="mb-2 line-clamp-2 text-sm font-medium text-[#1d1d1b]">
+        <h3 className="mb-2 line-clamp-2 flex-1 text-[15px] font-semibold leading-snug text-[#1d1d1b] sm:text-base">
           {name}
         </h3>
-        <div className="flex flex-col items-start">
+        <div className="mt-auto flex flex-col items-start gap-0.5">
           {hasDiscount && (
             <span className="text-xs text-gray-400 line-through">
               ${compareAtPrice.toLocaleString("es-AR")}
             </span>
           )}
-          <span className="text-xl font-semibold text-[#1d1d1b]">
+          <span className="text-lg font-bold tabular-nums text-[#1d1d1b] sm:text-xl">
             ${price.toLocaleString("es-AR")}
           </span>
+          <span className="text-[11px] font-medium text-green-700 sm:text-xs">Retiro en FADU</span>
         </div>
-        <p className="mt-1 text-xs text-green-600">Retiro en FADU</p>
       </div>
     </Link>
   );

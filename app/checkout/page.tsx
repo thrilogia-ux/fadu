@@ -79,7 +79,12 @@ export default function CheckoutPage() {
   }
 
   if (status === "loading") {
-    return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#fafafa]">
+        <div className="h-10 w-10 animate-pulse rounded-full bg-[#0f3bff]/25" aria-hidden />
+        <p className="text-sm text-gray-600">Cargando checkout…</p>
+      </div>
+    );
   }
 
   if (!session || items.length === 0) {
@@ -108,7 +113,7 @@ export default function CheckoutPage() {
                         type="email"
                         value={session.user.email || ""}
                         disabled
-                        className="w-full rounded-lg border border-black/20 bg-gray-50 px-4 py-2.5 text-sm"
+                        className="min-h-[44px] w-full rounded-lg border border-black/20 bg-gray-50 px-4 py-2.5 text-sm"
                       />
                     </div>
                     <div>
@@ -120,7 +125,8 @@ export default function CheckoutPage() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+54 9 11 1234-5678"
-                        className="w-full rounded-lg border border-black/20 px-4 py-2.5 text-sm outline-none focus:border-[#0f3bff]"
+                        className="min-h-[48px] w-full rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                        autoComplete="tel"
                       />
                       <p className="mt-1 text-xs text-gray-600">
                         Te avisaremos por email cuando tu pedido esté listo para retirar en FADU
@@ -199,7 +205,10 @@ export default function CheckoutPage() {
                 </div>
 
                 {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                  <div
+                    className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
+                    role="alert"
+                  >
                     {error}
                   </div>
                 )}
@@ -231,7 +240,7 @@ export default function CheckoutPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-lg bg-[#0f3bff] py-3 font-semibold text-white hover:bg-[#0d32cc] disabled:bg-gray-300"
+                    className="w-full min-h-[48px] rounded-lg bg-[#0f3bff] py-3 font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8] disabled:bg-gray-300"
                   >
                     {loading
                       ? "Procesando..."

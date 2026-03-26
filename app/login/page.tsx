@@ -63,7 +63,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20"
+                className="min-h-[48px] w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[16px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-[15px]"
                 placeholder="tu@email.com"
               />
             </div>
@@ -78,15 +78,19 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[15px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20"
+                className="min-h-[48px] w-full rounded-xl border border-black/12 bg-white px-4 py-3 text-[16px] outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-[15px]"
                 placeholder="••••••••"
               />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && (
+              <p className="text-sm text-red-600" role="alert">
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#0f3bff] py-3 text-[15px] font-medium text-white hover:opacity-90 disabled:opacity-60"
+              className="w-full min-h-[48px] rounded-xl bg-[#0f3bff] py-3 text-[15px] font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8] disabled:opacity-60"
             >
               {loading ? "Entrando…" : "Entrar"}
             </button>
@@ -107,8 +111,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Cargando…</div>
+      <div className="flex min-h-screen items-center justify-center bg-[#fafafa]">
+        <div className="h-9 w-9 animate-pulse rounded-full bg-[#0f3bff]/20" aria-hidden />
+        <span className="sr-only">Cargando…</span>
       </div>
     }>
       <LoginForm />
