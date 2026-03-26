@@ -31,7 +31,7 @@ export default function PedidoPage() {
     ])
       .then(([orderData, categoriesData]) => {
         setOrder(orderData);
-        setCategories(categoriesData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       })
       .finally(() => setLoading(false));
   }, [params.id]);

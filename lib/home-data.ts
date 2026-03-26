@@ -56,16 +56,16 @@ export async function getFeaturedProductsForHome() {
       orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
       include: productHomeInclude,
     });
-    return stripForRsc(rows);
+    // No usar JSON.stringify aquí: Prisma Decimal rompe la serialización.
+    return rows;
   } catch (e) {
     console.error("[home] featuredOrder falló, fallback createdAt:", e);
-    const rows = await prisma.product.findMany({
+    return prisma.product.findMany({
       where: { active: true, featured: true },
       take: 8,
       orderBy: { createdAt: "desc" },
       include: productHomeInclude,
     });
-    return stripForRsc(rows);
   }
 }
 
@@ -77,16 +77,15 @@ export async function getOffersProductsForHome() {
       orderBy: [{ offersOrder: "asc" }, { createdAt: "desc" }],
       include: productHomeInclude,
     });
-    return stripForRsc(rows);
+    return rows;
   } catch (e) {
     console.error("[home] offersOrder falló, fallback createdAt:", e);
-    const rows = await prisma.product.findMany({
+    return prisma.product.findMany({
       where: { active: true, compareAtPrice: { not: null } },
       take: 8,
       orderBy: { createdAt: "desc" },
       include: productHomeInclude,
     });
-    return stripForRsc(rows);
   }
 }
 

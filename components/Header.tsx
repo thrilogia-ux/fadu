@@ -20,7 +20,8 @@ const tapIcon =
   "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[#1d1d1b] transition hover:bg-black/5 active:bg-black/10";
 
 export function Header({ categories }: { categories: Category[] }) {
-  const menuCategories = categories
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const menuCategories = safeCategories
     .filter((c) => ALLOWED_CATEGORY_SLUGS.includes(c.slug))
     .sort((a, b) => ALLOWED_CATEGORY_SLUGS.indexOf(a.slug) - ALLOWED_CATEGORY_SLUGS.indexOf(b.slug));
   const { data: session } = useSession();

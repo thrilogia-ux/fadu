@@ -154,7 +154,7 @@ export default function ProductPage() {
           return;
         }
         setProduct(productData);
-        setCategories(categoriesData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setQuestions(Array.isArray(questionsData) ? questionsData : []);
         
         // Verificar si está en favoritos

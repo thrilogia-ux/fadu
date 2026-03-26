@@ -18,7 +18,9 @@ export default function CarritoPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []));
   }, []);
 
   async function applyCoupon() {

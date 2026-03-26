@@ -20,7 +20,9 @@ export default function CheckoutPage() {
   const isCompletingOrderRef = useRef(false);
 
   useEffect(() => {
-    fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []));
   }, []);
 
   useEffect(() => {

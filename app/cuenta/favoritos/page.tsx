@@ -41,7 +41,7 @@ export default function FavoritosPage() {
         fetch("/api/categories").then((r) => r.json()),
       ]).then(([favs, cats]) => {
         setFavorites(Array.isArray(favs) ? favs : []);
-        setCategories(cats);
+        setCategories(Array.isArray(cats) ? cats : []);
         setLoading(false);
       });
     }
