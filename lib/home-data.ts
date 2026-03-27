@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { HomeHeroSlide } from "@/components/HomeHero";
 import { runWithDbRetries } from "@/lib/db-retry";
+import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
 
 const productHomeInclude = {
   category: { select: { name: true, slug: true } as const },
@@ -9,14 +10,11 @@ const productHomeInclude = {
 
 type ProductHomeRow = Awaited<ReturnType<typeof getFeaturedProductsForHomeRaw>>[number];
 
-/**
- * Solo createdAt: no depender de columnas featured_order (migraciones viejas / DB distinta).
- */
 async function getFeaturedProductsForHomeRaw() {
   return prisma.product.findMany({
     where: { active: true, featured: true },
     take: 8,
-    orderBy: { createdAt: "desc" },
+    orderBy: homeFeaturedOrderBy,
     include: productHomeInclude,
   });
 }
@@ -140,7 +138,7 @@ export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
       prisma.product.findMany({
         where: { active: true, compareAtPrice: { not: null } },
         take: 8,
-        orderBy: { createdAt: "desc" },
+        orderBy: homeOffersOrderBy,
         include: productHomeInclude,
       })
     )) ?? [];

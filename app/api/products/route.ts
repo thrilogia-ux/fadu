@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runWithDbRetries } from "@/lib/db-retry";
+import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -44,10 +45,17 @@ export async function GET(request: Request) {
       const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
       if (category) where.categoryId = category.id;
     }
+    const orderBy =
+      !q?.trim() && featured === "true"
+        ? homeFeaturedOrderBy
+        : !q?.trim() && searchParams.get("onSale") === "true"
+          ? homeOffersOrderBy
+          : { createdAt: "desc" as const };
+
     return prisma.product.findMany({
       where,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       include: {
         category: { select: { name: true, slug: true } },
         images: {

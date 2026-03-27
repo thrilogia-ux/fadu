@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { homeOffersOrderBy } from "@/lib/product-list-order";
 
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
@@ -18,7 +19,7 @@ export default async function OfertasPage() {
       active: true,
       compareAtPrice: { not: null },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: homeOffersOrderBy,
     include: {
       category: { select: { name: true, slug: true } },
       images: { where: { isPrimary: true }, take: 1 },

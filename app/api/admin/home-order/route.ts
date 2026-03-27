@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
 
 // GET - Obtener productos destacados u ofertas para ordenar
 export async function GET(request: Request) {
@@ -16,13 +17,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "type debe ser featured u offers" }, { status: 400 });
     }
 
-    const orderField = type === "featured" ? "featuredOrder" : "offersOrder";
-
     const products =
       type === "featured"
         ? await prisma.product.findMany({
             where: { active: true, featured: true },
-            orderBy: [{ [orderField]: "asc" }, { createdAt: "desc" }],
+            orderBy: homeFeaturedOrderBy,
             include: {
               category: { select: { name: true } },
               images: { where: { isPrimary: true }, take: 1 },
@@ -33,7 +32,7 @@ export async function GET(request: Request) {
               active: true,
               compareAtPrice: { not: null },
             },
-            orderBy: [{ [orderField]: "asc" }, { createdAt: "desc" }],
+            orderBy: homeOffersOrderBy,
             include: {
               category: { select: { name: true } },
               images: { where: { isPrimary: true }, take: 1 },

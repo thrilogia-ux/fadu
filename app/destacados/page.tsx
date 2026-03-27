@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { homeFeaturedOrderBy } from "@/lib/product-list-order";
 
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
@@ -15,7 +16,7 @@ export default async function DestacadosPage() {
 
   const products = await prisma.product.findMany({
     where: { active: true, featured: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: homeFeaturedOrderBy,
     include: {
       category: { select: { name: true, slug: true } },
       images: { where: { isPrimary: true }, take: 1 },
