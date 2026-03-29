@@ -78,8 +78,14 @@ export default function AdminPedidosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
+        if (newStatus === "ready_for_pickup" && data.pickupReadyEmailSent === false) {
+          alert(
+            "Estado actualizado, pero no se envió el email con el QR. Revisá Resend, NEXT_PUBLIC_SITE_URL y el email del cliente."
+          );
+        }
         loadOrders();
       } else {
         alert("Error al cambiar estado");

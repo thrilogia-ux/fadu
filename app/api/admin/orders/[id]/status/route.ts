@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { sendPickupReadyEmail } from "@/lib/email";
 
 // PATCH /api/admin/orders/[id]/status - Cambiar estado del pedido
 export async function PATCH(
@@ -33,13 +34,19 @@ export async function PATCH(
       return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
     }
 
-    // Actualizar estado del pedido
+    const existing = await prisma.order.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+    }
+
     const order = await prisma.order.update({
       where: { id },
       data: { status, updatedAt: new Date() },
     });
 
-    // Registrar en historial
     await prisma.orderStatusHistory.create({
       data: {
         orderId: id,
@@ -48,9 +55,46 @@ export async function PATCH(
       },
     });
 
-    // TODO: Si el estado es ready_for_pickup, enviar email con QR
+    let pickupReadyEmailSent: boolean | undefined;
+    if (
+      status === "ready_for_pickup" &&
+      existing.status !== "ready_for_pickup"
+    ) {
+      const fullOrder = await prisma.order.findUnique({
+        where: { id },
+        include: {
+          items: { include: { product: { select: { name: true } } } },
+          user: { select: { email: true, name: true } },
+        },
+      });
+      if (fullOrder?.pickupCode) {
+        try {
+          const orderForEmail = {
+            ...fullOrder,
+            total: Number(fullOrder.total),
+            items: fullOrder.items.map((i) => ({
+              quantity: i.quantity,
+              price: Number(i.price),
+              product: i.product,
+            })),
+          };
+          pickupReadyEmailSent = await sendPickupReadyEmail(orderForEmail);
+          if (!pickupReadyEmailSent) {
+            console.error(
+              "[admin/order/status] sendPickupReadyEmail devolvió false para",
+              id
+            );
+          }
+        } catch (e) {
+          console.error("[admin/order/status] error enviando email listo para retiro:", e);
+          pickupReadyEmailSent = false;
+        }
+      } else {
+        pickupReadyEmailSent = false;
+      }
+    }
 
-    return NextResponse.json(order);
+    return NextResponse.json({ order, pickupReadyEmailSent });
   } catch (error) {
     console.error("Error updating order status:", error);
     return NextResponse.json({ error: "Error al actualizar estado" }, { status: 500 });

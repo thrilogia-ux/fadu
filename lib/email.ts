@@ -6,6 +6,13 @@ const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@rese
 // Si está definido, todos los emails se envían a esta dirección (útil para testeo)
 const TEST_TO = process.env.RESEND_TEST_TO;
 
+function publicShopUrl(): string {
+  const u = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (u) return u.replace(/\/$/, "");
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 export type OrderForEmail = {
   id: string;
   pickupCode: string | null;
@@ -112,6 +119,57 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<boolea
     return true;
   } catch (e) {
     console.error("Error enviando email de pickup:", e);
+    return false;
+  }
+}
+
+export type OrderThankYouForEmail = {
+  pickupCode: string | null;
+  user: { email: string | null; name: string | null };
+};
+
+/** Tras retiro validado en pickup: gracias + CTA a la tienda */
+export async function sendPickupThankYouEmail(order: OrderThankYouForEmail): Promise<boolean> {
+  if (!resend) return false;
+
+  const shop = publicShopUrl();
+  const code = order.pickupCode || "";
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #1d1d1b;">¡Gracias por retirar tu pedido!</h1>
+      <p>Hola ${order.user.name || "Cliente"},</p>
+      <p>Confirmamos el retiro${code ? ` del pedido <strong>#${code}</strong>` : " de tu pedido"} en el Pickup Point de FADU.</p>
+      <p>Esperamos que disfrutes tu compra. Cuando quieras volver a ver novedades y ofertas, entrá a la tienda:</p>
+      <p style="margin: 28px 0;">
+        <a href="${shop}/productos" style="display: inline-block; background: #0f3bff; color: #fff; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+          Volver a comprar en Fadu.store
+        </a>
+      </p>
+      <p style="color: #666; font-size: 14px;">— Fadu.store</p>
+    </body>
+    </html>
+  `;
+
+  const toEmail = TEST_TO || order.user.email;
+  if (!toEmail) return false;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: toEmail,
+      subject: `¡Gracias por tu compra!${code ? ` Pedido #${code}` : ""} — Fadu.store`,
+      html,
+    });
+    if (error) {
+      console.error("Error enviando email de agradecimiento post-retiro:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Error enviando email de agradecimiento post-retiro:", e);
     return false;
   }
 }

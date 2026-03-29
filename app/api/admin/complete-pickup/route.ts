@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { sendPickupThankYouEmail } from "@/lib/email";
 
 // POST /api/admin/complete-pickup - Marcar pedido como completado (retirado)
 export async function POST(request: Request) {
@@ -37,7 +38,27 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, order });
+    let thankYouEmailSent: boolean | undefined;
+    try {
+      const forEmail = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: {
+          pickupCode: true,
+          user: { select: { email: true, name: true } },
+        },
+      });
+      if (forEmail?.user) {
+        thankYouEmailSent = await sendPickupThankYouEmail({
+          pickupCode: forEmail.pickupCode,
+          user: forEmail.user,
+        });
+      }
+    } catch (e) {
+      console.error("[complete-pickup] email agradecimiento:", e);
+      thankYouEmailSent = false;
+    }
+
+    return NextResponse.json({ success: true, order, thankYouEmailSent });
   } catch (error) {
     console.error("Error completing pickup:", error);
     return NextResponse.json({ error: "Error al completar retiro" }, { status: 500 });

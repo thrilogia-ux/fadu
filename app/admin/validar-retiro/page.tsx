@@ -101,7 +101,13 @@ export default function ValidarRetiroPage() {
         }),
       });
       if (res.ok) {
-        alert("Pedido marcado como entregado ✅");
+        const data = await res.json().catch(() => ({}));
+        let msg = "Pedido marcado como entregado ✅";
+        if (data.thankYouEmailSent === false) {
+          msg +=
+            "\n\nNo se pudo enviar el email de agradecimiento al cliente (revisá Resend).";
+        }
+        alert(msg);
         setOrder(null);
         setManualCode("");
         setPickedUpBy("");

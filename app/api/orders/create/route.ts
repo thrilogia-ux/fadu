@@ -4,6 +4,32 @@ import { auth } from "@/auth";
 import { generatePickupCode } from "@/lib/qr";
 import { sendOrderConfirmation, sendPickupReadyEmail } from "@/lib/email";
 
+/** Confirmación de compra al crear pedido; no debe fallar la orden si el mail falla */
+async function sendOrderConfirmationBestEffort(orderId: string) {
+  try {
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: { include: { product: { select: { name: true } } } },
+        user: { select: { email: true, name: true } },
+      },
+    });
+    if (!fullOrder) return;
+    const orderForEmail = {
+      ...fullOrder,
+      total: Number(fullOrder.total),
+      items: fullOrder.items.map((i) => ({
+        quantity: i.quantity,
+        price: Number(i.price),
+        product: i.product,
+      })),
+    };
+    await sendOrderConfirmation(orderForEmail);
+  } catch (e) {
+    console.error("[orders/create] email confirmación:", e);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const session = await auth();
@@ -99,6 +125,7 @@ export async function POST(request: Request) {
 
     // Si es Mercado Pago, crear preferencia
     if (paymentMethod === "mercadopago") {
+      await sendOrderConfirmationBestEffort(order.id);
       // TODO: Integrar SDK de Mercado Pago
       // Por ahora retornamos URL de ejemplo
       return NextResponse.json({
@@ -107,6 +134,8 @@ export async function POST(request: Request) {
         pickupCode: order.pickupCode,
       });
     }
+
+    await sendOrderConfirmationBestEffort(order.id);
 
     // Si es transferencia, retornar datos
     return NextResponse.json({
