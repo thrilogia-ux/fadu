@@ -268,6 +268,13 @@ export function Header({ categories }: { categories: Category[] }) {
             </button>
             {showCategoriesMenu && (
               <div className="absolute left-0 mt-2 w-56 rounded-xl border border-black/10 bg-white py-2 shadow-xl">
+                <Link
+                  href="/productos"
+                  className="block border-b border-black/8 px-4 py-2 text-sm font-semibold text-[#0f3bff] hover:bg-black/5"
+                  onClick={() => setShowCategoriesMenu(false)}
+                >
+                  Ver todo
+                </Link>
                 {menuCategories.map((cat) => (
                   <Link
                     key={cat.id}
@@ -357,6 +364,15 @@ export function Header({ categories }: { categories: Category[] }) {
               <div className="border-b border-black/10 py-4">
                 <p className="mb-2 text-xs font-medium text-gray-500">Categorías</p>
                 <ul className="flex flex-col gap-1">
+                  <li>
+                    <Link
+                      href="/productos"
+                      className="flex min-h-[44px] items-center rounded-lg px-3 py-2 text-sm font-semibold text-[#0f3bff] transition hover:bg-[#0f3bff]/10 active:bg-[#0f3bff]/15"
+                      onClick={closeMenus}
+                    >
+                      Ver todo
+                    </Link>
+                  </li>
                   {menuCategories.map((cat) => (
                     <li key={cat.id}>
                       <Link
