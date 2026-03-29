@@ -17,6 +17,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "ID de pedido requerido" }, { status: 400 });
     }
 
+    const before = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { archived: true },
+    });
+    if (!before) {
+      return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+    }
+    if (before.archived) {
+      return NextResponse.json({ error: "El pedido está archivado" }, { status: 400 });
+    }
+
     const order = await prisma.order.update({
       where: { id: orderId },
       data: {

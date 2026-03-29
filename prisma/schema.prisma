@@ -238,6 +238,7 @@ model Order {
   pickedUpDni     String?   @map("picked_up_dni") // DNI quien retira
   validatedBy     String?   @map("validated_by") // Admin que validó
   validatedAt     DateTime? @map("validated_at") // Cuándo se validó
+  archived        Boolean   @default(false) @map("archived")
 
   user    User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   items   OrderItem[]

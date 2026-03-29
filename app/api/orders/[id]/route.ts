@@ -24,8 +24,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     // Verificar que el usuario sea el dueño o admin
-    if (session?.user?.id !== order.userId && (session?.user as any)?.role !== "admin") {
+    const isAdmin = (session?.user as any)?.role === "admin";
+    if (session?.user?.id !== order.userId && !isAdmin) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    if (order.archived && !isAdmin) {
+      return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
     }
 
     return NextResponse.json(order);

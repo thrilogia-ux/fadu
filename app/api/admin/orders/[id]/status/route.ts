@@ -36,10 +36,16 @@ export async function PATCH(
 
     const existing = await prisma.order.findUnique({
       where: { id },
-      select: { status: true },
+      select: { status: true, archived: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+    }
+    if (existing.archived) {
+      return NextResponse.json(
+        { error: "El pedido está archivado. Restaurarlo antes de cambiar el estado." },
+        { status: 400 }
+      );
     }
 
     const order = await prisma.order.update({

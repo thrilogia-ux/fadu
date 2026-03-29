@@ -12,9 +12,17 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const archived = searchParams.get("archived"); // false | true | all (default: false)
 
     const where: any = {};
     if (status) where.status = status;
+    if (archived === "all") {
+      // sin filtro archived
+    } else if (archived === "true") {
+      where.archived = true;
+    } else {
+      where.archived = false;
+    }
 
     const orders = await prisma.order.findMany({
       where,

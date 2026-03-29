@@ -32,6 +32,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
     }
 
+    if (order.archived) {
+      return NextResponse.json({ error: "Este pedido está archivado" }, { status: 400 });
+    }
+
     if (order.status !== "ready_for_pickup") {
       return NextResponse.json(
         { error: `El pedido no está listo para retirar (estado: ${order.status})` },
