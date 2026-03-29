@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useCart } from "@/lib/cart-context";
+import { cartLineKey } from "@/lib/cart-line";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -89,7 +90,7 @@ export default function CarritoPage() {
               <div className="lg:col-span-2 space-y-4">
                 {items.map((item) => (
                   <div
-                    key={item.productId}
+                    key={cartLineKey(item)}
                     className="flex min-w-0 flex-col gap-3 rounded-lg border border-black/8 bg-white p-4 sm:flex-row sm:gap-4"
                   >
                     <div className="flex min-w-0 flex-1 gap-3 sm:flex-row sm:gap-4">
@@ -112,6 +113,9 @@ export default function CarritoPage() {
                         >
                           {item.name}
                         </Link>
+                        {item.variantLabel ? (
+                          <p className="mt-0.5 text-sm text-gray-600">{item.variantLabel}</p>
+                        ) : null}
                         <p className="text-base font-bold text-[#1d1d1b] sm:text-lg">
                           ${item.price.toLocaleString("es-AR")}
                         </p>
@@ -119,7 +123,7 @@ export default function CarritoPage() {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                              onClick={() => updateQuantity(cartLineKey(item), item.quantity - 1)}
                               className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/20 text-lg transition hover:bg-black/5 active:bg-black/10"
                               aria-label="Quitar una unidad"
                             >
@@ -128,7 +132,7 @@ export default function CarritoPage() {
                             <span className="min-w-[2rem] text-center text-sm font-medium">{item.quantity}</span>
                             <button
                               type="button"
-                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              onClick={() => updateQuantity(cartLineKey(item), item.quantity + 1)}
                               className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/20 text-lg transition hover:bg-black/5 active:bg-black/10"
                               aria-label="Agregar una unidad"
                             >
@@ -136,7 +140,7 @@ export default function CarritoPage() {
                             </button>
                           </div>
                           <button
-                            onClick={() => removeItem(item.productId)}
+                            onClick={() => removeItem(cartLineKey(item))}
                             className="text-sm text-red-600 hover:underline"
                           >
                             Eliminar

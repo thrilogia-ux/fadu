@@ -8,7 +8,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/lib/cart-context";
+import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { ProductCard } from "@/components/ProductCard";
+
+interface ProductVariant {
+  id: string;
+  sizeLabel: string;
+  colorLabel: string;
+  stock: number;
+  sku: string | null;
+}
 
 interface Product {
   id: string;
@@ -18,6 +27,10 @@ interface Product {
   price: number;
   compareAtPrice: number | null;
   stock: number;
+  useVariants?: boolean;
+  showSizeSelector?: boolean;
+  showColorSelector?: boolean;
+  variants?: ProductVariant[];
   category: { name: string; slug: string };
   images: { id: string; url: string; order: number; isPrimary: boolean }[];
   videos: { id: string; url: string | null }[];
@@ -128,36 +141,13 @@ export default function ProductPage() {
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   
   // Favoritos
   const [isFavorite, setIsFavorite] = useState(false);
   const [loadingFav, setLoadingFav] = useState(false);
-  
-  // Combinar imágenes y videos en una sola galería
-  const mediaItems = useMemo<MediaItem[]>(() => {
-    if (!product) return [];
-    const items: MediaItem[] = [];
-    
-    // Agregar imágenes
-    product.images.forEach((img) => {
-      items.push({ type: "image", id: img.id, url: img.url });
-    });
-    
-    // Agregar videos
-    product.videos.forEach((vid) => {
-      if (vid.url) {
-        items.push({
-          type: "video",
-          id: vid.id,
-          url: vid.url,
-          embedUrl: getVideoEmbedUrl(vid.url),
-        });
-      }
-    });
-    
-    return items;
-  }, [product]);
-  
+
   // Preguntas
   const [questions, setQuestions] = useState<Question[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
@@ -183,6 +173,95 @@ export default function ProductPage() {
   const [loadingReview, setLoadingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [relatedProducts, setRelatedProducts] = useState<RelatedCardProduct[]>([]);
+
+  // Combinar imágenes y videos en una sola galería
+  const mediaItems = useMemo<MediaItem[]>(() => {
+    if (!product) return [];
+    const items: MediaItem[] = [];
+    
+    // Agregar imágenes
+    product.images.forEach((img) => {
+      items.push({ type: "image", id: img.id, url: img.url });
+    });
+    
+    // Agregar videos
+    product.videos.forEach((vid) => {
+      if (vid.url) {
+        items.push({
+          type: "video",
+          id: vid.id,
+          url: vid.url,
+          embedUrl: getVideoEmbedUrl(vid.url),
+        });
+      }
+    });
+    
+    return items;
+  }, [product]);
+
+  const selectedVariant = useMemo(() => {
+    if (!product?.useVariants || !product.variants?.length) return null;
+    if (!product.showSizeSelector && !product.showColorSelector) {
+      const inStock = product.variants.filter((v) => v.stock > 0);
+      return inStock[0] ?? product.variants[0] ?? null;
+    }
+    const ss = product.showSizeSelector ? selectedSize : "";
+    const sc = product.showColorSelector ? selectedColor : "";
+    return product.variants.find((v) => v.sizeLabel === ss && v.colorLabel === sc) ?? null;
+  }, [product, selectedSize, selectedColor]);
+
+  const sizeOptions = useMemo(() => {
+    if (!product?.useVariants || !product.showSizeSelector || !product.variants?.length) return [];
+    return sortSizeLabels(product.variants.map((v) => v.sizeLabel));
+  }, [product]);
+
+  const colorOptions = useMemo(() => {
+    if (!product?.useVariants || !product.showColorSelector || !product.variants?.length) return [];
+    const ss = product.showSizeSelector ? selectedSize : "";
+    const labels = product.variants.filter((v) => v.sizeLabel === ss).map((v) => v.colorLabel);
+    return [...new Set(labels)].sort((a, b) => a.localeCompare(b));
+  }, [product, selectedSize]);
+
+  const effectiveStock = product?.useVariants
+    ? (selectedVariant?.stock ?? 0)
+    : (product?.stock ?? 0);
+
+  useEffect(() => {
+    if (!product?.useVariants || !product.variants?.length) {
+      setSelectedSize("");
+      setSelectedColor("");
+      return;
+    }
+    if (!product.showSizeSelector && !product.showColorSelector) {
+      setSelectedSize("");
+      setSelectedColor("");
+      setQuantity(1);
+      return;
+    }
+    const first = product.variants.find((v) => v.stock > 0) ?? product.variants[0];
+    if (!first) return;
+    setSelectedSize(product.showSizeSelector ? first.sizeLabel : "");
+    setSelectedColor(product.showColorSelector ? first.colorLabel : "");
+    setQuantity(1);
+  }, [
+    product?.id,
+    product?.slug,
+    product?.useVariants,
+    product?.variants,
+    product?.showSizeSelector,
+    product?.showColorSelector,
+  ]);
+
+  useEffect(() => {
+    if (!product?.useVariants || !product.showColorSelector || !product.variants?.length) return;
+    const ss = product.showSizeSelector ? selectedSize : "";
+    const ok = product.variants.some(
+      (v) => v.sizeLabel === ss && v.colorLabel === selectedColor && v.stock > 0
+    );
+    if (ok) return;
+    const next = product.variants.find((v) => v.sizeLabel === ss && v.stock > 0);
+    if (next) setSelectedColor(next.colorLabel);
+  }, [product, selectedSize, selectedColor]);
 
   useEffect(() => {
     if (!slug) {
@@ -251,6 +330,10 @@ export default function ProductPage() {
               : null,
           videos: Array.isArray(productData.videos) ? (productData.videos as Product["videos"]) : [],
           images: Array.isArray(productData.images) ? (productData.images as Product["images"]) : [],
+          useVariants: Boolean(productData.useVariants),
+          showSizeSelector: Boolean(productData.showSizeSelector),
+          showColorSelector: Boolean(productData.showColorSelector),
+          variants: Array.isArray(productData.variants) ? (productData.variants as ProductVariant[]) : [],
         };
         setProduct(normalized);
 
@@ -552,6 +635,14 @@ export default function ProductPage() {
       : 0;
 
   function handleAddToCart() {
+    if (product!.useVariants && (!selectedVariant || selectedVariant.stock < 1)) return;
+    const vLabel =
+      product!.useVariants && selectedVariant
+        ? formatVariantLabel(selectedVariant.sizeLabel, selectedVariant.colorLabel, {
+            showSize: Boolean(product!.showSizeSelector),
+            showColor: Boolean(product!.showColorSelector),
+          })
+        : undefined;
     addItem({
       productId: product!.id,
       name: product!.name,
@@ -559,6 +650,8 @@ export default function ProductPage() {
       quantity,
       image: product!.images[0]?.url,
       slug: product!.slug,
+      variantId: product!.useVariants ? selectedVariant?.id : undefined,
+      variantLabel: vLabel || undefined,
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -768,12 +861,82 @@ export default function ProductPage() {
                     </div>
                   </div>
 
+                  {product.useVariants && (product.showSizeSelector || product.showColorSelector) && (
+                    <div className="mb-4 space-y-3">
+                      {product.showSizeSelector && sizeOptions.length > 0 && (
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-gray-700">Talle</p>
+                          <div className="flex flex-wrap gap-2">
+                            {sizeOptions.map((sz) => {
+                              const has = product.variants!.some((v) => v.sizeLabel === sz && v.stock > 0);
+                              const active = selectedSize === sz;
+                              return (
+                                <button
+                                  key={sz || "u"}
+                                  type="button"
+                                  disabled={!has}
+                                  onClick={() => {
+                                    setSelectedSize(sz);
+                                    setQuantity(1);
+                                  }}
+                                  className={`min-h-[40px] min-w-[40px] rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                                    active
+                                      ? "border-[#0f3bff] bg-[#e6f0ff] text-[#0f3bff]"
+                                      : "border-gray-200 bg-white text-gray-800"
+                                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                                >
+                                  {sz || "Única"}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {product.showColorSelector && colorOptions.length > 0 && (
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-gray-700">Color</p>
+                          <div className="flex flex-wrap gap-2">
+                            {colorOptions.map((c) => {
+                              const ss = product.showSizeSelector ? selectedSize : "";
+                              const has = product.variants!.some(
+                                (v) => v.sizeLabel === ss && v.colorLabel === c && v.stock > 0
+                              );
+                              const active = selectedColor === c;
+                              return (
+                                <button
+                                  key={c || "default"}
+                                  type="button"
+                                  disabled={!has}
+                                  onClick={() => {
+                                    setSelectedColor(c);
+                                    setQuantity(1);
+                                  }}
+                                  className={`min-h-[40px] rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                                    active
+                                      ? "border-[#0f3bff] bg-[#e6f0ff] text-[#0f3bff]"
+                                      : "border-gray-200 bg-white text-gray-800"
+                                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                                >
+                                  {c || "Único"}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Stock */}
                   <div className="mb-4">
-                    <p className={`text-sm ${product.stock > 5 ? "text-green-600" : "text-orange-600"}`}>
-                      {product.stock > 0
-                        ? `Stock disponible (${product.stock} unidades)`
-                        : "Sin stock"}
+                    <p
+                      className={`text-sm ${effectiveStock > 5 ? "text-green-600" : effectiveStock > 0 ? "text-orange-600" : "text-red-600"}`}
+                    >
+                      {product.useVariants && (!selectedVariant || selectedVariant.stock < 1)
+                        ? "Elegí una opción disponible"
+                        : effectiveStock > 0
+                          ? `Stock disponible (${effectiveStock} unidades)`
+                          : "Sin stock"}
                     </p>
                   </div>
 
@@ -782,6 +945,7 @@ export default function ProductPage() {
                     <label className="mb-2 block text-sm text-gray-600">Cantidad:</label>
                     <div className="flex items-center gap-2">
                       <button
+                        type="button"
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                         className="flex h-8 w-8 items-center justify-center rounded border border-gray-300 hover:bg-gray-50"
                       >
@@ -789,13 +953,14 @@ export default function ProductPage() {
                       </button>
                       <span className="w-12 text-center font-semibold">{quantity}</span>
                       <button
-                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                        type="button"
+                        onClick={() => setQuantity(Math.min(effectiveStock, quantity + 1))}
                         className="flex h-8 w-8 items-center justify-center rounded border border-gray-300 hover:bg-gray-50"
                       >
                         +
                       </button>
                       <span className="ml-2 text-sm text-gray-500">
-                        ({product.stock} disponibles)
+                        ({effectiveStock} disponibles)
                       </span>
                     </div>
                   </div>
@@ -803,18 +968,26 @@ export default function ProductPage() {
                   {/* Botones */}
                   <div className="space-y-3">
                     <button
+                      type="button"
                       onClick={() => {
                         handleAddToCart();
                         router.push("/carrito");
                       }}
-                      disabled={product.stock === 0}
+                      disabled={
+                        effectiveStock === 0 ||
+                        (product.useVariants && (!selectedVariant || selectedVariant.stock < 1))
+                      }
                       className="w-full rounded-lg bg-[#0f3bff] py-3.5 font-semibold text-white transition hover:bg-[#0d32cc] disabled:bg-gray-300"
                     >
                       Comprar ahora
                     </button>
                     <button
+                      type="button"
                       onClick={handleAddToCart}
-                      disabled={product.stock === 0}
+                      disabled={
+                        effectiveStock === 0 ||
+                        (product.useVariants && (!selectedVariant || selectedVariant.stock < 1))
+                      }
                       className="w-full rounded-lg bg-[#e6f0ff] py-3.5 font-semibold text-[#0f3bff] transition hover:bg-[#d9e8ff] disabled:bg-gray-100 disabled:text-gray-400"
                     >
                       {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}

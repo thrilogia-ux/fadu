@@ -38,7 +38,12 @@ export type OrderForEmail = {
   pickupCode: string | null;
   total: number;
   paymentMethod: string | null;
-  items: { quantity: number; price: number; product: { name: string } }[];
+  items: {
+    quantity: number;
+    price: number;
+    product: { name: string };
+    variantNote?: string | null;
+  }[];
   user: { email: string | null; name: string | null };
 };
 
@@ -66,7 +71,10 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
   }
 
   const itemsList = order.items
-    .map((i) => `• ${i.product.name} x${i.quantity} — $${(Number(i.price) * i.quantity).toLocaleString("es-AR")}`)
+    .map((i) => {
+      const extra = i.variantNote ? ` (${i.variantNote})` : "";
+      return `• ${i.product.name}${extra} x${i.quantity} — $${(Number(i.price) * i.quantity).toLocaleString("es-AR")}`;
+    })
     .join("\n");
 
   const html = `

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
+import { formatVariantLabel } from "@/lib/cart-line";
 
 interface Order {
   id: string;
@@ -13,7 +14,12 @@ interface Order {
   status: string;
   total: number;
   createdAt: string;
-  items: { product: { name: string }; quantity: number }[];
+  items: {
+    product: { name: string };
+    quantity: number;
+    variantSizeLabel?: string | null;
+    variantColorLabel?: string | null;
+  }[];
 }
 
 const statusLabels: Record<string, string> = {
@@ -120,7 +126,19 @@ export default function MisPedidosPage() {
                         })}
                       </p>
                       <p className="mt-2 line-clamp-2 text-sm text-gray-700">
-                        {order.items.map((i) => `${i.product.name} (x${i.quantity})`).join(", ")}
+                        {order.items
+                          .map((i) => {
+                            const v = formatVariantLabel(
+                              i.variantSizeLabel ?? "",
+                              i.variantColorLabel ?? "",
+                              {
+                                showSize: Boolean(i.variantSizeLabel?.trim()),
+                                showColor: Boolean(i.variantColorLabel?.trim()),
+                              }
+                            );
+                            return `${i.product.name}${v ? ` (${v})` : ""} (x${i.quantity})`;
+                          })
+                          .join(", ")}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">

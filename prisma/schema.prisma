@@ -116,6 +116,10 @@ model Product {
   compareAtPrice Decimal? @map("compare_at_price") @db.Decimal(10, 2) // precio tachado / oferta
   stock          Int      @default(0)
   sku            String?  @unique
+  // Si true, el checkout exige variantId y el stock viene de ProductVariant
+  useVariants       Boolean  @default(false) @map("use_variants")
+  showSizeSelector  Boolean  @default(false) @map("show_size_selector")
+  showColorSelector Boolean  @default(false) @map("show_color_selector")
   featured       Boolean  @default(false)
   featuredOrder  Int?     @map("featured_order")  // orden en sección Destacados del home
   offersOrder    Int?     @map("offers_order")    // orden en sección Ofertas del home
@@ -123,14 +127,33 @@ model Product {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  category     Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category     Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   images       ProductImage[]
   videos       ProductVideo[]
+  variants     ProductVariant[]
   orderItems   OrderItem[]
   cartItems    CartItem[]
   favorites    Favorite[]
   questions    ProductQuestion[]
   reviews      ProductReview[]
+}
+
+// Variante: talle y/o color; sizeLabel/colorLabel vacíos = sin esa dimensión
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String   @map("product_id")
+  sizeLabel  String   @default("") @map("size_label")
+  colorLabel String   @default("") @map("color_label")
+  stock      Int      @default(0)
+  sku        String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@unique([productId, sizeLabel, colorLabel])
+  @@map("product_variants")
 }
 
 model ProductImage {
@@ -226,11 +249,16 @@ model OrderItem {
   id        String  @id @default(cuid())
   orderId   String  @map("order_id")
   productId String  @map("product_id")
+  variantId String? @map("variant_id")
+  // Copia al vender por si se borra la variante
+  variantSizeLabel  String? @map("variant_size_label")
+  variantColorLabel String? @map("variant_color_label")
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order   Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant?  @relation(fields: [variantId], references: [id], onDelete: SetNull)
   @@map("order_items")
 }
 

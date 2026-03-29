@@ -25,6 +25,7 @@ async function main() {
     { name: "Decoración", slug: "decoracion", order: 3 },
     { name: "Diseño", slug: "diseno", order: 4 },
     { name: "Accesorios", slug: "accesorios", order: 5 },
+    { name: "Indumentaria", slug: "indumentaria", order: 6 },
   ];
 
   for (const c of categories) {

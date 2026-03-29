@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
+import { formatVariantLabel } from "@/lib/cart-line";
 
 interface Order {
   id: string;
@@ -13,7 +14,13 @@ interface Order {
   paymentMethod: string;
   total: number;
   createdAt: string;
-  items: { product: { name: string }; quantity: number; price: number }[];
+  items: {
+    product: { name: string };
+    quantity: number;
+    price: number;
+    variantSizeLabel?: string | null;
+    variantColorLabel?: string | null;
+  }[];
 }
 
 export default function PedidoPage() {
@@ -171,16 +178,27 @@ export default function PedidoPage() {
             <div className="mb-6">
               <h3 className="mb-3 text-sm font-semibold text-gray-600">Productos</h3>
               <div className="space-y-2">
-                {order.items.map((item, idx) => (
-                  <div key={idx} className="flex min-w-0 justify-between gap-2 text-sm">
-                    <span className="min-w-0 truncate">
-                      {item.product.name} x{item.quantity}
-                    </span>
-                    <span className="font-semibold shrink-0">
-                      ${(Number(item.price) * item.quantity).toLocaleString("es-AR")}
-                    </span>
-                  </div>
-                ))}
+                {order.items.map((item, idx) => {
+                  const vNote = formatVariantLabel(
+                    item.variantSizeLabel ?? "",
+                    item.variantColorLabel ?? "",
+                    {
+                      showSize: Boolean(item.variantSizeLabel?.trim()),
+                      showColor: Boolean(item.variantColorLabel?.trim()),
+                    }
+                  );
+                  return (
+                    <div key={idx} className="flex min-w-0 justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate">
+                        {item.product.name}
+                        {vNote ? ` (${vNote})` : ""} x{item.quantity}
+                      </span>
+                      <span className="font-semibold shrink-0">
+                        ${(Number(item.price) * item.quantity).toLocaleString("es-AR")}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

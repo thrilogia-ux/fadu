@@ -2,9 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { cartLineKey } from "@/lib/cart-line";
 
-interface CartItem {
+export interface CartItem {
   productId: string;
+  variantId?: string | null;
+  /** Texto "Talle M · Negro" para el usuario */
+  variantLabel?: string;
   name: string;
   price: number;
   quantity: number;
@@ -15,8 +19,8 @@ interface CartItem {
 interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (lineKey: string) => void;
+  updateQuantity: (lineKey: string, quantity: number) => void;
   clearCart: () => void;
   itemCount: number;
   total: number;
@@ -24,37 +28,55 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function normalizeItems(parsed: unknown): CartItem[] {
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .filter((x) => x && typeof x === "object" && typeof (x as CartItem).productId === "string")
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      return {
+        productId: String(o.productId),
+        variantId: (o.variantId as string | null | undefined) ?? null,
+        variantLabel: typeof o.variantLabel === "string" ? o.variantLabel : undefined,
+        name: String(o.name ?? ""),
+        price: Number(o.price) || 0,
+        quantity: Math.max(1, Math.floor(Number(o.quantity) || 1)),
+        image: typeof o.image === "string" ? o.image : undefined,
+        slug: String(o.slug ?? ""),
+      };
+    });
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  // Cargar carrito desde localStorage al montar (invitado) o desde API (logueado)
   useEffect(() => {
     if (loaded) return;
-    
+
     if (session?.user) {
-      // TODO: Cargar desde API /api/cart
       const savedCart = localStorage.getItem("cart");
       if (savedCart) {
         try {
-          const parsed = JSON.parse(savedCart);
-          setItems(parsed);
-          // TODO: Sincronizar con backend
-        } catch {}
+          setItems(normalizeItems(JSON.parse(savedCart)));
+        } catch {
+          setItems([]);
+        }
       }
     } else {
       const savedCart = localStorage.getItem("cart");
       if (savedCart) {
         try {
-          setItems(JSON.parse(savedCart));
-        } catch {}
+          setItems(normalizeItems(JSON.parse(savedCart)));
+        } catch {
+          setItems([]);
+        }
       }
     }
     setLoaded(true);
   }, [session, loaded]);
 
-  // Guardar en localStorage cuando cambie
   useEffect(() => {
     if (loaded) {
       localStorage.setItem("cart", JSON.stringify(items));
@@ -62,30 +84,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, loaded]);
 
   function addItem(item: CartItem) {
+    const key = cartLineKey(item);
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const existing = prev.find((i) => cartLineKey(i) === key);
       if (existing) {
         return prev.map((i) =>
-          i.productId === item.productId
-            ? { ...i, quantity: i.quantity + item.quantity }
-            : i
+          cartLineKey(i) === key ? { ...i, quantity: i.quantity + item.quantity } : i
         );
       }
       return [...prev, item];
     });
   }
 
-  function removeItem(productId: string) {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  function removeItem(lineKey: string) {
+    setItems((prev) => prev.filter((i) => cartLineKey(i) !== lineKey));
   }
 
-  function updateQuantity(productId: string, quantity: number) {
+  function updateQuantity(lineKey: string, quantity: number) {
     if (quantity <= 0) {
-      removeItem(productId);
+      removeItem(lineKey);
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+      prev.map((i) => (cartLineKey(i) === lineKey ? { ...i, quantity } : i))
     );
   }
 

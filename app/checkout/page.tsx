@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useCart } from "@/lib/cart-context";
+import { cartLineKey } from "@/lib/cart-line";
 import Link from "next/link";
 
 export default function CheckoutPage() {
@@ -50,6 +51,7 @@ export default function CheckoutPage() {
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
+            variantId: item.variantId ?? undefined,
           })),
           paymentMethod,
           phone: phone.trim() || null,
@@ -242,9 +244,10 @@ export default function CheckoutPage() {
 
                   <div className="mb-4 space-y-2 border-b border-black/8 pb-4">
                     {items.map((item) => (
-                      <div key={item.productId} className="flex min-w-0 justify-between gap-2 text-sm">
+                      <div key={cartLineKey(item)} className="flex min-w-0 justify-between gap-2 text-sm">
                         <span className="min-w-0 truncate text-gray-600">
-                          {item.name} x{item.quantity}
+                          {item.name}
+                          {item.variantLabel ? ` (${item.variantLabel})` : ""} x{item.quantity}
                         </span>
                         <span className="font-semibold shrink-0">
                           ${(item.price * item.quantity).toLocaleString("es-AR")}

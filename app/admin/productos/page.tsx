@@ -5,10 +5,26 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { PRESET_SIZE_LABELS } from "@/lib/product-variant-presets";
 
 interface Category {
   id: string;
   name: string;
+}
+
+interface ProductVariantRow {
+  id: string;
+  sizeLabel: string;
+  colorLabel: string;
+  stock: number;
+  sku: string | null;
+}
+
+interface VariantFormRow {
+  sizeLabel: string;
+  colorLabel: string;
+  stock: string;
+  sku: string;
 }
 
 interface Product {
@@ -24,6 +40,10 @@ interface Product {
   category: { id: string; name: string };
   featured: boolean;
   active: boolean;
+  useVariants?: boolean;
+  showSizeSelector?: boolean;
+  showColorSelector?: boolean;
+  variants?: ProductVariantRow[];
   images: { id: string; url: string; order: number; isPrimary: boolean }[];
   videos: { id: string; url: string | null }[];
 }
@@ -49,6 +69,10 @@ export default function AdminProductosPage() {
     categoryId: "",
     featured: false,
     active: true,
+    useVariants: false,
+    showSizeSelector: false,
+    showColorSelector: false,
+    variants: [{ sizeLabel: "", colorLabel: "", stock: "0", sku: "" }] as VariantFormRow[],
     images: [{ url: "", isPrimary: true }] as { url: string; isPrimary: boolean }[],
     videos: [""] as string[],
   });
@@ -88,6 +112,10 @@ export default function AdminProductosPage() {
       categoryId: categories[0]?.id || "",
       featured: false,
       active: true,
+      useVariants: false,
+      showSizeSelector: false,
+      showColorSelector: false,
+      variants: [{ sizeLabel: "", colorLabel: "", stock: "0", sku: "" }],
       images: [{ url: "", isPrimary: true }],
       videos: [""],
     });
@@ -106,6 +134,18 @@ export default function AdminProductosPage() {
       categoryId: product.categoryId,
       featured: product.featured,
       active: product.active,
+      useVariants: product.useVariants ?? false,
+      showSizeSelector: product.showSizeSelector ?? false,
+      showColorSelector: product.showColorSelector ?? false,
+      variants:
+        product.variants && product.variants.length
+          ? product.variants.map((v) => ({
+              sizeLabel: v.sizeLabel,
+              colorLabel: v.colorLabel,
+              stock: String(v.stock),
+              sku: v.sku || "",
+            }))
+          : [{ sizeLabel: "", colorLabel: "", stock: "0", sku: "" }],
       images: product.images.length 
         ? product.images.map((i) => ({ url: i.url, isPrimary: i.isPrimary })) 
         : [{ url: "", isPrimary: true }],
@@ -191,6 +231,48 @@ export default function AdminProductosPage() {
     setForm({ ...form, videos: updated.length ? updated : [""] });
   }
 
+  function addVariantRow() {
+    setForm((f) => ({
+      ...f,
+      variants: [...f.variants, { sizeLabel: "", colorLabel: "", stock: "0", sku: "" }],
+    }));
+  }
+
+  function removeVariantRow(idx: number) {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.length <= 1 ? f.variants : f.variants.filter((_, j) => j !== idx),
+    }));
+  }
+
+  function updateVariantRow(idx: number, field: keyof VariantFormRow, value: string) {
+    setForm((f) => {
+      const next = [...f.variants];
+      next[idx] = { ...next[idx], [field]: value };
+      return { ...f, variants: next };
+    });
+  }
+
+  function fillPresetIndumentaria() {
+    const color =
+      typeof window !== "undefined"
+        ? window.prompt("Color para todas las tallas (ej. Negro)", "Negro")
+        : "Negro";
+    const c = (color || "Negro").trim() || "Negro";
+    setForm((f) => ({
+      ...f,
+      useVariants: true,
+      showSizeSelector: true,
+      showColorSelector: true,
+      variants: PRESET_SIZE_LABELS.map((sz) => ({
+        sizeLabel: sz,
+        colorLabel: c,
+        stock: "0",
+        sku: "",
+      })),
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -199,6 +281,17 @@ export default function AdminProductosPage() {
       .map((img, idx) => ({ url: img.url, isPrimary: img.isPrimary || idx === 0 }));
     
     const videos = form.videos.filter((url) => url.trim());
+
+    const variantPayload = form.useVariants
+      ? form.variants
+          .filter((v) => (parseInt(v.stock, 10) || 0) > 0 || v.sizeLabel.trim() || v.colorLabel.trim())
+          .map((v) => ({
+            sizeLabel: form.showSizeSelector ? v.sizeLabel.trim() : "",
+            colorLabel: form.showColorSelector ? v.colorLabel.trim() : "",
+            stock: parseInt(v.stock, 10) || 0,
+            sku: v.sku.trim() || null,
+          }))
+      : [];
 
     const payload = {
       name: form.name,
@@ -210,6 +303,10 @@ export default function AdminProductosPage() {
       categoryId: form.categoryId,
       featured: form.featured,
       active: form.active,
+      useVariants: form.useVariants,
+      showSizeSelector: form.showSizeSelector,
+      showColorSelector: form.showColorSelector,
+      variants: variantPayload,
       images,
       videos,
     };
@@ -374,13 +471,135 @@ export default function AdminProductosPage() {
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium">Stock</label>
+                    <label className="mb-1 block text-sm font-medium">
+                      Stock {form.useVariants ? "(total = suma variantes)" : ""}
+                    </label>
                     <input
                       type="number"
                       value={form.stock}
+                      disabled={form.useVariants}
                       onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                      className="w-full rounded-lg border border-black/20 px-4 py-2.5 outline-none focus:border-[#0f3bff]"
+                      className="w-full rounded-lg border border-black/20 px-4 py-2.5 outline-none focus:border-[#0f3bff] disabled:bg-gray-100"
                     />
+                  </div>
+
+                  <div className="md:col-span-2 rounded-lg border border-black/10 bg-gray-50 p-4">
+                    <h3 className="mb-3 text-sm font-semibold">Variantes (indumentaria, talles y colores)</h3>
+                    <div className="mb-3 flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.useVariants}
+                          onChange={(e) => setForm({ ...form, useVariants: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        Usar stock por variante
+                      </label>
+                      <label className={`flex items-center gap-2 text-sm ${!form.useVariants ? "opacity-40" : ""}`}>
+                        <input
+                          type="checkbox"
+                          checked={form.showSizeSelector}
+                          disabled={!form.useVariants}
+                          onChange={(e) => setForm({ ...form, showSizeSelector: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        Mostrar selector de talle (S–XXL)
+                      </label>
+                      <label className={`flex items-center gap-2 text-sm ${!form.useVariants ? "opacity-40" : ""}`}>
+                        <input
+                          type="checkbox"
+                          checked={form.showColorSelector}
+                          disabled={!form.useVariants}
+                          onChange={(e) => setForm({ ...form, showColorSelector: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        Mostrar selector de color
+                      </label>
+                    </div>
+                    <p className="mb-3 text-xs text-gray-600">
+                      Sin talle (gorras, bolsos): desactivá “Mostrar selector de talle” y dejá talle vacío en cada fila
+                      o una sola fila. Sin color: desactivá color y dejá color vacío.
+                    </p>
+                    {form.useVariants && (
+                      <>
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={fillPresetIndumentaria}
+                            className="rounded-lg bg-[#0f3bff] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0d32cc]"
+                          >
+                            Plantilla S–XXL + color
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addVariantRow}
+                            className="rounded-lg border border-black/20 px-3 py-1.5 text-xs font-medium hover:bg-white"
+                          >
+                            + Fila variante
+                          </button>
+                        </div>
+                        <div className="max-h-56 overflow-auto rounded border border-black/10 bg-white">
+                          <table className="w-full text-left text-sm">
+                            <thead className="sticky top-0 bg-gray-100 text-xs">
+                              <tr>
+                                <th className="p-2">Talle</th>
+                                <th className="p-2">Color</th>
+                                <th className="p-2">Stock</th>
+                                <th className="p-2">SKU</th>
+                                <th className="p-2 w-8" />
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {form.variants.map((row, idx) => (
+                                <tr key={idx} className="border-t border-black/5">
+                                  <td className="p-1">
+                                    <input
+                                      value={row.sizeLabel}
+                                      onChange={(e) => updateVariantRow(idx, "sizeLabel", e.target.value)}
+                                      placeholder="S o vacío"
+                                      className="w-full min-w-[4rem] rounded border border-black/15 px-2 py-1"
+                                    />
+                                  </td>
+                                  <td className="p-1">
+                                    <input
+                                      value={row.colorLabel}
+                                      onChange={(e) => updateVariantRow(idx, "colorLabel", e.target.value)}
+                                      placeholder="Negro"
+                                      className="w-full min-w-[5rem] rounded border border-black/15 px-2 py-1"
+                                    />
+                                  </td>
+                                  <td className="p-1">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={row.stock}
+                                      onChange={(e) => updateVariantRow(idx, "stock", e.target.value)}
+                                      className="w-20 rounded border border-black/15 px-2 py-1"
+                                    />
+                                  </td>
+                                  <td className="p-1">
+                                    <input
+                                      value={row.sku}
+                                      onChange={(e) => updateVariantRow(idx, "sku", e.target.value)}
+                                      className="w-full min-w-[4rem] rounded border border-black/15 px-2 py-1"
+                                    />
+                                  </td>
+                                  <td className="p-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => removeVariantRow(idx)}
+                                      className="text-red-600 hover:underline"
+                                    >
+                                      ×
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div>

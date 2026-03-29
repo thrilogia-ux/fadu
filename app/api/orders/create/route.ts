@@ -9,6 +9,16 @@ import {
   type SendEmailResult,
 } from "@/lib/email";
 
+function variantNote(size: string | null, color: string | null): string | null {
+  const s = size?.trim();
+  const c = color?.trim();
+  if (!s && !c) return null;
+  const parts: string[] = [];
+  if (s) parts.push(`Talle ${s}`);
+  if (c) parts.push(c);
+  return parts.join(" · ");
+}
+
 async function sendOrderConfirmationBestEffort(orderId: string): Promise<SendEmailResult> {
   try {
     const fullOrder = await prisma.order.findUnique({
@@ -28,6 +38,7 @@ async function sendOrderConfirmationBestEffort(orderId: string): Promise<SendEma
         quantity: i.quantity,
         price: Number(i.price),
         product: i.product,
+        variantNote: variantNote(i.variantSizeLabel ?? null, i.variantColorLabel ?? null),
       })),
     };
     const result = await sendOrderConfirmation(orderForEmail);
@@ -40,6 +51,12 @@ async function sendOrderConfirmationBestEffort(orderId: string): Promise<SendEma
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+type CartLine = {
+  productId: string;
+  quantity: number;
+  variantId?: string | null;
+};
 
 export async function POST(request: Request) {
   try {
@@ -60,6 +77,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
     }
 
+    const lines: CartLine[] = [];
     for (const item of items) {
       if (!item || typeof item.productId !== "string" || !item.productId.trim()) {
         return NextResponse.json({ error: "Items inválidos" }, { status: 400 });
@@ -68,6 +86,11 @@ export async function POST(request: Request) {
       if (!Number.isFinite(qty) || qty < 1 || !Number.isInteger(qty)) {
         return NextResponse.json({ error: "Cantidad inválida en un producto" }, { status: 400 });
       }
+      const variantId =
+        typeof item.variantId === "string" && item.variantId.trim()
+          ? item.variantId.trim()
+          : null;
+      lines.push({ productId: item.productId.trim(), quantity: qty, variantId });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -81,10 +104,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const productIds = [...new Set(items.map((i: { productId: string }) => i.productId))];
+    const productIds = [...new Set(lines.map((l) => l.productId))];
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
-      select: { id: true, price: true, active: true, stock: true },
+      select: {
+        id: true,
+        price: true,
+        active: true,
+        stock: true,
+        useVariants: true,
+      },
     });
     if (products.length !== productIds.length) {
       return NextResponse.json(
@@ -98,24 +127,75 @@ export async function POST(request: Request) {
 
     const productById = new Map(products.map((p) => [p.id, p]));
 
-    const qtyByProduct = new Map<string, number>();
-    for (const item of items) {
-      const pid = String(item.productId).trim();
-      const q = Number(item.quantity);
-      qtyByProduct.set(pid, (qtyByProduct.get(pid) ?? 0) + q);
-    }
-    for (const [pid, needQty] of qtyByProduct) {
-      const p = productById.get(pid);
-      if (!p) {
-        return NextResponse.json({ error: "Items inválidos" }, { status: 400 });
-      }
-      if (!p.active) {
+    for (const line of lines) {
+      const p = productById.get(line.productId);
+      if (!p?.active) {
         return NextResponse.json(
           { error: "Un producto del carrito ya no está a la venta. Quitáselo e intentá de nuevo." },
           { status: 400 }
         );
       }
-      if (p.stock < needQty) {
+      if (p.useVariants && !line.variantId) {
+        return NextResponse.json(
+          { error: "Elegí talle y/o color para los productos con variantes antes de finalizar el pedido." },
+          { status: 400 }
+        );
+      }
+      if (!p.useVariants && line.variantId) {
+        return NextResponse.json({ error: "Items inválidos (variante no corresponde)." }, { status: 400 });
+      }
+    }
+
+    const variantIdsNeed = [...new Set(lines.map((l) => l.variantId).filter(Boolean) as string[])];
+    const variants =
+      variantIdsNeed.length > 0
+        ? await prisma.productVariant.findMany({
+            where: { id: { in: variantIdsNeed } },
+            select: {
+              id: true,
+              productId: true,
+              stock: true,
+              sizeLabel: true,
+              colorLabel: true,
+            },
+          })
+        : [];
+    if (variants.length !== variantIdsNeed.length) {
+      return NextResponse.json(
+        { error: "Una variante del carrito ya no existe. Actualizá el carrito e intentá de nuevo." },
+        { status: 400 }
+      );
+    }
+    const variantById = new Map(variants.map((v) => [v.id, v]));
+
+    const qtyByVariant = new Map<string, number>();
+    const qtyByProductSimple = new Map<string, number>();
+
+    for (const line of lines) {
+      const p = productById.get(line.productId)!;
+      if (p.useVariants && line.variantId) {
+        const v = variantById.get(line.variantId);
+        if (!v || v.productId !== line.productId) {
+          return NextResponse.json({ error: "Items inválidos (variante incorrecta)." }, { status: 400 });
+        }
+        qtyByVariant.set(line.variantId, (qtyByVariant.get(line.variantId) ?? 0) + line.quantity);
+      } else {
+        qtyByProductSimple.set(line.productId, (qtyByProductSimple.get(line.productId) ?? 0) + line.quantity);
+      }
+    }
+
+    for (const [vid, need] of qtyByVariant) {
+      const v = variantById.get(vid)!;
+      if (v.stock < need) {
+        return NextResponse.json(
+          { error: "No hay stock suficiente para la variante elegida. Ajustá el carrito e intentá de nuevo." },
+          { status: 400 }
+        );
+      }
+    }
+    for (const [pid, need] of qtyByProductSimple) {
+      const p = productById.get(pid)!;
+      if (p.stock < need) {
         return NextResponse.json(
           { error: "No hay stock suficiente para uno de los productos. Ajustá cantidades e intentá de nuevo." },
           { status: 400 }
@@ -124,20 +204,38 @@ export async function POST(request: Request) {
     }
 
     let total = 0;
-    const lineCreates: { productId: string; quantity: number; price: Prisma.Decimal }[] = [];
-    for (const item of items) {
-      const qty = Number(item.quantity);
-      const p = productById.get(item.productId);
-      if (!p) {
-        return NextResponse.json({ error: "Items inválidos" }, { status: 400 });
-      }
-      const lineTotal = Number(p.price) * qty;
-      total += lineTotal;
+    const lineCreates: Prisma.OrderItemCreateWithoutOrderInput[] = [];
+    for (const line of lines) {
+      const p = productById.get(line.productId)!;
+      const qty = line.quantity;
+      total += Number(p.price) * qty;
+      const v = line.variantId ? variantById.get(line.variantId) : undefined;
       lineCreates.push({
-        productId: item.productId,
+        product: { connect: { id: line.productId } },
         quantity: qty,
         price: p.price,
+        ...(v
+          ? {
+              variant: { connect: { id: v.id } },
+              variantSizeLabel: v.sizeLabel || null,
+              variantColorLabel: v.colorLabel || null,
+            }
+          : {
+              variantSizeLabel: null,
+              variantColorLabel: null,
+            }),
       });
+    }
+
+    const decVariant = new Map<string, number>();
+    const decProduct = new Map<string, number>();
+    for (const line of lines) {
+      const p = productById.get(line.productId)!;
+      if (p.useVariants && line.variantId) {
+        decVariant.set(line.variantId, (decVariant.get(line.variantId) ?? 0) + line.quantity);
+      } else {
+        decProduct.set(line.productId, (decProduct.get(line.productId) ?? 0) + line.quantity);
+      }
     }
 
     const initialStatus = paymentMethod === "test" ? "ready_for_pickup" : "pending_payment";
@@ -154,19 +252,35 @@ export async function POST(request: Request) {
     const orderCountBase = await prisma.order.count();
     let order: Awaited<ReturnType<typeof prisma.order.create>> | null = null;
     let lastCreateError: unknown;
+
     for (let attempt = 0; attempt < 12; attempt++) {
       const pickupCode = generatePickupCode(orderCountBase + 1 + attempt);
       try {
-        order = await prisma.order.create({
-          data: {
-            userId: session.user.id,
-            status: initialStatus,
-            paymentMethod,
-            total,
-            pickupCode,
-            items: { create: lineCreates },
-            history: { create: historyEntries },
-          },
+        order = await prisma.$transaction(async (tx) => {
+          const o = await tx.order.create({
+            data: {
+              userId: session.user.id,
+              status: initialStatus,
+              paymentMethod,
+              total,
+              pickupCode,
+              items: { create: lineCreates },
+              history: { create: historyEntries },
+            },
+          });
+          for (const [vid, q] of decVariant) {
+            await tx.productVariant.update({
+              where: { id: vid },
+              data: { stock: { decrement: q } },
+            });
+          }
+          for (const [pid, q] of decProduct) {
+            await tx.product.update({
+              where: { id: pid },
+              data: { stock: { decrement: q } },
+            });
+          }
+          return o;
         });
         break;
       } catch (e) {
@@ -177,6 +291,7 @@ export async function POST(request: Request) {
         throw e;
       }
     }
+
     if (!order) {
       console.error("[orders/create] pickup code retry exhausted:", lastCreateError);
       return NextResponse.json(
@@ -185,7 +300,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Pago de prueba: enviar emails y retornar
     if (paymentMethod === "test") {
       const fullOrder = await prisma.order.findUnique({
         where: { id: order.id },
@@ -208,6 +322,7 @@ export async function POST(request: Request) {
             quantity: i.quantity,
             price: Number(i.price),
             product: i.product,
+            variantNote: variantNote(i.variantSizeLabel ?? null, i.variantColorLabel ?? null),
           })),
         };
         const conf = await sendOrderConfirmation(orderForEmail);
@@ -231,11 +346,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // Si es Mercado Pago, crear preferencia
     if (paymentMethod === "mercadopago") {
       const conf = await sendOrderConfirmationBestEffort(order.id);
-      // TODO: Integrar SDK de Mercado Pago
-      // Por ahora retornamos URL de ejemplo
       return NextResponse.json({
         orderId: order.id,
         initPoint: `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=DEMO`,
@@ -247,7 +359,6 @@ export async function POST(request: Request) {
 
     const conf = await sendOrderConfirmationBestEffort(order.id);
 
-    // Si es transferencia, retornar datos
     return NextResponse.json({
       orderId: order.id,
       pickupCode: order.pickupCode,
