@@ -3,8 +3,20 @@ import { generateQRDataURL } from "./qr";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
-// Si está definido, todos los emails se envían a esta dirección (útil para testeo)
-const TEST_TO = process.env.RESEND_TEST_TO;
+
+/**
+ * Solo en desarrollo (`next dev`): si RESEND_TEST_TO tiene valor, todos los mails van ahí.
+ * En producción (NODE_ENV=production, p. ej. Vercel) se ignora siempre: los pedidos llegan al email del cliente.
+ */
+function resendTestOverride(): string | undefined {
+  if (process.env.NODE_ENV === "production") {
+    return undefined;
+  }
+  const t = process.env.RESEND_TEST_TO?.trim();
+  return t && t.length > 0 ? t : undefined;
+}
+
+const TEST_TO = resendTestOverride();
 
 function publicShopUrl(): string {
   const u = process.env.NEXT_PUBLIC_SITE_URL?.trim();
