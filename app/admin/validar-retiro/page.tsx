@@ -1,10 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import { orderItemProductName } from "@/lib/order-item-display";
+
+const QR_REGION_ID = "qr-reader";
+
+function pickRearCameraId(devices: { id: string; label: string }[]): string | undefined {
+  const rear = devices.find((d) => /back|rear|trasera|environment|wide|ultra/i.test(d.label));
+  if (rear) return rear.id;
+  if (devices.length >= 2) return devices[devices.length - 1].id;
+  return devices[0]?.id;
+}
 
 interface Order {
   id: string;
@@ -28,6 +37,8 @@ export default function ValidarRetiroPage() {
   const [scanning, setScanning] = useState(false);
   const [pickedUpBy, setPickedUpBy] = useState("");
   const [pickedUpDni, setPickedUpDni] = useState("");
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scanHandledRef = useRef(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -37,7 +48,7 @@ export default function ValidarRetiroPage() {
     }
   }, [session, status, router]);
 
-  async function validateCode(code: string) {
+  const validateCode = useCallback(async (code: string) => {
     setError("");
     setLoading(true);
     try {
@@ -58,7 +69,7 @@ export default function ValidarRetiroPage() {
       setError("Error de conexión");
     }
     setLoading(false);
-  }
+  }, []);
 
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,27 +79,131 @@ export default function ValidarRetiroPage() {
   }
 
   function startScanning() {
-    setScanning(true);
+    scanHandledRef.current = false;
     setError("");
-    
-    setTimeout(() => {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
-      );
+    setScanning(true);
+  }
 
-      scanner.render(
-        (decodedText) => {
-          scanner.clear();
+  useEffect(() => {
+    if (!scanning) return;
+
+    let cancelled = false;
+
+    const stopScanner = async () => {
+      const instance = scannerRef.current;
+      scannerRef.current = null;
+      if (!instance) return;
+      try {
+        if (instance.isScanning) await instance.stop();
+      } catch {
+        /* ya detenido */
+      }
+      try {
+        instance.clear();
+      } catch {
+        /* */
+      }
+    };
+
+    const run = async () => {
+      await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+      if (cancelled) return;
+
+      const region = document.getElementById(QR_REGION_ID);
+      if (!region) {
+        setError("No se encontró el visor QR. Probá de nuevo.");
+        setScanning(false);
+        return;
+      }
+      region.innerHTML = "";
+
+      try {
+        const html5 = new Html5Qrcode(QR_REGION_ID, { verbose: false });
+        scannerRef.current = html5;
+
+        const scanConfig = {
+          fps: 10,
+          qrbox: (viewWidth: number, viewHeight: number) => {
+            const edge = Math.min(viewWidth, viewHeight, 320);
+            const box = Math.max(200, Math.floor(edge * 0.72));
+            return { width: box, height: box };
+          },
+        };
+
+        const onDecoded = async (decodedText: string) => {
+          if (cancelled || scanHandledRef.current) return;
+          scanHandledRef.current = true;
+          cancelled = true;
+          await stopScanner();
           setScanning(false);
-          validateCode(decodedText);
-        },
-        (errorMessage) => {
-          // Ignorar errores de escaneo continuos
+          const normalized = decodedText.trim().toUpperCase();
+          void validateCode(normalized);
+        };
+
+        const onScanError = () => {
+          /* frames sin QR: ignorar */
+        };
+
+        try {
+          await html5.start({ facingMode: { ideal: "environment" } }, scanConfig, onDecoded, onScanError);
+        } catch (firstErr) {
+          console.warn("[QR] ideal environment falló, probando cámara por id:", firstErr);
+          try {
+            if (html5.isScanning) await html5.stop();
+          } catch {
+            /* */
+          }
+          try {
+            html5.clear();
+          } catch {
+            /* */
+          }
+          region.innerHTML = "";
+          const cameras = await Html5Qrcode.getCameras();
+          const camId = pickRearCameraId(cameras);
+          if (!camId) throw new Error("No se detectó ninguna cámara");
+          const html5b = new Html5Qrcode(QR_REGION_ID, { verbose: false });
+          scannerRef.current = html5b;
+          await html5b.start(camId, scanConfig, onDecoded, onScanError);
         }
-      );
-    }, 100);
+      } catch (e) {
+        console.error("[QR] arranque cámara:", e);
+        await stopScanner();
+        const msg =
+          e instanceof Error ? e.message : "Error desconocido";
+        setError(
+          `No se pudo usar la cámara (${msg}). En el teléfono: permití acceso a la cámara, usá HTTPS, y si el navegador ofrece elegir cámara, elegí la trasera.`
+        );
+        setScanning(false);
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+      void stopScanner();
+    };
+  }, [scanning, validateCode]);
+
+  async function cancelScanning() {
+    const instance = scannerRef.current;
+    scannerRef.current = null;
+    if (instance) {
+      try {
+        if (instance.isScanning) await instance.stop();
+      } catch {
+        /* */
+      }
+      try {
+        instance.clear();
+      } catch {
+        /* */
+      }
+    }
+    const region = document.getElementById(QR_REGION_ID);
+    if (region) region.innerHTML = "";
+    setScanning(false);
   }
 
   async function completePickup() {
@@ -174,13 +289,13 @@ export default function ValidarRetiroPage() {
         {/* Lector QR */}
         {scanning && (
           <div className="mb-6 rounded-lg border border-black/10 bg-white p-6">
-            <div id="qr-reader" className="w-full"></div>
+            <p className="mb-3 text-center text-sm text-gray-600">
+              Usá la <strong>cámara trasera</strong> para enfocar el código. Si el navegador pide permiso, aceptalo.
+            </p>
+            <div id={QR_REGION_ID} className="w-full overflow-hidden rounded-lg bg-black/5" />
             <button
-              onClick={() => {
-                setScanning(false);
-                const reader = document.getElementById("qr-reader");
-                if (reader) reader.innerHTML = "";
-              }}
+              type="button"
+              onClick={() => void cancelScanning()}
               className="mt-4 w-full rounded-lg border border-gray-300 py-2 text-sm hover:bg-gray-50"
             >
               Cancelar
