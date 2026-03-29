@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
@@ -152,6 +153,17 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting product:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2003") {
+        return NextResponse.json(
+          {
+            error:
+              "No se puede eliminar: hay datos vinculados que impiden el borrado. Probá desactivar el producto.",
+          },
+          { status: 409 }
+        );
+      }
+    }
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

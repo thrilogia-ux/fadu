@@ -38,6 +38,7 @@ async function sendOrderConfirmationBestEffort(orderId: string): Promise<SendEma
         quantity: i.quantity,
         price: Number(i.price),
         product: i.product,
+        productNameSnapshot: i.productNameSnapshot,
         variantNote: variantNote(i.variantSizeLabel ?? null, i.variantColorLabel ?? null),
       })),
     };
@@ -109,6 +110,7 @@ export async function POST(request: Request) {
       where: { id: { in: productIds } },
       select: {
         id: true,
+        name: true,
         price: true,
         active: true,
         stock: true,
@@ -212,6 +214,7 @@ export async function POST(request: Request) {
       const v = line.variantId ? variantById.get(line.variantId) : undefined;
       lineCreates.push({
         product: { connect: { id: line.productId } },
+        productNameSnapshot: p.name,
         quantity: qty,
         price: p.price,
         ...(v
@@ -322,6 +325,7 @@ export async function POST(request: Request) {
             quantity: i.quantity,
             price: Number(i.price),
             product: i.product,
+            productNameSnapshot: i.productNameSnapshot,
             variantNote: variantNote(i.variantSizeLabel ?? null, i.variantColorLabel ?? null),
           })),
         };

@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { formatVariantLabel } from "@/lib/cart-line";
+import { orderItemProductName } from "@/lib/order-item-display";
 
 interface Order {
   id: string;
@@ -15,7 +16,8 @@ interface Order {
   total: number;
   createdAt: string;
   items: {
-    product: { name: string };
+    product: { name: string } | null;
+    productNameSnapshot?: string | null;
     quantity: number;
     variantSizeLabel?: string | null;
     variantColorLabel?: string | null;
@@ -136,7 +138,7 @@ export default function MisPedidosPage() {
                                 showColor: Boolean(i.variantColorLabel?.trim()),
                               }
                             );
-                            return `${i.product.name}${v ? ` (${v})` : ""} (x${i.quantity})`;
+                            return `${orderItemProductName(i)}${v ? ` (${v})` : ""} (x${i.quantity})`;
                           })
                           .join(", ")}
                       </p>

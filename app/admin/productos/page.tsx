@@ -351,6 +351,9 @@ export default function AdminProductosPage() {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       if (res.ok) {
         setProducts(products.filter((p) => p.id !== id));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(typeof data.error === "string" ? data.error : "No se pudo eliminar el producto");
       }
     } catch {
       alert("Error al eliminar");

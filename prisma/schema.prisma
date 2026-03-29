@@ -248,7 +248,9 @@ model Order {
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String  @map("order_id")
-  productId String  @map("product_id")
+  // Nullable para permitir borrar el producto; el nombre queda en productNameSnapshot
+  productId String? @map("product_id")
+  productNameSnapshot String? @map("product_name_snapshot")
   variantId String? @map("variant_id")
   // Copia al vender por si se borra la variante
   variantSizeLabel  String? @map("variant_size_label")
@@ -257,7 +259,7 @@ model OrderItem {
   price     Decimal @db.Decimal(10, 2)
 
   order   Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  product Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
   variant ProductVariant?  @relation(fields: [variantId], references: [id], onDelete: SetNull)
   @@map("order_items")
 }

@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { generateQRBuffer } from "./qr";
+import { orderItemProductName } from "./order-item-display";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
@@ -41,7 +42,8 @@ export type OrderForEmail = {
   items: {
     quantity: number;
     price: number;
-    product: { name: string };
+    product: { name: string } | null;
+    productNameSnapshot?: string | null;
     variantNote?: string | null;
   }[];
   user: { email: string | null; name: string | null };
@@ -73,7 +75,8 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
   const itemsList = order.items
     .map((i) => {
       const extra = i.variantNote ? ` (${i.variantNote})` : "";
-      return `• ${i.product.name}${extra} x${i.quantity} — $${(Number(i.price) * i.quantity).toLocaleString("es-AR")}`;
+      const nm = orderItemProductName(i);
+      return `• ${nm}${extra} x${i.quantity} — $${(Number(i.price) * i.quantity).toLocaleString("es-AR")}`;
     })
     .join("\n");
 

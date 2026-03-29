@@ -4,13 +4,18 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { orderItemProductName } from "@/lib/order-item-display";
 
 interface Order {
   id: string;
   pickupCode: string;
   total: number;
   user: { name: string | null; email: string };
-  items: { product: { name: string }; quantity: number }[];
+  items: {
+    product: { name: string } | null;
+    productNameSnapshot?: string | null;
+    quantity: number;
+  }[];
 }
 
 export default function ValidarRetiroPage() {
@@ -213,7 +218,9 @@ export default function ValidarRetiroPage() {
               <p className="text-sm text-gray-600 mb-2">Productos</p>
               {order.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between py-1">
-                  <span>{item.product.name} x{item.quantity}</span>
+                  <span>
+                    {orderItemProductName(item)} x{item.quantity}
+                  </span>
                 </div>
               ))}
             </div>

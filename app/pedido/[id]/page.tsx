@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { formatVariantLabel } from "@/lib/cart-line";
+import { orderItemProductName } from "@/lib/order-item-display";
 
 interface Order {
   id: string;
@@ -15,7 +16,8 @@ interface Order {
   total: number;
   createdAt: string;
   items: {
-    product: { name: string };
+    product: { name: string } | null;
+    productNameSnapshot?: string | null;
     quantity: number;
     price: number;
     variantSizeLabel?: string | null;
@@ -190,7 +192,7 @@ export default function PedidoPage() {
                   return (
                     <div key={idx} className="flex min-w-0 justify-between gap-2 text-sm">
                       <span className="min-w-0 truncate">
-                        {item.product.name}
+                        {orderItemProductName(item)}
                         {vNote ? ` (${vNote})` : ""} x{item.quantity}
                       </span>
                       <span className="font-semibold shrink-0">
