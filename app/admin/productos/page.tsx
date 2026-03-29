@@ -253,24 +253,34 @@ export default function AdminProductosPage() {
     });
   }
 
+  /** Conserva filas ya cargadas y suma 5 filas (S–XXL) para el color nuevo */
   function fillPresetIndumentaria() {
     const color =
       typeof window !== "undefined"
-        ? window.prompt("Color para todas las tallas (ej. Negro)", "Negro")
+        ? window.prompt("Color para todas las tallas (ej. Negro). Se agregan filas sin borrar las que ya tenés.", "Negro")
         : "Negro";
     const c = (color || "Negro").trim() || "Negro";
-    setForm((f) => ({
-      ...f,
-      useVariants: true,
-      showSizeSelector: true,
-      showColorSelector: true,
-      variants: PRESET_SIZE_LABELS.map((sz) => ({
+    setForm((f) => {
+      const hasData = (row: VariantFormRow) =>
+        Boolean(row.sizeLabel.trim()) ||
+        Boolean(row.colorLabel.trim()) ||
+        (parseInt(row.stock, 10) || 0) > 0 ||
+        Boolean(row.sku.trim());
+      const keep = f.variants.filter(hasData);
+      const newRows = PRESET_SIZE_LABELS.map((sz) => ({
         sizeLabel: sz,
         colorLabel: c,
         stock: "0",
         sku: "",
-      })),
-    }));
+      }));
+      return {
+        ...f,
+        useVariants: true,
+        showSizeSelector: true,
+        showColorSelector: true,
+        variants: [...keep, ...newRows],
+      };
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -528,7 +538,7 @@ export default function AdminProductosPage() {
                             onClick={fillPresetIndumentaria}
                             className="rounded-lg bg-[#0f3bff] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0d32cc]"
                           >
-                            Plantilla S–XXL + color
+                            + Plantilla S–XXL (suma color)
                           </button>
                           <button
                             type="button"
