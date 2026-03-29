@@ -34,6 +34,8 @@ export type OrderForEmail = {
   user: { email: string | null; name: string | null };
 };
 
+export type SendEmailResult = { ok: true } | { ok: false; error: string };
+
 function formatResendError(error: unknown): string {
   if (error == null) return "Error desconocido de Resend";
   if (typeof error === "string") return error;
@@ -50,8 +52,10 @@ function formatResendError(error: unknown): string {
 /**
  * Envía email de confirmación de venta
  */
-export async function sendOrderConfirmation(order: OrderForEmail): Promise<boolean> {
-  if (!resend) return false;
+export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendEmailResult> {
+  if (!resend) {
+    return { ok: false, error: "Falta RESEND_API_KEY en el servidor" };
+  }
 
   const itemsList = order.items
     .map((i) => `• ${i.product.name} x${i.quantity} — $${(Number(i.price) * i.quantity).toLocaleString("es-AR")}`)
@@ -74,8 +78,13 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<boole
     </html>
   `;
 
-  const toEmail = TEST_TO || order.user.email;
-  if (!toEmail) return false;
+  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n— Fadu.store`;
+
+  const toRaw = TEST_TO || order.user.email;
+  const toEmail = typeof toRaw === "string" ? toRaw.trim() : "";
+  if (!toEmail) {
+    return { ok: false, error: "El usuario no tiene email en la cuenta" };
+  }
 
   try {
     const { error } = await resend.emails.send({
@@ -83,25 +92,43 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<boole
       to: toEmail,
       subject: `Pedido #${order.pickupCode || order.id} confirmado — Fadu.store`,
       html,
+      text,
     });
     if (error) {
+      const msg = formatResendError(error);
       console.error("Error enviando email de confirmación:", error);
-      return false;
+      return {
+        ok: false,
+        error: `${msg}${hintResendDomain(msg)}`,
+      };
     }
-    return true;
+    return { ok: true };
   } catch (e) {
     console.error("Error enviando email de confirmación:", e);
-    return false;
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
-export type SendPickupEmailResult = { ok: true } | { ok: false; error: string };
+/** Aclara el típico límite de Resend sin dominio verificado */
+function hintResendDomain(apiMessage: string): string {
+  const m = apiMessage.toLowerCase();
+  if (
+    m.includes("domain") ||
+    m.includes("verify") ||
+    m.includes("validation") ||
+    m.includes("not allowed") ||
+    m.includes("from")
+  ) {
+    return " | En Resend: verificá un dominio en resend.com/domains y definí RESEND_FROM_EMAIL con ese dominio; sin eso solo podés enviar al mail de tu cuenta Resend.";
+  }
+  return "";
+}
 
 /**
  * Email con QR para retiro: adjunto PNG + cid (Resend suele rechazar o fallar con img data: largos).
  * Si falla, reintenta solo con el código en texto para que el cliente igual reciba el mail.
  */
-export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendPickupEmailResult> {
+export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEmailResult> {
   if (!resend) {
     return { ok: false, error: "Falta RESEND_API_KEY en el servidor" };
   }
@@ -194,7 +221,8 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendPi
     }
     const err2 = formatResendError(attempt2.error);
     console.error("[email] pickup fallback texto, Resend:", attempt2.error);
-    return { ok: false, error: `${err1} | fallback: ${err2}` };
+    const combined = `${err1} | fallback: ${err2}`;
+    return { ok: false, error: `${combined}${hintResendDomain(combined)}` };
   } catch (e) {
     console.error("Error enviando email de pickup:", e);
     return { ok: false, error: e instanceof Error ? e.message : String(e) };

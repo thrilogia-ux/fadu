@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { generatePickupCode } from "@/lib/qr";
-import { sendOrderConfirmation, sendPickupReadyEmail } from "@/lib/email";
+import {
+  sendOrderConfirmation,
+  sendPickupReadyEmail,
+  type SendEmailResult,
+} from "@/lib/email";
 
-/** Confirmación de compra al crear pedido; no debe fallar la orden si el mail falla */
-async function sendOrderConfirmationBestEffort(orderId: string) {
+async function sendOrderConfirmationBestEffort(orderId: string): Promise<SendEmailResult> {
   try {
     const fullOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -14,7 +17,9 @@ async function sendOrderConfirmationBestEffort(orderId: string) {
         user: { select: { email: true, name: true } },
       },
     });
-    if (!fullOrder) return;
+    if (!fullOrder) {
+      return { ok: false, error: "Pedido no encontrado para enviar confirmación" };
+    }
     const orderForEmail = {
       ...fullOrder,
       total: Number(fullOrder.total),
@@ -24,9 +29,14 @@ async function sendOrderConfirmationBestEffort(orderId: string) {
         product: i.product,
       })),
     };
-    await sendOrderConfirmation(orderForEmail);
+    const result = await sendOrderConfirmation(orderForEmail);
+    if (!result.ok) {
+      console.error("[orders/create] email confirmación:", result.error);
+    }
+    return result;
   } catch (e) {
     console.error("[orders/create] email confirmación:", e);
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -103,6 +113,12 @@ export async function POST(request: Request) {
           user: { select: { email: true, name: true } },
         },
       });
+      let emailConfirmationSent = false;
+      let emailConfirmationError: string | undefined = fullOrder
+        ? undefined
+        : "No se pudo cargar el pedido para enviar emails";
+      let emailPickupSent: boolean | undefined;
+      let emailPickupError: string | undefined;
       if (fullOrder) {
         const orderForEmail = {
           ...fullOrder,
@@ -113,8 +129,12 @@ export async function POST(request: Request) {
             product: i.product,
           })),
         };
-        await sendOrderConfirmation(orderForEmail);
+        const conf = await sendOrderConfirmation(orderForEmail);
+        emailConfirmationSent = conf.ok;
+        emailConfirmationError = conf.ok ? undefined : conf.error;
         const pickMail = await sendPickupReadyEmail(orderForEmail);
+        emailPickupSent = pickMail.ok;
+        emailPickupError = pickMail.ok ? undefined : pickMail.error;
         if (!pickMail.ok) {
           console.error("[orders/create] test sendPickupReadyEmail:", pickMail.error);
         }
@@ -123,28 +143,36 @@ export async function POST(request: Request) {
         orderId: order.id,
         pickupCode: order.pickupCode,
         paymentMethod: "test",
+        emailConfirmationSent,
+        emailConfirmationError,
+        emailPickupSent,
+        emailPickupError,
       });
     }
 
     // Si es Mercado Pago, crear preferencia
     if (paymentMethod === "mercadopago") {
-      await sendOrderConfirmationBestEffort(order.id);
+      const conf = await sendOrderConfirmationBestEffort(order.id);
       // TODO: Integrar SDK de Mercado Pago
       // Por ahora retornamos URL de ejemplo
       return NextResponse.json({
         orderId: order.id,
         initPoint: `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=DEMO`,
         pickupCode: order.pickupCode,
+        emailConfirmationSent: conf.ok,
+        emailConfirmationError: conf.ok ? undefined : conf.error,
       });
     }
 
-    await sendOrderConfirmationBestEffort(order.id);
+    const conf = await sendOrderConfirmationBestEffort(order.id);
 
     // Si es transferencia, retornar datos
     return NextResponse.json({
       orderId: order.id,
       pickupCode: order.pickupCode,
       paymentMethod: "transfer",
+      emailConfirmationSent: conf.ok,
+      emailConfirmationError: conf.ok ? undefined : conf.error,
     });
   } catch (error) {
     console.error("Error creating order:", error);

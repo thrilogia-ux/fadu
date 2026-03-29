@@ -64,6 +64,25 @@ export default function CheckoutPage() {
         return;
       }
 
+      const emailLines: string[] = [];
+      if (data.emailConfirmationSent === false) {
+        emailLines.push(
+          `• Confirmación de compra: no se pudo enviar.\n  ${data.emailConfirmationError || "Revisá Resend: API key, dominio verificado y RESEND_FROM_EMAIL."}`
+        );
+      }
+      if (data.emailPickupSent === false) {
+        emailLines.push(
+          `• Email con código/QR para retirar: no se pudo enviar.\n  ${data.emailPickupError || ""}`
+        );
+      }
+      if (emailLines.length > 0) {
+        window.alert(
+          "Pedido creado, pero hay un problema con el correo hacia tu casilla:\n\n" +
+            emailLines.join("\n\n") +
+            "\n\nSin un dominio verificado en Resend, solo podés enviar al mail de tu cuenta Resend. Revisá también SPAM."
+        );
+      }
+
       // Si es Mercado Pago, redirigir a la preferencia
       if (paymentMethod === "mercadopago" && data.initPoint) {
         window.location.href = data.initPoint;
