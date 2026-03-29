@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { generatePickupCode } from "@/lib/qr";
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { items, paymentMethod, phone } = await request.json();
+    const { items, paymentMethod } = await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
@@ -59,18 +60,85 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
     }
 
-    // Calcular total
-    let total = 0;
     for (const item of items) {
-      if (!item.productId || !item.quantity || !item.price) {
+      if (!item || typeof item.productId !== "string" || !item.productId.trim()) {
         return NextResponse.json({ error: "Items inválidos" }, { status: 400 });
       }
-      total += item.price * item.quantity;
+      const qty = Number(item.quantity);
+      if (!Number.isFinite(qty) || qty < 1 || !Number.isInteger(qty)) {
+        return NextResponse.json({ error: "Cantidad inválida en un producto" }, { status: 400 });
+      }
     }
 
-    // Contar pedidos para generar código único
-    const orderCount = await prisma.order.count();
-    const pickupCode = generatePickupCode(orderCount + 1);
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+    if (!userExists) {
+      return NextResponse.json(
+        { error: "Usuario no encontrado. Cerrá sesión y volvé a entrar." },
+        { status: 401 }
+      );
+    }
+
+    const productIds = [...new Set(items.map((i: { productId: string }) => i.productId))];
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, price: true, active: true, stock: true },
+    });
+    if (products.length !== productIds.length) {
+      return NextResponse.json(
+        {
+          error:
+            "Hay productos en el carrito que ya no existen. Quitálos del carrito e intentá de nuevo.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const productById = new Map(products.map((p) => [p.id, p]));
+
+    const qtyByProduct = new Map<string, number>();
+    for (const item of items) {
+      const pid = String(item.productId).trim();
+      const q = Number(item.quantity);
+      qtyByProduct.set(pid, (qtyByProduct.get(pid) ?? 0) + q);
+    }
+    for (const [pid, needQty] of qtyByProduct) {
+      const p = productById.get(pid);
+      if (!p) {
+        return NextResponse.json({ error: "Items inválidos" }, { status: 400 });
+      }
+      if (!p.active) {
+        return NextResponse.json(
+          { error: "Un producto del carrito ya no está a la venta. Quitáselo e intentá de nuevo." },
+          { status: 400 }
+        );
+      }
+      if (p.stock < needQty) {
+        return NextResponse.json(
+          { error: "No hay stock suficiente para uno de los productos. Ajustá cantidades e intentá de nuevo." },
+          { status: 400 }
+        );
+      }
+    }
+
+    let total = 0;
+    const lineCreates: { productId: string; quantity: number; price: Prisma.Decimal }[] = [];
+    for (const item of items) {
+      const qty = Number(item.quantity);
+      const p = productById.get(item.productId);
+      if (!p) {
+        return NextResponse.json({ error: "Items inválidos" }, { status: 400 });
+      }
+      const lineTotal = Number(p.price) * qty;
+      total += lineTotal;
+      lineCreates.push({
+        productId: item.productId,
+        quantity: qty,
+        price: p.price,
+      });
+    }
 
     const initialStatus = paymentMethod === "test" ? "ready_for_pickup" : "pending_payment";
     const historyEntries =
@@ -83,26 +151,39 @@ export async function POST(request: Request) {
           ]
         : [{ status: "pending_payment", note: `Pedido creado. Método: ${paymentMethod}` }];
 
-    // Crear orden
-    const order = await prisma.order.create({
-      data: {
-        userId: session.user.id,
-        status: initialStatus,
-        paymentMethod,
-        total,
-        pickupCode,
-        items: {
-          create: items.map((item: any) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-        },
-        history: {
-          create: historyEntries,
-        },
-      },
-    });
+    const orderCountBase = await prisma.order.count();
+    let order: Awaited<ReturnType<typeof prisma.order.create>> | null = null;
+    let lastCreateError: unknown;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const pickupCode = generatePickupCode(orderCountBase + 1 + attempt);
+      try {
+        order = await prisma.order.create({
+          data: {
+            userId: session.user.id,
+            status: initialStatus,
+            paymentMethod,
+            total,
+            pickupCode,
+            items: { create: lineCreates },
+            history: { create: historyEntries },
+          },
+        });
+        break;
+      } catch (e) {
+        lastCreateError = e;
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+          continue;
+        }
+        throw e;
+      }
+    }
+    if (!order) {
+      console.error("[orders/create] pickup code retry exhausted:", lastCreateError);
+      return NextResponse.json(
+        { error: "No se pudo generar un código de retiro único. Intentá de nuevo en unos segundos." },
+        { status: 503 }
+      );
+    }
 
     // Pago de prueba: enviar emails y retornar
     if (paymentMethod === "test") {
@@ -176,6 +257,17 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error creating order:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2003") {
+        return NextResponse.json(
+          {
+            error:
+              "No se pudo vincular el pedido con los datos guardados (producto o cuenta). Revisá el carrito o iniciá sesión de nuevo.",
+          },
+          { status: 400 }
+        );
+      }
+    }
     return NextResponse.json({ error: "Error al crear pedido" }, { status: 500 });
   }
 }

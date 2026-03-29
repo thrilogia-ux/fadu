@@ -5,18 +5,26 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
 
 /**
- * Solo en desarrollo (`next dev`): si RESEND_TEST_TO tiene valor, todos los mails van ahí.
- * En producción (NODE_ENV=production, p. ej. Vercel) se ignora siempre: los pedidos llegan al email del cliente.
+ * Mails transaccionales: si `RESEND_TEST_TO` está definida, **siempre** se usa como `to`
+ * (local y Vercel). Resend en modo prueba solo deja enviar a tu propio email; p.ej. `thrilogia@gmail.com`.
+ * Quitá la variable cuando tengas dominio verificado y quieras enviar al cliente.
+ *
+ * Nota: se lee en cada envío con `process.env["..."]` para evitar que quede fija en `undefined`
+ * al cargar el módulo (comportamiento que a veces vemos con bundles serverless).
  */
 function resendTestOverride(): string | undefined {
-  if (process.env.NODE_ENV === "production") {
-    return undefined;
-  }
-  const t = process.env.RESEND_TEST_TO?.trim();
-  return t && t.length > 0 ? t : undefined;
+  const raw = process.env["RESEND_TEST_TO"];
+  const t = typeof raw === "string" ? raw.trim() : "";
+  return t.length > 0 ? t : undefined;
 }
 
-const TEST_TO = resendTestOverride();
+/** Destino real del mail; prioriza override de prueba sobre el email del cliente */
+function resolveTransactionalTo(customerEmail: string | null | undefined): string | undefined {
+  const override = resendTestOverride();
+  if (override) return override;
+  const c = typeof customerEmail === "string" ? customerEmail.trim() : "";
+  return c.length > 0 ? c : undefined;
+}
 
 function publicShopUrl(): string {
   const u = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -80,19 +88,26 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
 
   const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n— Fadu.store`;
 
-  const toRaw = TEST_TO || order.user.email;
-  const toEmail = typeof toRaw === "string" ? toRaw.trim() : "";
+  const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) {
     return { ok: false, error: "El usuario no tiene email en la cuenta" };
   }
+  const testRedirect = resendTestOverride();
+  const redirectNote = testRedirect
+    ? `<p style="font-size:12px;color:#666;margin-top:16px">(Prueba Resend: este correo se envió a <strong>${testRedirect}</strong>. Cliente en cuenta: ${order.user.email || "—"}.)</p>`
+    : "";
 
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: toEmail,
       subject: `Pedido #${order.pickupCode || order.id} confirmado — Fadu.store`,
-      html,
-      text,
+      html: html.replace("</body>", `${redirectNote}</body>`),
+      text:
+        text +
+        (testRedirect
+          ? `\n\n(Prueba Resend: enviado a ${testRedirect}. Email del cliente: ${order.user.email || "—"}.)`
+          : ""),
     });
     if (error) {
       const msg = formatResendError(error);
@@ -117,9 +132,14 @@ function hintResendDomain(apiMessage: string): string {
     m.includes("verify") ||
     m.includes("validation") ||
     m.includes("not allowed") ||
-    m.includes("from")
+    m.includes("from") ||
+    m.includes("testing emails") ||
+    m.includes("only send")
   ) {
-    return " | En Resend: verificá un dominio en resend.com/domains y definí RESEND_FROM_EMAIL con ese dominio; sin eso solo podés enviar al mail de tu cuenta Resend.";
+    return (
+      " | En Resend sin dominio: poné en Vercel (y local) RESEND_TEST_TO con **el mismo email que tu cuenta Resend** " +
+      "(ej. thrilogia@gmail.com); así todos los mails van ahí hasta verificar un dominio en resend.com/domains."
+    );
   }
   return "";
 }
@@ -136,11 +156,17 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
     return { ok: false, error: "El pedido no tiene código de retiro" };
   }
 
-  const toRaw = TEST_TO || order.user.email;
-  const toEmail = typeof toRaw === "string" ? toRaw.trim() : "";
+  const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) {
     return { ok: false, error: "El usuario no tiene email en la cuenta" };
   }
+  const testRedirect = resendTestOverride();
+  const pickupRedirectNoteHtml = testRedirect
+    ? `<p style="font-size:12px;color:#666;margin-top:16px">(Prueba Resend: enviado a <strong>${testRedirect}</strong>. Cliente: ${order.user.email || "—"}.)</p>`
+    : "";
+  const pickupRedirectNoteText = testRedirect
+    ? `\n\n(Prueba Resend: enviado a ${testRedirect}. Email del cliente: ${order.user.email || "—"}.)`
+    : "";
 
   let qrBase64: string;
   try {
@@ -152,7 +178,7 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
   }
 
   const subject = `Retirá tu pedido #${order.pickupCode} — Fadu.store`;
-  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n— Fadu.store`;
+  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n— Fadu.store${pickupRedirectNoteText}`;
 
   const htmlWithCid = `
     <!DOCTYPE html>
@@ -168,6 +194,7 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
       </p>
       <p style="font-size: 18px; font-weight: bold; text-align: center;">Código: ${order.pickupCode}</p>
       <p>— Fadu.store</p>
+      ${pickupRedirectNoteHtml}
     </body>
     </html>
   `;
@@ -183,6 +210,7 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
       <p style="font-size: 18px; font-weight: bold; text-align: center; margin: 24px 0;">Código para retirar: ${order.pickupCode}</p>
       <p>Si no ves el QR en otro correo, usá este código en el pickup.</p>
       <p>— Fadu.store</p>
+      ${pickupRedirectNoteHtml}
     </body>
     </html>
   `;
@@ -259,15 +287,22 @@ export async function sendPickupThankYouEmail(order: OrderThankYouForEmail): Pro
     </html>
   `;
 
-  const toEmail = TEST_TO || order.user.email;
+  const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) return false;
+
+  const testRedirect = resendTestOverride();
+  const htmlOut =
+    html +
+    (testRedirect
+      ? `<p style="font-size:12px;color:#666;margin-top:16px">(Prueba Resend: enviado a <strong>${testRedirect}</strong>.)</p>`
+      : "");
 
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: toEmail,
       subject: `¡Gracias por tu compra!${code ? ` Pedido #${code}` : ""} — Fadu.store`,
-      html,
+      html: htmlOut,
     });
     if (error) {
       console.error("Error enviando email de agradecimiento post-retiro:", error);

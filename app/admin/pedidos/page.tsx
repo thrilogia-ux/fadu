@@ -7,7 +7,7 @@ import Link from "next/link";
 
 interface Order {
   id: string;
-  pickupCode: string;
+  pickupCode: string | null;
   status: string;
   paymentMethod: string;
   total: number;
@@ -87,13 +87,17 @@ export default function AdminPedidosPage() {
               ? `\n\nDetalle: ${data.pickupReadyEmailError}`
               : "";
           alert(
-            "Estado actualizado, pero no se envió el email con el QR. Revisá Resend (API key, dominio verificado) y que el cliente tenga email en la cuenta." +
+            "Estado actualizado, pero no se envió el email con el QR. Revisá Resend (API key, dominio verificado), RESEND_TEST_TO si probás, y que el cliente tenga email en la cuenta." +
               detail
           );
         }
         loadOrders();
       } else {
-        alert("Error al cambiar estado");
+        const msg =
+          typeof data.error === "string" && data.error.trim()
+            ? data.error
+            : `Error al cambiar estado (${res.status})`;
+        alert(msg);
       }
     } catch {
       alert("Error de conexión");
@@ -163,7 +167,7 @@ export default function AdminPedidosPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-3">
-                      <h3 className="text-lg font-bold">#{order.pickupCode}</h3>
+                      <h3 className="text-lg font-bold">#{order.pickupCode || order.id.slice(0, 8)}</h3>
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColors[order.status]}`}>
                         {statusLabels[order.status]}
                       </span>
@@ -180,25 +184,37 @@ export default function AdminPedidosPage() {
                     </p>
                   </div>
 
-                  <div className="flex gap-2">
-                    {order.status === "pending_payment" && order.paymentMethod === "transfer" && (
+                  <div className="flex flex-wrap gap-2">
+                    {order.status === "pending_payment" && (
                       <button
+                        type="button"
                         onClick={() => changeStatus(order.id, "paid")}
                         className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                       >
-                        Marcar pagado
+                        Pago realizado
                       </button>
                     )}
                     {order.status === "paid" && (
-                      <button
-                        onClick={() => changeStatus(order.id, "preparing")}
-                        className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
-                      >
-                        Preparar
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => changeStatus(order.id, "preparing")}
+                          className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+                        >
+                          Preparar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => changeStatus(order.id, "ready_for_pickup")}
+                          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                        >
+                          Listo para retirar
+                        </button>
+                      </>
                     )}
                     {order.status === "preparing" && (
                       <button
+                        type="button"
                         onClick={() => changeStatus(order.id, "ready_for_pickup")}
                         className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                       >
