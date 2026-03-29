@@ -62,3 +62,8 @@ VALUES
   ('seed_topbanner_fadu15', 'Usa el Cupón FADU15 para tener un 15% OFF en tu compra', 1, true, NOW()),
   ('seed_topbanner_vivi', 'Viví tu identidad FADU en la nueva tienda FADU.Store', 2, true, NOW())
 ON CONFLICT ("id") DO NOTHING;
+
+-- Perfil de usuario (carrera FADU, teléfono) para /cuenta/perfil
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "fadu_career" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "fadu_career_other" VARCHAR(255);

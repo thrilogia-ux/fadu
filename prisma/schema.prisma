@@ -18,6 +18,9 @@ model User {
   passwordHash  String?   @map("password_hash") // null si solo OAuth
   name          String?
   image         String?
+  phone                 String? @map("phone")
+  faduCareer            String? @map("fadu_career")
+  faduCareerOther       String? @map("fadu_career_other") @db.VarChar(255)
   role          String    @default("user") // "user" | "admin"
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
