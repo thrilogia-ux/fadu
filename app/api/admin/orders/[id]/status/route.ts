@@ -56,6 +56,7 @@ export async function PATCH(
     });
 
     let pickupReadyEmailSent: boolean | undefined;
+    let pickupReadyEmailError: string | undefined;
     if (
       status === "ready_for_pickup" &&
       existing.status !== "ready_for_pickup"
@@ -78,23 +79,29 @@ export async function PATCH(
               product: i.product,
             })),
           };
-          pickupReadyEmailSent = await sendPickupReadyEmail(orderForEmail);
-          if (!pickupReadyEmailSent) {
+          const emailResult = await sendPickupReadyEmail(orderForEmail);
+          pickupReadyEmailSent = emailResult.ok;
+          if (!emailResult.ok) {
+            pickupReadyEmailError = emailResult.error;
             console.error(
-              "[admin/order/status] sendPickupReadyEmail devolvió false para",
+              "[admin/order/status] sendPickupReadyEmail:",
+              emailResult.error,
+              "orderId",
               id
             );
           }
         } catch (e) {
           console.error("[admin/order/status] error enviando email listo para retiro:", e);
           pickupReadyEmailSent = false;
+          pickupReadyEmailError = e instanceof Error ? e.message : String(e);
         }
       } else {
         pickupReadyEmailSent = false;
+        pickupReadyEmailError = "Pedido sin código de retiro";
       }
     }
 
-    return NextResponse.json({ order, pickupReadyEmailSent });
+    return NextResponse.json({ order, pickupReadyEmailSent, pickupReadyEmailError });
   } catch (error) {
     console.error("Error updating order status:", error);
     return NextResponse.json({ error: "Error al actualizar estado" }, { status: 500 });

@@ -82,8 +82,13 @@ export default function AdminPedidosPage() {
 
       if (res.ok) {
         if (newStatus === "ready_for_pickup" && data.pickupReadyEmailSent === false) {
+          const detail =
+            typeof data.pickupReadyEmailError === "string" && data.pickupReadyEmailError.trim()
+              ? `\n\nDetalle: ${data.pickupReadyEmailError}`
+              : "";
           alert(
-            "Estado actualizado, pero no se envió el email con el QR. Revisá Resend, NEXT_PUBLIC_SITE_URL y el email del cliente."
+            "Estado actualizado, pero no se envió el email con el QR. Revisá Resend (API key, dominio verificado) y que el cliente tenga email en la cuenta." +
+              detail
           );
         }
         loadOrders();

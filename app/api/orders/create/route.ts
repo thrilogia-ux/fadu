@@ -114,7 +114,10 @@ export async function POST(request: Request) {
           })),
         };
         await sendOrderConfirmation(orderForEmail);
-        await sendPickupReadyEmail(orderForEmail);
+        const pickMail = await sendPickupReadyEmail(orderForEmail);
+        if (!pickMail.ok) {
+          console.error("[orders/create] test sendPickupReadyEmail:", pickMail.error);
+        }
       }
       return NextResponse.json({
         orderId: order.id,

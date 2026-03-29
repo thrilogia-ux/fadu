@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { generateQRDataURL } from "./qr";
+import { generateQRBuffer } from "./qr";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
@@ -33,6 +33,19 @@ export type OrderForEmail = {
   items: { quantity: number; price: number; product: { name: string } }[];
   user: { email: string | null; name: string | null };
 };
+
+function formatResendError(error: unknown): string {
+  if (error == null) return "Error desconocido de Resend";
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && "message" in error && typeof (error as { message: unknown }).message === "string") {
+    return (error as { message: string }).message;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
 
 /**
  * Envía email de confirmación de venta
@@ -82,21 +95,39 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<boole
   }
 }
 
-/**
- * Envía email con QR para retiro en pickup
- */
-export async function sendPickupReadyEmail(order: OrderForEmail): Promise<boolean> {
-  if (!resend || !order.pickupCode) return false;
+export type SendPickupEmailResult = { ok: true } | { ok: false; error: string };
 
-  let qrDataUrl: string;
-  try {
-    qrDataUrl = await generateQRDataURL(order.pickupCode);
-  } catch (e) {
-    console.error("Error generando QR:", e);
-    return false;
+/**
+ * Email con QR para retiro: adjunto PNG + cid (Resend suele rechazar o fallar con img data: largos).
+ * Si falla, reintenta solo con el código en texto para que el cliente igual reciba el mail.
+ */
+export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendPickupEmailResult> {
+  if (!resend) {
+    return { ok: false, error: "Falta RESEND_API_KEY en el servidor" };
+  }
+  if (!order.pickupCode) {
+    return { ok: false, error: "El pedido no tiene código de retiro" };
   }
 
-  const html = `
+  const toRaw = TEST_TO || order.user.email;
+  const toEmail = typeof toRaw === "string" ? toRaw.trim() : "";
+  if (!toEmail) {
+    return { ok: false, error: "El usuario no tiene email en la cuenta" };
+  }
+
+  let qrBase64: string;
+  try {
+    const buf = await generateQRBuffer(order.pickupCode);
+    qrBase64 = buf.toString("base64");
+  } catch (e) {
+    console.error("Error generando QR:", e);
+    return { ok: false, error: "No se pudo generar el código QR" };
+  }
+
+  const subject = `Retirá tu pedido #${order.pickupCode} — Fadu.store`;
+  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n— Fadu.store`;
+
+  const htmlWithCid = `
     <!DOCTYPE html>
     <html>
     <head><meta charset="utf-8"></head>
@@ -106,7 +137,7 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<boolea
       <p>Tu pedido <strong>#${order.pickupCode}</strong> está listo para retirar en el <strong>Pickup Point de FADU</strong>.</p>
       <p>Presentá este código QR al retirar:</p>
       <p style="text-align: center; margin: 24px 0;">
-        <img src="${qrDataUrl}" alt="QR ${order.pickupCode}" width="250" height="250" />
+        <img src="cid:pickupqr" alt="QR ${order.pickupCode}" width="250" height="250" />
       </p>
       <p style="font-size: 18px; font-weight: bold; text-align: center;">Código: ${order.pickupCode}</p>
       <p>— Fadu.store</p>
@@ -114,24 +145,59 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<boolea
     </html>
   `;
 
-  const toEmail = TEST_TO || order.user.email;
-  if (!toEmail) return false;
+  const htmlFallback = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #1d1d1b;">¡Tu pedido está listo!</h1>
+      <p>Hola ${order.user.name || "Cliente"},</p>
+      <p>Tu pedido <strong>#${order.pickupCode}</strong> está listo para retirar en el <strong>Pickup Point de FADU</strong>.</p>
+      <p style="font-size: 18px; font-weight: bold; text-align: center; margin: 24px 0;">Código para retirar: ${order.pickupCode}</p>
+      <p>Si no ves el QR en otro correo, usá este código en el pickup.</p>
+      <p>— Fadu.store</p>
+    </body>
+    </html>
+  `;
 
   try {
-    const { error } = await resend.emails.send({
+    const attempt1 = await resend.emails.send({
       from: FROM_EMAIL,
       to: toEmail,
-      subject: `Retirá tu pedido #${order.pickupCode} — Fadu.store`,
-      html,
+      subject,
+      html: htmlWithCid,
+      text: textBody,
+      attachments: [
+        {
+          filename: "pickup-qr.png",
+          content: qrBase64,
+          contentType: "image/png",
+          contentId: "pickupqr",
+        },
+      ],
     });
-    if (error) {
-      console.error("Error enviando email de pickup:", error);
-      return false;
+    if (!attempt1.error) {
+      return { ok: true };
     }
-    return true;
+    const err1 = formatResendError(attempt1.error);
+    console.error("[email] pickup con adjunto CID, Resend:", attempt1.error);
+
+    const attempt2 = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: toEmail,
+      subject,
+      html: htmlFallback,
+      text: textBody,
+    });
+    if (!attempt2.error) {
+      return { ok: true };
+    }
+    const err2 = formatResendError(attempt2.error);
+    console.error("[email] pickup fallback texto, Resend:", attempt2.error);
+    return { ok: false, error: `${err1} | fallback: ${err2}` };
   } catch (e) {
     console.error("Error enviando email de pickup:", e);
-    return false;
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
