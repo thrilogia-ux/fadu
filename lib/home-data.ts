@@ -154,8 +154,9 @@ export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
 
 export type HomeCategory = { id: string; name: string; slug: string };
 
-export async function getCategoriesForHome(allowedSlugs: string[]): Promise<HomeCategory[]> {
-  let all = await runWithDbRetries("home.categories", () =>
+/** Todas las categorías activas (mismo orden que admin: campo `order`). Para header y navegación. */
+export async function getAllActiveCategories(): Promise<HomeCategory[]> {
+  let all = await runWithDbRetries("home.categories.all", () =>
     prisma.category.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
@@ -167,6 +168,19 @@ export async function getCategoriesForHome(allowedSlugs: string[]): Promise<Home
     const { loadCategoriesFromApi } = await import("@/lib/home-api-fallback");
     list = await loadCategoriesFromApi();
   }
-  const curated = list.filter((c) => allowedSlugs.includes(c.slug));
-  return curated.length > 0 ? curated : list;
+  return list;
+}
+
+/**
+ * Subconjunto para la grilla del home con iconos fijos (orden de `preferredSlugs`).
+ * Si ninguna coincide con la DB, se muestran todas.
+ */
+export function categoriesForHomeExplorationGrid(
+  all: HomeCategory[],
+  preferredSlugs: string[]
+): HomeCategory[] {
+  const curated = preferredSlugs
+    .map((slug) => all.find((c) => c.slug === slug))
+    .filter((c): c is HomeCategory => c != null);
+  return curated.length > 0 ? curated : all;
 }

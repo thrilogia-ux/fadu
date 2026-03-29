@@ -1,5 +1,6 @@
 import {
-  getCategoriesForHome,
+  getAllActiveCategories,
+  categoriesForHomeExplorationGrid,
   getFeaturedProductsForHome,
   getHeroSlidesForHome,
   getOffersProductsForHome,
@@ -46,10 +47,11 @@ async function HomePageContent() {
     getHeroSlidesForHome(),
     getFeaturedProductsForHome(),
     getOffersProductsForHome(),
-    getCategoriesForHome(ALLOWED_CATEGORY_SLUGS),
+    getAllActiveCategories(),
   ]);
 
-  const categories = mergeHomeCategories(categoriesRaw);
+  const allCategories = mergeHomeCategories(categoriesRaw);
+  const homeGridCategories = categoriesForHomeExplorationGrid(allCategories, ALLOWED_CATEGORY_SLUGS);
 
   const iconsByCategory: Record<string, string> = {
     iluminacion: "/iluminacion.png",
@@ -61,7 +63,7 @@ async function HomePageContent() {
 
   return (
     <>
-      <Header categories={categories} />
+      <Header categories={allCategories} />
 
       <main className="min-w-0 overflow-x-hidden">
         <HomeHero slides={heroSlides} />
@@ -86,7 +88,7 @@ async function HomePageContent() {
           <div className="mx-auto max-w-7xl px-4">
             <h2 className="mb-6 text-xl font-bold text-[#1d1d1b] md:mb-8 md:text-2xl">Explorar por categoría</h2>
             <div className="grid grid-cols-3 gap-2 md:hidden">
-              {categories.map((cat) => (
+              {homeGridCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categoria/${cat.slug}`}
@@ -97,7 +99,7 @@ async function HomePageContent() {
               ))}
             </div>
             <div className="hidden md:grid md:grid-cols-5 md:gap-4">
-              {categories.map((cat) => (
+              {homeGridCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categoria/${cat.slug}`}

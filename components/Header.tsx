@@ -14,19 +14,13 @@ interface Category {
   slug: string;
 }
 
-const ALLOWED_CATEGORY_SLUGS = ["iluminacion", "escritorio", "decoracion", "diseno", "accesorios"];
-
 const tapIcon =
   "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[#1d1d1b] transition hover:bg-black/5 active:bg-black/10";
 
 export function Header({ categories }: { categories: Category[] }) {
   const safeCategories = Array.isArray(categories) ? categories : [];
-  const curated = safeCategories
-    .filter((c) => ALLOWED_CATEGORY_SLUGS.includes(c.slug))
-    .sort((a, b) => ALLOWED_CATEGORY_SLUGS.indexOf(a.slug) - ALLOWED_CATEGORY_SLUGS.indexOf(b.slug));
-  /* Sin coincidencias con la lista fija (slugs distintos en producción): usar todas las categorías recibidas */
-  const menuCategories =
-    curated.length > 0 ? curated : [...safeCategories].sort((a, b) => a.name.localeCompare(b.name, "es"));
+  /** Todas las categorías que envía la página (orden del admin); sin lista blanca fija */
+  const menuCategories = safeCategories;
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
