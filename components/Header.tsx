@@ -302,29 +302,29 @@ export function Header({ categories }: { categories: Category[] }) {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="h-full w-[300px] max-w-[90vw] bg-white shadow-xl"
+            className="flex h-full max-h-[100dvh] w-[300px] max-w-[90vw] flex-col bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col p-4">
-              <div className="mb-4 flex items-center justify-between gap-2 border-b border-black/10 pb-3">
-                <span className="text-sm font-semibold text-[#1d1d1b]">Menú</span>
-                <button
-                  type="button"
-                  onClick={closeMenus}
-                  className={`${tapIcon} text-gray-600`}
-                  aria-label="Cerrar menú"
-                >
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="mb-4">
-                <SearchForm />
-              </div>
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/10 p-4 pb-3">
+              <span className="text-sm font-semibold text-[#1d1d1b]">Menú</span>
+              <button
+                type="button"
+                onClick={closeMenus}
+                className={`${tapIcon} text-gray-600`}
+                aria-label="Cerrar menú"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="shrink-0 border-b border-black/10 px-4 pb-4 pt-4">
+              <SearchForm />
+            </div>
 
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-8 [-webkit-overflow-scrolling:touch]">
               {/* Cuenta */}
-              <div className="border-b border-black/10 pb-4">
+              <div className="border-b border-black/10 pb-4 pt-2">
                 <p className="mb-2 text-xs font-medium text-gray-500">Cuenta</p>
                 {session ? (
                   <div className="space-y-1">
@@ -386,9 +386,6 @@ export function Header({ categories }: { categories: Category[] }) {
                   ))}
                 </ul>
               </div>
-
-              {/* Links */}
-              <div className="pt-4" />
             </div>
           </div>
         </div>
