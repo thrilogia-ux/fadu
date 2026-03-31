@@ -675,8 +675,8 @@ export default function ProductPage() {
           </nav>
 
           <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-            {/* Columna izquierda: Galería */}
-            <div className="min-w-0 lg:col-span-2">
+            {/* Galería (móvil: 1.º; desktop: 2 cols arriba a la izquierda) */}
+            <div className="order-1 min-w-0 lg:order-none lg:col-span-2">
               <div className="w-full min-w-0 overflow-hidden rounded-xl bg-white shadow-sm md:rounded-lg">
                 <div className={`p-3 md:p-4 ${mediaItems.length > 1 ? "grid md:grid-cols-[80px_1fr] gap-4" : ""}`}>
                   {/* Thumbnails verticales - desktop */}
@@ -802,20 +802,10 @@ export default function ProductPage() {
                   </div>
                 )}
               </div>
-              
-              {/* Descripción */}
-              {product.description && (
-                <div className="mt-4 rounded-lg bg-white p-6 shadow-sm">
-                  <h2 className="mb-4 text-xl font-semibold text-[#1d1d1b]">Descripción</h2>
-                  <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                    {product.description}
-                  </p>
-                </div>
-              )}
             </div>
 
-            {/* Columna derecha: Info y compra */}
-            <div className="min-w-0 lg:col-span-1">
+            {/* Precio / compra / vendedor (móvil: 2.º; desktop: columna derecha) */}
+            <div className="order-2 min-w-0 lg:order-none lg:col-span-1">
               <div className="space-y-4 lg:sticky lg:top-4">
                 {/* Card principal */}
                 <div className="min-w-0 rounded-xl bg-white p-4 shadow-sm md:rounded-lg md:p-6">
@@ -1020,8 +1010,16 @@ export default function ProductPage() {
               </div>
             </div>
 
+            {/* Descripción (móvil: 3.º; desktop: fila debajo de la galería, 2 cols) */}
+            {product.description && (
+              <div className="order-3 min-w-0 rounded-lg bg-white p-6 shadow-sm lg:order-none lg:col-span-2">
+                <h2 className="mb-4 text-xl font-semibold text-[#1d1d1b]">Descripción</h2>
+                <p className="whitespace-pre-wrap leading-relaxed text-gray-700">{product.description}</p>
+              </div>
+            )}
+
             {/* Opiniones del producto */}
-            <div className="mt-4 rounded-lg bg-white p-6 shadow-sm lg:col-span-3">
+            <div className="order-4 mt-4 rounded-lg bg-white p-6 shadow-sm lg:order-none lg:col-span-3">
               <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
                 Opiniones del producto
               </h2>
@@ -1134,7 +1132,7 @@ export default function ProductPage() {
             </div>
 
             {/* Preguntas y respuestas - al final (mobile y desktop) */}
-            <div className="mt-4 rounded-lg bg-white p-6 shadow-sm lg:col-span-3">
+            <div className="order-5 mt-4 rounded-lg bg-white p-6 shadow-sm lg:order-none lg:col-span-3">
               <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
                 Preguntas y respuestas
               </h2>
@@ -1205,7 +1203,7 @@ export default function ProductPage() {
 
             {relatedProducts.length > 0 && (
               <section
-                className="mt-4 rounded-lg border border-black/8 bg-white p-6 shadow-sm lg:col-span-3"
+                className="order-6 mt-4 rounded-lg border border-black/8 bg-white p-6 shadow-sm lg:order-none lg:col-span-3"
                 aria-label="Productos relacionados"
               >
                 <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
