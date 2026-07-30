@@ -33,7 +33,7 @@ export function ProductCard({
   return (
     <Link
       href={`/producto/${slug}`}
-      className="group block min-w-0 overflow-hidden rounded-lg border border-black/8 bg-white shadow-sm transition hover:shadow-lg hover:border-black/12 active:scale-[0.99]"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-black/8 bg-white shadow-sm transition hover:border-black/12 hover:shadow-lg active:scale-[0.99]"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         {images[0] ? (
@@ -66,21 +66,22 @@ export function ProductCard({
           </span>
         )}
       </div>
-      <div className="flex min-h-[5.5rem] flex-col p-3 sm:p-4">
-        {category && (
-          <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:text-xs">
-            {category.name}
-          </p>
-        )}
-        <h3 className="mb-2 line-clamp-2 flex-1 text-[15px] font-semibold leading-snug text-[#1d1d1b] sm:text-base">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <p className="mb-0.5 min-h-[1rem] text-[11px] font-medium uppercase tracking-wide text-gray-500 sm:min-h-[1.125rem] sm:text-xs">
+          {category?.name ?? "\u00A0"}
+        </p>
+        <h3 className="mb-2 line-clamp-2 min-h-[2.75rem] flex-1 text-[15px] font-semibold leading-snug text-[#1d1d1b] sm:min-h-[3rem] sm:text-base">
           {name}
         </h3>
-        <div className="mt-auto flex flex-col items-start gap-0.5">
-          {hasDiscount && (
-            <span className="text-xs text-gray-400 line-through">
-              ${compareAtPrice.toLocaleString("es-AR")}
-            </span>
-          )}
+        <div className="mt-auto flex min-h-[4.25rem] flex-col items-start justify-end gap-0.5">
+          <span
+            className={`text-xs line-through ${hasDiscount ? "text-gray-400" : "invisible"}`}
+            aria-hidden={!hasDiscount}
+          >
+            {hasDiscount
+              ? `$${compareAtPrice!.toLocaleString("es-AR")}`
+              : "\u00A0"}
+          </span>
           <span className="text-lg font-bold tabular-nums text-[#1d1d1b] sm:text-xl">
             ${price.toLocaleString("es-AR")}
           </span>

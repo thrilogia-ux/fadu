@@ -19,7 +19,7 @@ export function ProductCatalogCard({
 
   return (
     <>
-      <div className="group/card relative min-w-0">
+      <div className="group/card relative h-full min-w-0">
         <ProductCard {...card} inStock={inStock} productType={productType} />
         {enableQuickView && (
           <button
