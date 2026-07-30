@@ -129,15 +129,15 @@ export function Header({ categories }: { categories: Category[] }) {
           </button>
 
           {/* Logo */}
-          <Link href="/" className="-ml-1 shrink-0 md:ml-0" onClick={closeMenus}>
+          <Link href="/" className="shrink-0" onClick={closeMenus}>
             <Image
               src="/ubafadushop-logo.svg"
               alt=".UBAfadu.shop"
               width={300}
-              height={57}
+              height={71}
               priority
               unoptimized
-              className="h-10 w-auto max-w-[128px] object-contain object-left md:h-14 md:max-w-[280px]"
+              className="h-12 w-auto max-w-[min(52vw,210px)] object-contain object-left md:h-14 md:max-w-[280px]"
             />
           </Link>
 
