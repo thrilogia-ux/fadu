@@ -46,8 +46,9 @@ export function Footer() {
               <Image
                 src="/ubafadushop-logo-gris.svg"
                 alt=".UBAfadu.shop"
-                width={320}
-                height={56}
+                width={300}
+                height={57}
+                unoptimized
                 className="h-12 w-auto opacity-90 md:h-14 md:max-w-[300px]"
               />
             </Link>

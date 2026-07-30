@@ -114,9 +114,10 @@ export function Header({ categories }: { categories: Category[] }) {
             <Image
               src="/ubafadushop-logo.svg"
               alt=".UBAfadu.shop"
-              width={320}
-              height={56}
+              width={300}
+              height={57}
               priority
+              unoptimized
               className="h-12 w-auto md:h-14 md:max-w-[280px]"
             />
           </Link>

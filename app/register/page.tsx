@@ -58,7 +58,7 @@ export default function RegisterPage() {
       <header className="border-b border-black/5 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center px-4">
           <Link href="/" className="flex items-center">
-            <Image src="/ubafadushop-logo.svg" alt=".UBAfadu.shop" width={320} height={56} className="h-12 w-auto md:h-14" />
+            <Image src="/ubafadushop-logo.svg" alt=".UBAfadu.shop" width={300} height={57} unoptimized className="h-12 w-auto md:h-14" />
           </Link>
         </div>
       </header>
