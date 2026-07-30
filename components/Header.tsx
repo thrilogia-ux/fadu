@@ -112,12 +112,12 @@ export function Header({ categories }: { categories: Category[] }) {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0" onClick={closeMenus}>
             <Image
-              src="/fadustore2.svg"
-              alt="Fadu.store"
-              width={240}
-              height={48}
+              src="/ubafadushop-logo.svg"
+              alt=".UBAfadu.shop"
+              width={320}
+              height={56}
               priority
-              className="h-14 w-auto md:h-16 md:max-w-[300px]"
+              className="h-12 w-auto md:h-14 md:max-w-[280px]"
             />
           </Link>
 

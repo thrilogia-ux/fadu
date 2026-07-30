@@ -44,11 +44,11 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="inline-block mb-6">
               <Image
-                src="/fadustore2gris.svg"
-                alt="Fadu.store"
-                width={280}
-                height={52}
-                className="h-14 w-auto opacity-90 md:h-16 md:max-w-[320px]"
+                src="/ubafadushop-logo-gris.svg"
+                alt=".UBAfadu.shop"
+                width={320}
+                height={56}
+                className="h-12 w-auto opacity-90 md:h-14 md:max-w-[300px]"
               />
             </Link>
             

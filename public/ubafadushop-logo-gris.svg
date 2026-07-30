@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 80" role="img" aria-label=".UBAfadu.shop">
+  <text
+    x="0"
+    y="58"
+    font-family="Segoe UI, system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif"
+    font-weight="600"
+    fill="#60605f"
+  >
+    <tspan font-size="40">.UBA</tspan>
+    <tspan font-size="52" dx="4">fadu</tspan>
+    <tspan font-size="26" dy="8" dx="4">.shop</tspan>
+  </text>
+</svg>
