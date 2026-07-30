@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/auth";
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 4 * 1024 * 1024; // 4MB (límite body en Vercel ~4.5MB)
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export async function POST(request: Request) {

@@ -182,22 +182,39 @@ export default function AdminHeroPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("folder", "hero-slides");
 
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
 
-      const data = await res.json();
+      let data: { url?: string; error?: string } = {};
+      const text = await res.text();
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setUploadError(
+          res.status === 413
+            ? "La imagen es muy pesada. Probá con menos de 4MB."
+            : `Error del servidor (${res.status}). Pegá una URL de imagen abajo.`
+        );
+        return;
+      }
 
       if (!res.ok) {
         setUploadError(data.error || "Error al subir");
         return;
       }
 
+      if (!data.url) {
+        setUploadError("No se recibió la URL de la imagen");
+        return;
+      }
+
       setForm({ ...form, imageUrl: data.url });
     } catch {
-      setUploadError("Error de conexión");
+      setUploadError("Error de conexión. Probá pegar una URL de imagen abajo.");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -317,7 +334,7 @@ export default function AdminHeroPage() {
                     <p className="mt-1 text-sm text-red-600">{uploadError}</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Recomendado: 1920x600px mínimo. Máx. 5MB (JPEG, PNG, WebP, GIF).
+                    Recomendado: 1920x600px mínimo. Máx. 4MB (JPEG, PNG, WebP, GIF).
                   </p>
                   {form.imageUrl && (
                     <>
