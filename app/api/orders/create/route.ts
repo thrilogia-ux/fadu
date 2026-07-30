@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { items, paymentMethod } = await request.json();
+    const { items, paymentMethod, phone: phoneBody } = await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
@@ -103,6 +103,14 @@ export async function POST(request: Request) {
         { error: "Usuario no encontrado. Cerrá sesión y volvé a entrar." },
         { status: 401 }
       );
+    }
+
+    if (typeof phoneBody === "string" && phoneBody.trim()) {
+      const trimmedPhone = phoneBody.trim().slice(0, 40);
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { phone: trimmedPhone },
+      });
     }
 
     const productIds = [...new Set(lines.map((l) => l.productId))];

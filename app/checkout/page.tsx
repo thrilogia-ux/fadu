@@ -37,6 +37,18 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.phone && typeof data.phone === "string") {
+          setPhone(data.phone);
+        }
+      })
+      .catch(() => {});
+  }, [status]);
+
+  useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login?callbackUrl=/checkout");
     }
@@ -151,7 +163,7 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium">
-                        Teléfono (opcional)
+                        WhatsApp / teléfono
                       </label>
                       <input
                         type="tel"
@@ -162,7 +174,8 @@ export default function CheckoutPage() {
                         autoComplete="tel"
                       />
                       <p className="mt-1 text-xs text-gray-600">
-                        Te avisaremos por email cuando tu pedido esté listo para retirar en FADU
+                        Para avisarte por email y, si lo cargás, para que el equipo te contacte por
+                        WhatsApp cuando el pedido esté listo para retirar.
                       </p>
                     </div>
                   </div>

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       where,
       orderBy: { createdAt: "desc" },
       include: {
-        user: { select: { email: true, name: true } },
+        user: { select: { email: true, name: true, phone: true } },
         items: {
           include: {
             product: { select: { name: true } },

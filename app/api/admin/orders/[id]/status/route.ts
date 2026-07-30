@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { sendPickupReadyEmail } from "@/lib/email";
+import { getPickupInfo } from "@/lib/pickup";
+import { buildPickupReadyNotifyUrl } from "@/lib/whatsapp";
 
 // PATCH /api/admin/orders/[id]/status - Cambiar estado del pedido
 export async function PATCH(
@@ -63,6 +65,7 @@ export async function PATCH(
 
     let pickupReadyEmailSent: boolean | undefined;
     let pickupReadyEmailError: string | undefined;
+    let pickupWhatsAppNotifyUrl: string | null = null;
     if (
       status === "ready_for_pickup" &&
       existing.status !== "ready_for_pickup"
@@ -71,10 +74,21 @@ export async function PATCH(
         where: { id },
         include: {
           items: { include: { product: { select: { name: true } } } },
-          user: { select: { email: true, name: true } },
+          user: { select: { email: true, name: true, phone: true } },
         },
       });
       if (fullOrder?.pickupCode) {
+        const pickup = await getPickupInfo();
+        if (fullOrder.user.phone) {
+          pickupWhatsAppNotifyUrl = buildPickupReadyNotifyUrl(fullOrder.user.phone, {
+            customerName: fullOrder.user.name,
+            pickupCode: fullOrder.pickupCode,
+            orderId: fullOrder.id,
+            address: pickup.address,
+            scheduleLines: pickup.scheduleLines,
+          });
+        }
+
         try {
           const orderForEmail = {
             ...fullOrder,
@@ -107,7 +121,12 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ order, pickupReadyEmailSent, pickupReadyEmailError });
+    return NextResponse.json({
+      order,
+      pickupReadyEmailSent,
+      pickupReadyEmailError,
+      pickupWhatsAppNotifyUrl,
+    });
   } catch (error) {
     console.error("Error updating order status:", error);
     return NextResponse.json({ error: "Error al actualizar estado" }, { status: 500 });

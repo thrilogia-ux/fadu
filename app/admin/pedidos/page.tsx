@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AdminPickupWhatsAppNotify } from "@/components/admin/AdminPickupWhatsAppNotify";
 
 interface Order {
   id: string;
@@ -13,9 +14,14 @@ interface Order {
   total: number;
   createdAt: string;
   archived: boolean;
-  user: { name: string | null; email: string };
+  user: { name: string | null; email: string; phone: string | null };
   _count: { items: number };
 }
+
+type PickupInfoState = {
+  address: string;
+  scheduleLines: string[];
+};
 
 type ListMode = "active" | "archived" | "all";
 
@@ -45,6 +51,10 @@ export default function AdminPedidosPage() {
   const [filter, setFilter] = useState<string>("all");
   const [listMode, setListMode] = useState<ListMode>("active");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pickupInfo, setPickupInfo] = useState<PickupInfoState>({
+    address: "",
+    scheduleLines: [],
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -61,6 +71,17 @@ export default function AdminPedidosPage() {
   useEffect(() => {
     if (session && (session.user as any).role === "admin") {
       loadOrders();
+      fetch("/api/pickup-info")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && !data.error) {
+            setPickupInfo({
+              address: typeof data.address === "string" ? data.address : "",
+              scheduleLines: Array.isArray(data.scheduleLines) ? data.scheduleLines : [],
+            });
+          }
+        })
+        .catch(() => {});
     }
   }, [session, listMode]);
 
@@ -142,15 +163,30 @@ export default function AdminPedidosPage() {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        if (newStatus === "ready_for_pickup" && data.pickupReadyEmailSent === false) {
-          const detail =
-            typeof data.pickupReadyEmailError === "string" && data.pickupReadyEmailError.trim()
-              ? `\n\nDetalle: ${data.pickupReadyEmailError}`
-              : "";
-          alert(
-            "Estado actualizado, pero no se envió el email con el QR. Revisá Resend (API key, dominio verificado), RESEND_TEST_TO si probás, y que el cliente tenga email en la cuenta." +
-              detail
-          );
+        if (newStatus === "ready_for_pickup") {
+          if (data.pickupReadyEmailSent === false) {
+            const detail =
+              typeof data.pickupReadyEmailError === "string" && data.pickupReadyEmailError.trim()
+                ? `\n\nDetalle: ${data.pickupReadyEmailError}`
+                : "";
+            alert(
+              "Estado actualizado, pero no se envió el email con el QR. Revisá Resend (API key, dominio verificado), RESEND_TEST_TO si probás, y que el cliente tenga email en la cuenta." +
+                detail
+            );
+          }
+
+          const waUrl =
+            typeof data.pickupWhatsAppNotifyUrl === "string"
+              ? data.pickupWhatsAppNotifyUrl
+              : null;
+          if (waUrl) {
+            const openWa = confirm(
+              "Pedido marcado como listo para retirar.\n\n¿Abrir WhatsApp para avisar al cliente? (solo tenés que apretar Enviar en la app)"
+            );
+            if (openWa) {
+              window.open(waUrl, "_blank", "noopener,noreferrer");
+            }
+          }
         }
         loadOrders();
       } else {
@@ -320,6 +356,11 @@ export default function AdminPedidosPage() {
                     <p className="text-sm text-gray-600">
                       Cliente: {order.user.name || order.user.email}
                     </p>
+                    {order.user.phone ? (
+                      <p className="text-sm text-gray-600">Tel: {order.user.phone}</p>
+                    ) : (
+                      <p className="text-sm text-amber-700">Sin teléfono (no se puede avisar por WhatsApp)</p>
+                    )}
                     <p className="text-sm text-gray-600">
                       {new Date(order.createdAt).toLocaleString("es-AR")}
                     </p>
@@ -366,6 +407,19 @@ export default function AdminPedidosPage() {
                         Listo para retirar
                       </button>
                     )}
+                    {!order.archived &&
+                      (order.status === "ready_for_pickup" || order.status === "completed") &&
+                      order.pickupCode && (
+                        <AdminPickupWhatsAppNotify
+                          customerPhone={order.user.phone}
+                          customerName={order.user.name}
+                          pickupCode={order.pickupCode}
+                          orderId={order.id}
+                          address={pickupInfo.address}
+                          scheduleLines={pickupInfo.scheduleLines}
+                          variant="compact"
+                        />
+                      )}
                   </div>
                 </div>
               </div>
