@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { productInStock } from "@/lib/product-stock";
 import { WaitlistButton } from "@/components/WaitlistButton";
+import type { HomeProductPlain } from "@/lib/home-data";
 
 type Variant = {
   id: string;
@@ -39,10 +40,51 @@ type QuickProduct = {
 
 type Props = {
   slug: string | null;
+  initial?: HomeProductPlain | null;
   onClose: () => void;
 };
 
-export function ProductQuickView({ slug, onClose }: Props) {
+function initialToQuickProduct(initial: HomeProductPlain): QuickProduct {
+  return {
+    id: initial.id,
+    name: initial.name,
+    slug: initial.slug,
+    description: null,
+    price: initial.price,
+    compareAtPrice: initial.compareAtPrice,
+    stock: initial.inStock ? 1 : 0,
+    useVariants: false,
+    showSizeSelector: false,
+    showColorSelector: false,
+    productType: initial.productType,
+    images: initial.images,
+    category: initial.category,
+  };
+}
+
+async function fetchProductBySlug(slug: string): Promise<QuickProduct> {
+  const load = async () => {
+    const res = await fetch(`/api/products/${encodeURIComponent(slug)}`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(
+        typeof data.error === "string" ? data.error : "No se pudo cargar el producto"
+      );
+    }
+    return data as QuickProduct;
+  };
+
+  try {
+    return await load();
+  } catch (first) {
+    await new Promise((r) => setTimeout(r, 400));
+    return load();
+  }
+}
+
+export function ProductQuickView({ slug, initial, onClose }: Props) {
   const { addItem } = useCart();
   const [product, setProduct] = useState<QuickProduct | null>(null);
   const [loading, setLoading] = useState(false);
@@ -53,24 +95,37 @@ export function ProductQuickView({ slug, onClose }: Props) {
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
+    setLoading(!initial);
     setError("");
-    setProduct(null);
+    setProduct(initial ? initialToQuickProduct(initial) : null);
     setSelectedSize("");
     setSelectedColor("");
     setQty(1);
-    fetch(`/api/products/${slug}`)
-      .then((r) => r.json())
+
+    let cancelled = false;
+
+    fetchProductBySlug(slug)
       .then((data) => {
-        if (data.error) {
-          setError(data.error);
+        if (!cancelled) setProduct(data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (initial) {
+          setError("");
+          setProduct(initialToQuickProduct(initial));
         } else {
-          setProduct(data);
+          setError(err instanceof Error ? err.message : "No se pudo cargar el producto");
+          setProduct(null);
         }
       })
-      .catch(() => setError("No se pudo cargar el producto"))
-      .finally(() => setLoading(false));
-  }, [slug]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initial?.id]);
 
   useEffect(() => {
     if (!slug) return;
@@ -177,10 +232,10 @@ export function ProductQuickView({ slug, onClose }: Props) {
           </button>
         </div>
 
-        {loading && (
+        {loading && !product && (
           <div className="px-4 py-16 text-center text-sm text-gray-600">Cargando…</div>
         )}
-        {error && (
+        {error && !product && (
           <div className="px-4 py-16 text-center text-sm text-red-600">{error}</div>
         )}
 

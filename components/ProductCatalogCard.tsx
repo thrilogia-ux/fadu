@@ -40,7 +40,11 @@ export function ProductCatalogCard({
         )}
       </div>
       {quickSlug && (
-        <ProductQuickView slug={quickSlug} onClose={() => setQuickSlug(null)} />
+        <ProductQuickView
+          slug={quickSlug}
+          initial={{ ...card, inStock, productType: productType ?? "standard" }}
+          onClose={() => setQuickSlug(null)}
+        />
       )}
     </>
   );
