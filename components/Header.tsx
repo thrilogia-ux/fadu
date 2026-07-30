@@ -106,11 +106,30 @@ export function Header({ categories }: { categories: Category[] }) {
       </div>
 
       {/* Header principal */}
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-7xl px-3 md:px-4">
         {/* Fila: Logo, Búsqueda (desktop), Acciones */}
-        <div className="flex items-center gap-3 py-3 md:gap-5 md:py-4">
+        <div className="flex items-center gap-1.5 py-3 md:gap-5 md:py-4">
+          {/* Mobile: menú hamburguesa (izquierda, siempre visible) */}
+          <button
+            type="button"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className={`${tapIcon} shrink-0 md:hidden`}
+            aria-label={showMobileMenu ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={showMobileMenu}
+          >
+            {showMobileMenu ? (
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0" onClick={closeMenus}>
+          <Link href="/" className="-ml-1 shrink-0 md:ml-0" onClick={closeMenus}>
             <Image
               src="/ubafadushop-logo.svg"
               alt=".UBAfadu.shop"
@@ -118,7 +137,7 @@ export function Header({ categories }: { categories: Category[] }) {
               height={57}
               priority
               unoptimized
-              className="h-12 w-auto md:h-14 md:max-w-[280px]"
+              className="h-10 w-auto max-w-[128px] object-contain object-left md:h-14 md:max-w-[280px]"
             />
           </Link>
 
@@ -143,7 +162,20 @@ export function Header({ categories }: { categories: Category[] }) {
           </form>
 
           {/* Espaciador en mobile */}
-          <div className="flex-1 md:hidden" />
+          <div className="min-w-0 flex-1 md:hidden" />
+
+          <div className="flex shrink-0 items-center gap-0.5 md:gap-1">
+          {/* Mobile: cuenta */}
+          <Link
+            href={session ? "/cuenta" : "/login"}
+            className={`${tapIcon} md:hidden`}
+            onClick={closeMenus}
+            aria-label={session ? "Mi cuenta" : "Iniciar sesión"}
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </Link>
 
           {/* Carrito - siempre visible */}
           <Link
@@ -174,25 +206,7 @@ export function Header({ categories }: { categories: Category[] }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-
-          {/* Mobile: menú hamburguesa */}
-          <button
-            type="button"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className={`${tapIcon} md:hidden`}
-            aria-label={showMobileMenu ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={showMobileMenu}
-          >
-            {showMobileMenu ? (
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+          </div>
 
           {/* Desktop: Cuenta */}
           <div className="relative hidden md:block">
