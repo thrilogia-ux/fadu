@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import { generateQRBuffer } from "./qr";
 import { orderItemProductName } from "./order-item-display";
+import { getPickupInfo } from "./pickup";
+import { buildWhatsAppUrl, buildOrderPickupWhatsAppMessage } from "./whatsapp";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
@@ -25,6 +27,23 @@ function resolveTransactionalTo(customerEmail: string | null | undefined): strin
   if (override) return override;
   const c = typeof customerEmail === "string" ? customerEmail.trim() : "";
   return c.length > 0 ? c : undefined;
+}
+
+function pickupScheduleHtml(info: Awaited<ReturnType<typeof getPickupInfo>>): string {
+  const lines = info.scheduleLines
+    .map((l) => `<li style="margin:4px 0">${l}</li>`)
+    .join("");
+  return `
+    <p><strong>Dirección:</strong> ${info.address}</p>
+    <p><strong>Horarios de retiro:</strong></p>
+    <ul style="margin:8px 0;padding-left:20px">${lines || "<li>Consultá en fadustore.vercel.app/retiro</li>"}</ul>
+    ${info.notes ? `<p style="font-size:14px;color:#555">${info.notes}</p>` : ""}
+  `;
+}
+
+function pickupScheduleText(info: Awaited<ReturnType<typeof getPickupInfo>>): string {
+  const lines = info.scheduleLines.map((l) => `• ${l}`).join("\n");
+  return `Dirección: ${info.address}\nHorarios de retiro:\n${lines || "Consultá en el sitio /retiro"}${info.notes ? `\n${info.notes}` : ""}`;
 }
 
 function publicShopUrl(): string {
@@ -80,6 +99,10 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
     })
     .join("\n");
 
+  const pickup = await getPickupInfo();
+  const scheduleBlock = pickupScheduleHtml(pickup);
+  const scheduleText = pickupScheduleText(pickup);
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -92,12 +115,14 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
       <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto;">${itemsList}</pre>
       <p><strong>Total: $${Number(order.total).toLocaleString("es-AR")}</strong></p>
       <p>Te avisaremos por email cuando tu pedido esté listo para retirar en el Pickup Point de FADU.</p>
+      <h2>Retiro en FADU</h2>
+      ${scheduleBlock}
       <p>— Fadu.store</p>
     </body>
     </html>
   `;
 
-  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n— Fadu.store`;
+  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n\n${scheduleText}\n— Fadu.store`;
 
   const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) {
@@ -188,8 +213,17 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
     return { ok: false, error: "No se pudo generar el código QR" };
   }
 
+  const pickup = await getPickupInfo();
+  const scheduleBlock = pickupScheduleHtml(pickup);
+  const scheduleText = pickupScheduleText(pickup);
+  const waMessage = buildOrderPickupWhatsAppMessage(order.pickupCode, {
+    scheduleLines: pickup.scheduleLines,
+    address: pickup.address,
+  });
+  const waUrl = buildWhatsAppUrl(waMessage);
+
   const subject = `Retirá tu pedido #${order.pickupCode} — Fadu.store`;
-  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n— Fadu.store${pickupRedirectNoteText}`;
+  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n\n${scheduleText}\n\nConsultas por WhatsApp: ${waUrl}\n— Fadu.store${pickupRedirectNoteText}`;
 
   const htmlWithCid = `
     <!DOCTYPE html>
@@ -204,6 +238,11 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
         <img src="cid:pickupqr" alt="QR ${order.pickupCode}" width="250" height="250" />
       </p>
       <p style="font-size: 18px; font-weight: bold; text-align: center;">Código: ${order.pickupCode}</p>
+      <h2>Horarios de retiro</h2>
+      ${scheduleBlock}
+      <p style="text-align:center;margin-top:20px">
+        <a href="${waUrl}" style="display:inline-block;background:#25D366;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Consultar por WhatsApp</a>
+      </p>
       <p>— Fadu.store</p>
       ${pickupRedirectNoteHtml}
     </body>
@@ -220,6 +259,11 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
       <p>Tu pedido <strong>#${order.pickupCode}</strong> está listo para retirar en el <strong>Pickup Point de FADU</strong>.</p>
       <p style="font-size: 18px; font-weight: bold; text-align: center; margin: 24px 0;">Código para retirar: ${order.pickupCode}</p>
       <p>Si no ves el QR en otro correo, usá este código en el pickup.</p>
+      <h2>Horarios de retiro</h2>
+      ${scheduleBlock}
+      <p style="text-align:center;margin-top:20px">
+        <a href="${waUrl}" style="display:inline-block;background:#25D366;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Consultar por WhatsApp</a>
+      </p>
       <p>— Fadu.store</p>
       ${pickupRedirectNoteHtml}
     </body>

@@ -1,10 +1,9 @@
 "use client";
 
-export function WhatsAppButton() {
-  const phoneNumber = "5491168333363";
-  const message = "Hola! Tengo una consulta sobre Fadu.store";
-  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+import { buildWhatsAppUrl, DEFAULT_WHATSAPP_GREETING } from "@/lib/whatsapp";
 
+export function WhatsAppButton() {
+  const whatsappUrl = buildWhatsAppUrl(DEFAULT_WHATSAPP_GREETING);
   return (
     <a
       href={whatsappUrl}

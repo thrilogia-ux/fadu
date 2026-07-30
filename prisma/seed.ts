@@ -132,6 +132,23 @@ async function main() {
     });
   }
   console.log("Franja superior: mensajes por defecto sincronizados (3)");
+
+  await prisma.pickupConfig.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      address: "Av. San Juan 350, CABA",
+      notes: "Presentá el código QR del email o tu número de pedido al retirar.",
+      slots: {
+        create: [
+          { dayOfWeek: 3, startTime: "16:00", endTime: "20:00", active: true, sortOrder: 0 },
+          { dayOfWeek: 5, startTime: "10:00", endTime: "16:00", active: true, sortOrder: 1 },
+        ],
+      },
+    },
+  });
+  console.log("Pickup: horarios por defecto (Mié 16-20, Vie 10-16)");
 }
 
 main()

@@ -18,12 +18,22 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
+  const [pickupSchedule, setPickupSchedule] = useState<string[]>([]);
+  const [pickupAddress, setPickupAddress] = useState("");
   const isCompletingOrderRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
       .then((data) => setCategories(Array.isArray(data) ? data : []));
+    fetch("/api/pickup-info")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && !data.error) {
+          setPickupSchedule(Array.isArray(data.scheduleLines) ? data.scheduleLines : []);
+          setPickupAddress(typeof data.address === "string" ? data.address : "");
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -260,6 +270,23 @@ export default function CheckoutPage() {
                     <span>Total</span>
                     <span className="shrink-0">${total.toLocaleString("es-AR")}</span>
                   </div>
+
+                  {(pickupAddress || pickupSchedule.length > 0) && (
+                    <div className="mb-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
+                      <p className="mb-2 font-semibold text-[#1d1d1b]">Retiro en FADU</p>
+                      {pickupAddress ? <p className="mb-1">{pickupAddress}</p> : null}
+                      {pickupSchedule.length > 0 ? (
+                        <ul className="space-y-0.5">
+                          {pickupSchedule.map((line) => (
+                            <li key={line}>• {line}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      <Link href="/retiro" className="mt-2 inline-block text-[#0f3bff] hover:underline">
+                        Más info
+                      </Link>
+                    </div>
+                  )}
 
                   <button
                     type="submit"

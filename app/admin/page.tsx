@@ -39,6 +39,12 @@ export default function AdminDashboard() {
       icon: "✅",
     },
     {
+      title: "Retiro y horarios",
+      description: "Días y horarios del Pickup Point",
+      href: "/admin/retiro",
+      icon: "🕐",
+    },
+    {
       title: "Productos",
       description: "Agregar, editar y eliminar productos",
       href: "/admin/productos",

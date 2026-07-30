@@ -372,3 +372,27 @@ model TopBannerMessage {
 
   @@map("top_banner_messages")
 }
+
+// --- Pickup Point: dirección y días/horarios de retiro ---
+model PickupConfig {
+  id        String   @id @default("default")
+  address   String   @default("Av. San Juan 350, CABA")
+  notes     String?  @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  slots PickupSlot[]
+  @@map("pickup_config")
+}
+
+model PickupSlot {
+  id        String  @id @default(cuid())
+  configId  String  @default("default") @map("config_id")
+  dayOfWeek Int     @map("day_of_week") // 0=Domingo … 6=Sábado (convención JS)
+  startTime String  @map("start_time") @db.VarChar(5) // HH:mm
+  endTime   String  @map("end_time") @db.VarChar(5)
+  active    Boolean @default(true)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  config PickupConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  @@map("pickup_slots")
+}

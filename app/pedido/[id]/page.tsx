@@ -7,6 +7,9 @@ import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
+import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
+import { WhatsAppOrderLink } from "@/components/WhatsAppOrderLink";
+import type { PickupInfo } from "@/lib/pickup";
 
 interface Order {
   id: string;
@@ -30,6 +33,7 @@ export default function PedidoPage() {
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const [order, setOrder] = useState<Order | null>(null);
+  const [pickupInfo, setPickupInfo] = useState<PickupInfo | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,10 +41,12 @@ export default function PedidoPage() {
     Promise.all([
       fetch(`/api/orders/${params.id}`).then((r) => r.json()),
       fetch("/api/categories").then((r) => r.json()),
+      fetch("/api/pickup-info").then((r) => r.json()),
     ])
-      .then(([orderData, categoriesData]) => {
+      .then(([orderData, categoriesData, pickupData]) => {
         setOrder(orderData);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        if (pickupData && !pickupData.error) setPickupInfo(pickupData);
       })
       .finally(() => setLoading(false));
   }, [params.id]);
@@ -213,16 +219,31 @@ export default function PedidoPage() {
             {/* Retiro */}
             <div className="rounded-lg bg-gray-50 p-4">
               <h3 className="mb-2 font-semibold">📍 Retiro en FADU</h3>
-              <p className="text-sm text-gray-700">
+              <p className="mb-3 text-sm text-gray-700">
                 {order.status === "ready_for_pickup" || order.status === "completed"
-                  ? "Recibiste un email con el código QR para retirar en FADU."
-                  : "Una vez que tu pedido esté listo, recibirás un email con un código QR para retirarlo en FADU."}
+                  ? "Tu pedido está listo. Presentá el código QR del email o tu número de pedido al retirar."
+                  : "Cuando tu pedido esté listo, recibirás un email con un código QR para retirarlo en FADU."}
               </p>
-              <p className="mt-2 text-xs text-gray-600">
-                Dirección: Av. San Juan 350, CABA
-                <br />
-                Horarios: Lunes a viernes de 10 a 18 hs
-              </p>
+              {pickupInfo ? (
+                <PickupScheduleDisplay info={pickupInfo} showNotes className="mb-4" />
+              ) : (
+                <p className="text-sm text-gray-600">Cargando horarios...</p>
+              )}
+              {(order.status === "ready_for_pickup" || order.status === "completed") &&
+                pickupInfo && (
+                  <WhatsAppOrderLink
+                    pickupCode={order.pickupCode}
+                    scheduleLines={pickupInfo.scheduleLines}
+                    address={pickupInfo.address}
+                    className="mt-2"
+                  />
+                )}
+              <Link
+                href="/retiro"
+                className="mt-3 inline-block text-sm font-medium text-[#0f3bff] hover:underline"
+              >
+                Más info sobre el retiro →
+              </Link>
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
