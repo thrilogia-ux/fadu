@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { PRESET_SIZE_LABELS } from "@/lib/product-variant-presets";
+import { uploadAdminImage } from "@/lib/upload-image-client";
 
 interface Category {
   id: string;
@@ -190,25 +191,12 @@ export default function AdminProductosPage() {
     setUploadingImageIdx(idx);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "products");
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setUploadError(data.error || "Error al subir");
-        return;
-      }
-
-      updateImage(idx, data.url);
-    } catch {
-      setUploadError("Error de conexión");
+      const url = await uploadAdminImage(file, "products");
+      updateImage(idx, url);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Error al subir la imagen"
+      );
     } finally {
       setUploadingImageIdx(null);
       e.target.value = "";

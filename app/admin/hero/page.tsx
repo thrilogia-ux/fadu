@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { uploadAdminImage } from "@/lib/upload-image-client";
 
 interface HeroSlide {
   id: string;
@@ -180,41 +181,14 @@ export default function AdminHeroPage() {
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "hero-slides");
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      let data: { url?: string; error?: string } = {};
-      const text = await res.text();
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        setUploadError(
-          res.status === 413
-            ? "La imagen es muy pesada. Probá con menos de 4MB."
-            : `Error del servidor (${res.status}). Pegá una URL de imagen abajo.`
-        );
-        return;
-      }
-
-      if (!res.ok) {
-        setUploadError(data.error || "Error al subir");
-        return;
-      }
-
-      if (!data.url) {
-        setUploadError("No se recibió la URL de la imagen");
-        return;
-      }
-
-      setForm({ ...form, imageUrl: data.url });
-    } catch {
-      setUploadError("Error de conexión. Probá pegar una URL de imagen abajo.");
+      const url = await uploadAdminImage(file, "hero-slides");
+      setForm({ ...form, imageUrl: url });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error de conexión. Probá pegar una URL de imagen abajo.";
+      setUploadError(message);
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -334,7 +308,7 @@ export default function AdminHeroPage() {
                     <p className="mt-1 text-sm text-red-600">{uploadError}</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Recomendado: 1920x600px mínimo. Máx. 4MB (JPEG, PNG, WebP, GIF).
+                    Recomendado: 1920x600px mínimo. Máx. 5MB (JPEG, PNG, WebP, GIF).
                   </p>
                   {form.imageUrl && (
                     <>

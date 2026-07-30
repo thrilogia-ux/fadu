@@ -14,11 +14,13 @@ export async function GET() {
   }
 
   const hasUrl = Boolean(process.env.DATABASE_URL?.trim());
+  const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim());
   const body = {
     ok: database === "ok",
     message: "Fadu.store API OK",
     database,
     databaseUrlConfigured: hasUrl,
+    blobConfigured,
     /** Si `database` !== ok: revisá Vercel DATABASE_URL (pooler Supabase 6543, pgbouncer=true) y que el proyecto Supabase no esté pausado. */
     ...(database !== "ok"
       ? {
