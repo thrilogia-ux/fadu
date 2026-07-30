@@ -211,17 +211,17 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center overflow-hidden bg-black/50 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Vista rápida del producto"
       onClick={onClose}
     >
       <div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:rounded-2xl"
+        className="flex max-h-[100dvh] w-full max-w-lg min-w-0 flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[min(92dvh,900px)] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-black/8 bg-white px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-black/8 bg-white px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <h2 className="text-sm font-semibold text-[#1d1d1b]">Vista rápida</h2>
           <button
             type="button"
@@ -232,6 +232,7 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
           </button>
         </div>
 
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {loading && !product && (
           <div className="px-4 py-16 text-center text-sm text-gray-600">Cargando…</div>
         )}
@@ -240,14 +241,14 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
         )}
 
         {product && !loading && (
-          <div className="p-4">
-            <div className="relative mb-4 aspect-square overflow-hidden rounded-lg bg-gray-50">
+          <div className="box-border w-full max-w-full p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="relative mx-auto mb-4 h-[min(38dvh,240px)] w-full max-w-full overflow-hidden rounded-lg bg-gray-50 sm:mb-4 sm:aspect-square sm:h-auto sm:max-h-none">
               {product.images[0] ? (
                 <Image
                   src={product.images[0].url}
                   alt={product.name}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="400px"
                   unoptimized
                 />
@@ -266,7 +267,7 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
                 {product.category.name}
               </p>
             )}
-            <h3 className="mb-2 text-lg font-bold text-[#1d1d1b]">{product.name}</h3>
+            <h3 className="mb-2 break-words text-lg font-bold text-[#1d1d1b]">{product.name}</h3>
             <p className="mb-4 text-xl font-bold tabular-nums">
               ${Number(product.price).toLocaleString("es-AR")}
             </p>
@@ -333,8 +334,8 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
             )}
 
             {inStock ? (
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+                <div className="flex shrink-0 items-center gap-2">
                   <label className="text-sm text-gray-600">Cant.</label>
                   <input
                     type="number"
@@ -351,7 +352,7 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
                   type="button"
                   disabled={!canAdd}
                   onClick={handleAdd}
-                  className="min-h-[44px] flex-1 rounded-lg bg-[#0f3bff] px-4 py-2.5 text-sm font-semibold text-white disabled:bg-gray-300"
+                  className="min-h-[44px] min-w-0 flex-1 rounded-lg bg-[#0f3bff] px-4 py-2.5 text-sm font-semibold text-white disabled:bg-gray-300"
                 >
                   Agregar al carrito
                 </button>
@@ -369,6 +370,7 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
             </Link>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
