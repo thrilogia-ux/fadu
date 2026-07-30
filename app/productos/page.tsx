@@ -5,7 +5,8 @@ import { mergeHomeCategories } from "@/lib/home-fallback";
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { catalogListInclude, mapProductToCatalog } from "@/lib/catalog-product-map";
 
 export default async function ProductosPage() {
   const categoriesRaw =
@@ -22,10 +23,7 @@ export default async function ProductosPage() {
       prisma.product.findMany({
         where: { active: true },
         orderBy: { createdAt: "desc" },
-        include: {
-          category: { select: { name: true, slug: true } },
-          images: { where: { isPrimary: true }, take: 1 },
-        },
+        include: catalogListInclude,
       })
     )) ?? [];
 
@@ -56,16 +54,7 @@ export default async function ProductosPage() {
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={Number(product.price)}
-                  compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                  images={product.images}
-                  category={product.category}
-                />
+                <ProductCatalogCard key={product.id} {...mapProductToCatalog(product)} />
               ))}
             </div>
           )}

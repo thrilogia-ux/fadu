@@ -20,6 +20,12 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [pickupSchedule, setPickupSchedule] = useState<string[]>([]);
   const [pickupAddress, setPickupAddress] = useState("");
+  const [fairMode, setFairMode] = useState({
+    enabled: false,
+    title: "",
+    message: "",
+    hideMercadoPago: false,
+  });
   const isCompletingOrderRef = useRef(false);
 
   useEffect(() => {
@@ -32,6 +38,16 @@ export default function CheckoutPage() {
         if (data && !data.error) {
           setPickupSchedule(Array.isArray(data.scheduleLines) ? data.scheduleLines : []);
           setPickupAddress(typeof data.address === "string" ? data.address : "");
+        }
+      });
+    fetch("/api/fair-mode")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && typeof data.enabled === "boolean") {
+          setFairMode(data);
+          if (data.enabled && data.hideMercadoPago) {
+            setPaymentMethod("transfer");
+          }
         }
       });
   }, []);
@@ -144,6 +160,13 @@ export default function CheckoutPage() {
         <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
           <h1 className="mb-6 text-2xl font-bold text-[#1d1d1b] text-center md:mb-8 md:text-left md:text-3xl">Finalizar compra</h1>
 
+          {fairMode.enabled && (
+            <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4">
+              <h2 className="font-semibold text-amber-950">{fairMode.title}</h2>
+              <p className="mt-1 text-sm text-amber-900">{fairMode.message}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="grid min-w-0 gap-8 lg:grid-cols-3">
               {/* Datos y pago */}
@@ -185,6 +208,7 @@ export default function CheckoutPage() {
                 <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
                   <h2 className="mb-4 text-lg font-semibold">Método de pago</h2>
                   <div className="space-y-3">
+                    {(!fairMode.enabled || !fairMode.hideMercadoPago) && (
                     <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-black/10 p-4 transition hover:border-[#0f3bff] has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5">
                       <input
                         type="radio"
@@ -206,6 +230,7 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     </label>
+                    )}
 
                     <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-black/10 p-4 transition hover:border-[#0f3bff] has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5">
                       <input

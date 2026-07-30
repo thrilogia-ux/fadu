@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import Link from "next/link";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCatalogCard } from "@/components/ProductCatalogCard";
 import type { HomeProductPlain } from "@/lib/home-data";
 import { normalizeApiProductList } from "@/lib/normalize-api-product";
 
@@ -68,16 +68,7 @@ export function HomeProductShelfClient({ initial, hydrateUrls, emptyFallback }: 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
       {items.map((product) => (
-        <ProductCard
-          key={product.id}
-          id={product.id}
-          name={product.name}
-          slug={product.slug}
-          price={product.price}
-          compareAtPrice={product.compareAtPrice}
-          images={product.images}
-          category={product.category}
-        />
+        <ProductCatalogCard key={product.id} {...product} />
       ))}
     </div>
   );

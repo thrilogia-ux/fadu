@@ -1,4 +1,5 @@
 import type { HomeProductPlain } from "@/lib/home-data";
+import { productInStock } from "@/lib/product-stock";
 
 export function normalizeApiProduct(p: unknown): HomeProductPlain | null {
   if (!p || typeof p !== "object") return null;
@@ -9,6 +10,11 @@ export function normalizeApiProduct(p: unknown): HomeProductPlain | null {
     .map((img) => ({ url: String((img as { url?: string }).url ?? "") }))
     .filter((i) => i.url.length > 0);
   if (typeof o.id !== "string" || typeof o.name !== "string" || typeof o.slug !== "string") return null;
+  const variants = Array.isArray(o.variants)
+    ? o.variants.map((v) => ({ stock: Number((v as { stock?: number }).stock ?? 0) }))
+    : undefined;
+  const stock = Number(o.stock ?? 0);
+  const useVariants = Boolean(o.useVariants);
   return {
     id: o.id,
     name: o.name,
@@ -21,6 +27,8 @@ export function normalizeApiProduct(p: unknown): HomeProductPlain | null {
       cat?.name && cat?.slug
         ? { name: cat.name, slug: cat.slug }
         : { name: "Productos", slug: "productos" },
+    inStock: productInStock({ stock, useVariants, variants }),
+    productType: typeof o.productType === "string" ? o.productType : "standard",
   };
 }
 

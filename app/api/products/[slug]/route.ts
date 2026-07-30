@@ -77,5 +77,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       ? { ...product, videos: [] }
       : product;
 
-  return NextResponse.json(body);
+  let bundleItems: unknown[] = [];
+  if (product.productType === "bundle_pack" || product.productType === "bundle_combo") {
+    try {
+      bundleItems = await prisma.bundleItem.findMany({
+        where: { bundleProductId: product.id },
+        orderBy: { sortOrder: "asc" },
+        include: {
+          component: { select: { id: true, name: true, slug: true, price: true } },
+        },
+      });
+    } catch {
+      bundleItems = [];
+    }
+  }
+
+  return NextResponse.json({ ...body, bundleItems });
 }

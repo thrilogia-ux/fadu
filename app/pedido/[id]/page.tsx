@@ -9,6 +9,7 @@ import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import { WhatsAppOrderLink } from "@/components/WhatsAppOrderLink";
+import { ReorderButton } from "@/components/ReorderButton";
 import type { PickupInfo } from "@/lib/pickup";
 
 interface Order {
@@ -247,6 +248,17 @@ export default function PedidoPage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <ReorderButton orderId={order.id} className="flex-1" />
+              {(order.status === "ready_for_pickup" || order.status === "completed") &&
+                order.pickupCode && (
+                  <a
+                    href={`/api/orders/${order.id}/qr`}
+                    download
+                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-black/20 py-3 text-center text-sm font-semibold hover:bg-black/5"
+                  >
+                    Descargar QR de retiro
+                  </a>
+                )}
               <Link
                 href="/"
                 className="flex-1 rounded-lg border border-black/20 py-3 text-center font-semibold hover:bg-black/5"

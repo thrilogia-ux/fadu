@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
+import { ReorderButton } from "@/components/ReorderButton";
 import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
 
@@ -107,11 +108,11 @@ export default function MisPedidosPage() {
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
-                <Link
+                <div
                   key={order.id}
-                  href={`/pedido/${order.id}`}
-                  className="block rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
+                  className="rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
                 >
+                  <Link href={`/pedido/${order.id}`} className="block">
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
@@ -150,7 +151,11 @@ export default function MisPedidosPage() {
                       <p className="mt-1 text-sm text-[#0f3bff]">Ver detalle →</p>
                     </div>
                   </div>
-                </Link>
+                  </Link>
+                  <div className="mt-4 border-t border-black/8 pt-4">
+                    <ReorderButton orderId={order.id} variant="link" />
+                  </div>
+                </div>
               ))}
             </div>
           )}

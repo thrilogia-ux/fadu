@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { generatePickupCode } from "@/lib/qr";
+import { isBundleType } from "@/lib/bundles";
 import {
   sendOrderConfirmation,
   sendPickupReadyEmail,
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
         active: true,
         stock: true,
         useVariants: true,
+        productType: true,
       },
     });
     if (products.length !== productIds.length) {
@@ -145,7 +147,7 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      if (p.useVariants && !line.variantId) {
+      if (p.useVariants && !isBundleType(p.productType) && !line.variantId) {
         return NextResponse.json(
           { error: "Elegí talle y/o color para los productos con variantes antes de finalizar el pedido." },
           { status: 400 }
@@ -249,6 +251,16 @@ export async function POST(request: Request) {
       }
     }
 
+    const bundleIds = products
+      .filter((p) => isBundleType(p.productType))
+      .map((p) => p.id);
+    const bundleComponents =
+      bundleIds.length > 0
+        ? await prisma.bundleItem.findMany({
+            where: { bundleProductId: { in: bundleIds } },
+          })
+        : [];
+
     const initialStatus = paymentMethod === "test" ? "ready_for_pickup" : "pending_payment";
     const historyEntries =
       paymentMethod === "test"
@@ -290,6 +302,17 @@ export async function POST(request: Request) {
               where: { id: pid },
               data: { stock: { decrement: q } },
             });
+          }
+          for (const line of lines) {
+            const p = productById.get(line.productId)!;
+            if (!isBundleType(p.productType)) continue;
+            const comps = bundleComponents.filter((b) => b.bundleProductId === line.productId);
+            for (const bi of comps) {
+              await tx.product.update({
+                where: { id: bi.componentProductId },
+                data: { stock: { decrement: bi.quantity * line.quantity } },
+              });
+            }
           }
           return o;
         });

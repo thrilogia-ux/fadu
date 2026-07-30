@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { mapProductToCatalog } from "@/lib/catalog-product-map";
 import Link from "next/link";
 
 interface Favorite {
@@ -107,14 +108,12 @@ export default function FavoritosPage() {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {favorites.map((fav) => (
                 <div key={fav.id} className="relative">
-                  <ProductCard
-                    id={fav.product.id}
-                    name={fav.product.name}
-                    slug={fav.product.slug}
-                    price={Number(fav.product.price)}
-                    compareAtPrice={fav.product.compareAtPrice ? Number(fav.product.compareAtPrice) : null}
-                    images={fav.product.images}
-                    category={fav.product.category}
+                  <ProductCatalogCard
+                    {...mapProductToCatalog({
+                      ...fav.product,
+                      stock: 1,
+                      inStock: true,
+                    } as Parameters<typeof mapProductToCatalog>[0])}
                   />
                   <button
                     onClick={() => removeFavorite(fav.product.id)}

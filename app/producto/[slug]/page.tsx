@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useCart } from "@/lib/cart-context";
 import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { ProductCard } from "@/components/ProductCard";
+import { WaitlistButton } from "@/components/WaitlistButton";
 
 interface ProductVariant {
   id: string;
@@ -982,6 +983,13 @@ export default function ProductPage() {
                     >
                       {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
                     </button>
+                    {effectiveStock === 0 && (
+                      <WaitlistButton
+                        productId={product.id}
+                        variantId={selectedVariant?.id}
+                        className="pt-2"
+                      />
+                    )}
                   </div>
                 </div>
 

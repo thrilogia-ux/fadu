@@ -62,6 +62,7 @@ export async function GET(request: Request) {
           where: { isPrimary: true },
           take: 1,
         },
+        variants: { select: { stock: true } },
       },
     });
   });

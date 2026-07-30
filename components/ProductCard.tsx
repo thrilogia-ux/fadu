@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { productTypeLabel } from "@/lib/product-stock";
 
 interface ProductCardProps {
   id: string;
@@ -9,13 +10,25 @@ interface ProductCardProps {
   compareAtPrice?: number | null;
   images: { url: string }[];
   category?: { name: string; slug: string };
+  inStock?: boolean;
+  productType?: string | null;
 }
 
-export function ProductCard({ name, slug, price, compareAtPrice, images, category }: ProductCardProps) {
+export function ProductCard({
+  name,
+  slug,
+  price,
+  compareAtPrice,
+  images,
+  category,
+  inStock = true,
+  productType,
+}: ProductCardProps) {
   const hasDiscount = compareAtPrice && compareAtPrice > price;
   const discountPercent = hasDiscount
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : 0;
+  const typeLabel = productTypeLabel(productType);
 
   return (
     <Link
@@ -37,8 +50,18 @@ export function ProductCard({ name, slug, price, compareAtPrice, images, categor
             Sin imagen
           </div>
         )}
-        {hasDiscount && (
-          <span className="absolute left-2 top-2 rounded-full bg-green-500 px-2 py-1 text-xs font-bold text-white">
+        {!inStock && (
+          <span className="absolute right-2 top-2 rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white sm:text-xs">
+            Sin stock
+          </span>
+        )}
+        {typeLabel && (
+          <span className="absolute left-2 top-2 rounded-full bg-[#0f3bff] px-2 py-1 text-[10px] font-bold text-white sm:text-xs">
+            {typeLabel}
+          </span>
+        )}
+        {hasDiscount && inStock && (
+          <span className={`absolute rounded-full bg-green-500 px-2 py-1 text-xs font-bold text-white ${typeLabel ? "left-2 top-9" : "left-2 top-2"}`}>
             {discountPercent}% OFF
           </span>
         )}
@@ -61,7 +84,9 @@ export function ProductCard({ name, slug, price, compareAtPrice, images, categor
           <span className="text-lg font-bold tabular-nums text-[#1d1d1b] sm:text-xl">
             ${price.toLocaleString("es-AR")}
           </span>
-          <span className="text-[11px] font-medium text-green-700 sm:text-xs">Retiro en FADU</span>
+          <span className="text-[11px] font-medium text-green-700 sm:text-xs">
+            {inStock ? "Retiro en FADU" : "Lista de espera disponible"}
+          </span>
         </div>
       </div>
     </Link>

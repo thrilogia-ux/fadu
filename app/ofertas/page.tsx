@@ -4,7 +4,8 @@ import { homeOffersOrderBy } from "@/lib/product-list-order";
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { catalogListInclude, mapProductToCatalog } from "@/lib/catalog-product-map";
 import Image from "next/image";
 
 export default async function OfertasPage() {
@@ -20,10 +21,7 @@ export default async function OfertasPage() {
       compareAtPrice: { not: null },
     },
     orderBy: homeOffersOrderBy,
-    include: {
-      category: { select: { name: true, slug: true } },
-      images: { where: { isPrimary: true }, take: 1 },
-    },
+    include: catalogListInclude,
   });
 
   return (
@@ -51,16 +49,7 @@ export default async function OfertasPage() {
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={Number(product.price)}
-                  compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                  images={product.images}
-                  category={product.category}
-                />
+                <ProductCatalogCard key={product.id} {...mapProductToCatalog(product)} />
               ))}
             </div>
           )}

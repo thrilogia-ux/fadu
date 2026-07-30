@@ -3,9 +3,12 @@ import type { HomeHeroSlide } from "@/components/HomeHero";
 import { runWithDbRetries } from "@/lib/db-retry";
 import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
 
+import { productInStock } from "@/lib/product-stock";
+
 const productHomeInclude = {
   category: { select: { name: true, slug: true } as const },
   images: { where: { isPrimary: true }, take: 1 },
+  variants: { select: { stock: true } },
 } as const;
 
 type ProductHomeRow = Awaited<ReturnType<typeof getFeaturedProductsForHomeRaw>>[number];
@@ -28,9 +31,14 @@ export type HomeProductPlain = {
   compareAtPrice: number | null;
   images: { url: string }[];
   category: { name: string; slug: string };
+  inStock: boolean;
+  productType: string;
 };
 
 function toHomeProductPlain(p: ProductHomeRow): HomeProductPlain {
+  const variants = (p as { variants?: { stock: number }[] }).variants;
+  const useVariants = Boolean((p as { useVariants?: boolean }).useVariants);
+  const stock = Number((p as { stock?: number }).stock ?? 0);
   return {
     id: p.id,
     name: p.name,
@@ -41,6 +49,8 @@ function toHomeProductPlain(p: ProductHomeRow): HomeProductPlain {
     category: p.category
       ? { name: p.category.name, slug: p.category.slug }
       : { name: "Productos", slug: "productos" },
+    inStock: productInStock({ stock, useVariants, variants }),
+    productType: String((p as { productType?: string }).productType ?? "standard"),
   };
 }
 

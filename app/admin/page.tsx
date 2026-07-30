@@ -93,6 +93,18 @@ export default function AdminDashboard() {
       icon: "⭐",
     },
     {
+      title: "Bundles",
+      description: "Packs fijos y combos con descuento",
+      href: "/admin/bundles",
+      icon: "🎁",
+    },
+    {
+      title: "Modo feria",
+      description: "Checkout rápido en eventos y ferias",
+      href: "/admin/feria",
+      icon: "🎪",
+    },
+    {
       title: "Newsletter",
       description: "Ver suscriptores del newsletter",
       href: "/admin/newsletter",

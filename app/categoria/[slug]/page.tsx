@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { catalogListInclude, mapProductToCatalog } from "@/lib/catalog-product-map";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,10 +32,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       categoryId: category.id,
     },
     orderBy: { createdAt: "desc" },
-    include: {
-      category: { select: { name: true, slug: true } },
-      images: { where: { isPrimary: true }, take: 1 },
-    },
+    include: catalogListInclude,
   });
 
   // Iconos por categoría (PNG en public)
@@ -109,16 +107,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={Number(product.price)}
-                  compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                  images={product.images}
-                  category={product.category}
-                />
+                <ProductCatalogCard key={product.id} {...mapProductToCatalog(product)} />
               ))}
             </div>
           )}

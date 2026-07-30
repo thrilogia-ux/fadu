@@ -2,7 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { catalogListInclude, mapProductToCatalog } from "@/lib/catalog-product-map";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,7 @@ export default async function BuscarPage({
         },
         orderBy: { createdAt: "desc" },
         take: 48,
-        include: {
-          category: { select: { name: true, slug: true } },
-          images: { where: { isPrimary: true }, take: 1 },
-        },
+        include: catalogListInclude,
       })
     : [];
 
@@ -100,15 +98,12 @@ export default async function BuscarPage({
           ) : (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
               {products.map((product) => (
-                <ProductCard
+                <ProductCatalogCard
                   key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={Number(product.price)}
-                  compareAtPrice={product.compareAtPrice ? Number(product.compareAtPrice) : null}
-                  images={product.images.map((img) => ({ url: img.url }))}
-                  category={product.category}
+                  {...mapProductToCatalog({
+                    ...product,
+                    images: product.images.map((img) => ({ url: img.url })),
+                  })}
                 />
               ))}
             </div>
