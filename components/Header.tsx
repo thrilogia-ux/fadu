@@ -185,8 +185,8 @@ export function Header({ categories }: { categories: Category[] }) {
           </div>
         </div>
 
-        {/* Desktop: logo | búsqueda más corta | carrito + cuenta */}
-        <div className="hidden min-h-[108px] items-center gap-6 py-5 md:flex lg:gap-8">
+        {/* Desktop: logo | búsqueda centrada | carrito + cuenta */}
+        <div className="hidden min-h-[108px] items-center py-5 md:flex">
           <Link href="/" className="shrink-0" onClick={closeMenus}>
             <Image
               src="/ubafadushop-logo.svg"
@@ -199,26 +199,28 @@ export function Header({ categories }: { categories: Category[] }) {
             />
           </Link>
 
-          <form onSubmit={handleSearch} className="flex w-full max-w-[300px] lg:max-w-[340px]">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar productos, marcas..."
-              className="min-h-[44px] w-full rounded-xl border border-black/15 bg-gray-50 px-4 py-2.5 text-base outline-none transition focus:border-[#0f3bff] focus:bg-white focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-sm"
-            />
-            <button
-              type="submit"
-              className="ml-2 flex h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#0f3bff] text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
-              aria-label="Buscar"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
-          </form>
+          <div className="flex flex-1 items-center justify-center px-6 lg:px-10">
+            <form onSubmit={handleSearch} className="flex w-full max-w-[450px] lg:max-w-[510px]">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar productos, marcas..."
+                className="min-h-[44px] w-full rounded-xl border border-black/15 bg-gray-50 px-4 py-2.5 text-base outline-none transition focus:border-[#0f3bff] focus:bg-white focus:ring-2 focus:ring-[#0f3bff]/25 sm:text-sm"
+              />
+              <button
+                type="submit"
+                className="ml-2 flex h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#0f3bff] text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
+                aria-label="Buscar"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </form>
+          </div>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Link
               href="/carrito"
               className={`relative ${tapIcon}`}
