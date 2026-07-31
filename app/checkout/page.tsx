@@ -148,7 +148,9 @@ export default function CheckoutPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Error al crear el pedido");
+        setError(
+          [data.error || "Error al crear el pedido", data.detail].filter(Boolean).join(" — ")
+        );
         setLoading(false);
         return;
       }

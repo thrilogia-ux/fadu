@@ -10,6 +10,11 @@ import {
   type SendEmailResult,
 } from "@/lib/email";
 import { validateCouponForCart } from "@/lib/coupons";
+import {
+  ensureOrderSchema,
+  isMissingDiscountColumnError,
+  prismaErrorMessage,
+} from "@/lib/order-schema";
 
 class OrderCouponError extends Error {
   constructor(message: string) {
@@ -70,11 +75,17 @@ type CartLine = {
 };
 
 export async function POST(request: Request) {
+  let isAdminUser = false;
+
   try {
+    await ensureOrderSchema();
+
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
+
+    isAdminUser = (session.user as { role?: string })?.role === "admin";
 
     const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody } = await request.json();
 
@@ -82,7 +93,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
     }
 
-    const isAdmin = (session.user as { role?: string })?.role === "admin";
+    const isAdmin = isAdminUser;
     const validMethods = ["mercadopago", "transfer", ...(isAdmin ? ["test"] : [])];
     if (!validMethods.includes(paymentMethod)) {
       return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
@@ -471,6 +482,22 @@ export async function POST(request: Request) {
         );
       }
     }
-    return NextResponse.json({ error: "Error al crear pedido" }, { status: 500 });
+    if (isMissingDiscountColumnError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "Falta actualizar la base de datos (columna discount_total). Ejecutá en Supabase: ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_total DECIMAL(10,2) NOT NULL DEFAULT 0;",
+        },
+        { status: 503 }
+      );
+    }
+    const detail = prismaErrorMessage(error);
+    return NextResponse.json(
+      {
+        error: "Error al crear pedido",
+        ...(isAdminUser && detail ? { detail } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
