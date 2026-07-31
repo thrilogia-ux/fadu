@@ -18,6 +18,7 @@ interface Order {
   status: string;
   paymentMethod: string;
   total: number;
+  discountTotal?: number;
   createdAt: string;
   items: {
     product: { name: string } | null;
@@ -212,9 +213,28 @@ export default function PedidoPage() {
             </div>
 
             {/* Total */}
-            <div className="mb-6 flex justify-between border-t border-black/8 pt-4 text-xl font-bold">
-              <span>Total</span>
-              <span>${Number(order.total).toLocaleString("es-AR")}</span>
+            <div className="mb-6 space-y-2 border-t border-black/8 pt-4">
+              {Number(order.discountTotal ?? 0) > 0 && (
+                <>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span>
+                      $
+                      {(
+                        Number(order.total) + Number(order.discountTotal ?? 0)
+                      ).toLocaleString("es-AR")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Descuento</span>
+                    <span>-${Number(order.discountTotal).toLocaleString("es-AR")}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between text-xl font-bold">
+                <span>Total</span>
+                <span>${Number(order.total).toLocaleString("es-AR")}</span>
+              </div>
             </div>
 
             {/* Retiro */}

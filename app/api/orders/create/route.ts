@@ -9,6 +9,14 @@ import {
   sendPickupReadyEmail,
   type SendEmailResult,
 } from "@/lib/email";
+import { validateCouponForCart } from "@/lib/coupons";
+
+class OrderCouponError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OrderCouponError";
+  }
+}
 
 function variantNote(size: string | null, color: string | null): string | null {
   const s = size?.trim();
@@ -35,6 +43,7 @@ async function sendOrderConfirmationBestEffort(orderId: string): Promise<SendEma
     const orderForEmail = {
       ...fullOrder,
       total: Number(fullOrder.total),
+      discountTotal: Number(fullOrder.discountTotal ?? 0),
       items: fullOrder.items.map((i) => ({
         quantity: i.quantity,
         price: Number(i.price),
@@ -67,7 +76,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { items, paymentMethod, phone: phoneBody } = await request.json();
+    const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody } = await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
@@ -215,12 +224,12 @@ export async function POST(request: Request) {
       }
     }
 
-    let total = 0;
+    let subtotal = 0;
     const lineCreates: Prisma.OrderItemCreateWithoutOrderInput[] = [];
     for (const line of lines) {
       const p = productById.get(line.productId)!;
       const qty = line.quantity;
-      total += Number(p.price) * qty;
+      subtotal += Number(p.price) * qty;
       const v = line.variantId ? variantById.get(line.variantId) : undefined;
       lineCreates.push({
         product: { connect: { id: line.productId } },
@@ -238,6 +247,26 @@ export async function POST(request: Request) {
               variantColorLabel: null,
             }),
       });
+    }
+
+    const couponCodeStr =
+      typeof couponCodeBody === "string" && couponCodeBody.trim()
+        ? couponCodeBody.trim().toUpperCase()
+        : null;
+
+    let discountAmount = 0;
+    let couponIdToApply: string | null = null;
+
+    if (couponCodeStr) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: couponCodeStr },
+      });
+      const couponResult = validateCouponForCart(coupon, subtotal);
+      if (!couponResult.ok) {
+        return NextResponse.json({ error: couponResult.error }, { status: 400 });
+      }
+      discountAmount = couponResult.discount;
+      couponIdToApply = couponResult.coupon.id;
     }
 
     const decVariant = new Map<string, number>();
@@ -262,6 +291,12 @@ export async function POST(request: Request) {
         : [];
 
     const initialStatus = paymentMethod === "test" ? "ready_for_pickup" : "pending_payment";
+    const historyNoteBase = `Pedido creado. Método: ${paymentMethod}`;
+    const historyNote =
+      couponCodeStr && discountAmount > 0
+        ? `${historyNoteBase}. Cupón ${couponCodeStr} (-$${discountAmount.toLocaleString("es-AR")})`
+        : historyNoteBase;
+
     const historyEntries =
       paymentMethod === "test"
         ? [
@@ -270,7 +305,7 @@ export async function POST(request: Request) {
             { status: "preparing", note: "Preparación simulgada" },
             { status: "ready_for_pickup", note: "Listo para retiro (simulación)" },
           ]
-        : [{ status: "pending_payment", note: `Pedido creado. Método: ${paymentMethod}` }];
+        : [{ status: "pending_payment", note: historyNote }];
 
     const orderCountBase = await prisma.order.count();
     let order: Awaited<ReturnType<typeof prisma.order.create>> | null = null;
@@ -280,17 +315,35 @@ export async function POST(request: Request) {
       const pickupCode = generatePickupCode(orderCountBase + 1 + attempt);
       try {
         order = await prisma.$transaction(async (tx) => {
+          if (couponIdToApply) {
+            const coupon = await tx.coupon.findUnique({ where: { id: couponIdToApply } });
+            const couponResult = validateCouponForCart(coupon, subtotal);
+            if (!couponResult.ok) {
+              throw new OrderCouponError(couponResult.error);
+            }
+          }
+
+          const finalTotal = subtotal - discountAmount;
+
           const o = await tx.order.create({
             data: {
               userId: session.user.id,
               status: initialStatus,
               paymentMethod,
-              total,
+              total: finalTotal,
+              discountTotal: discountAmount,
               pickupCode,
               items: { create: lineCreates },
               history: { create: historyEntries },
             },
           });
+
+          if (couponIdToApply) {
+            await tx.coupon.update({
+              where: { id: couponIdToApply },
+              data: { usedCount: { increment: 1 } },
+            });
+          }
           for (const [vid, q] of decVariant) {
             await tx.productVariant.update({
               where: { id: vid },
@@ -319,6 +372,9 @@ export async function POST(request: Request) {
         break;
       } catch (e) {
         lastCreateError = e;
+        if (e instanceof OrderCouponError) {
+          return NextResponse.json({ error: e.message }, { status: 400 });
+        }
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
           continue;
         }
@@ -352,6 +408,7 @@ export async function POST(request: Request) {
         const orderForEmail = {
           ...fullOrder,
           total: Number(fullOrder.total),
+          discountTotal: Number(fullOrder.discountTotal ?? 0),
           items: fullOrder.items.map((i) => ({
             quantity: i.quantity,
             price: Number(i.price),

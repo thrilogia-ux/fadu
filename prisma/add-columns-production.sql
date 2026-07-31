@@ -167,3 +167,5 @@ VALUES
   ('fair_mode_message', 'Compra rápida en el stand. Retirá en el pickup con tu QR.', NOW()),
   ('fair_mode_hide_mercadopago', 'true', NOW())
 ON CONFLICT ("key") DO NOTHING;
+
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_total" DECIMAL(10, 2) NOT NULL DEFAULT 0;

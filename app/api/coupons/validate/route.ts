@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { validateCouponForCart } from "@/lib/coupons";
 
 export async function POST(request: Request) {
   try {
@@ -9,47 +10,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Código requerido" }, { status: 400 });
     }
 
+    const total = Number(cartTotal);
+    if (!Number.isFinite(total) || total < 0) {
+      return NextResponse.json({ error: "Total del carrito inválido" }, { status: 400 });
+    }
+
     const coupon = await prisma.coupon.findUnique({
-      where: { code: code.toUpperCase() },
+      where: { code: code.trim().toUpperCase() },
     });
 
-    if (!coupon || !coupon.active) {
-      return NextResponse.json({ error: "Cupón inválido" }, { status: 400 });
-    }
-
-    const now = new Date();
-    if (now < coupon.validFrom || now > coupon.validUntil) {
-      return NextResponse.json({ error: "Cupón expirado" }, { status: 400 });
-    }
-
-    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-      return NextResponse.json({ error: "Cupón agotado" }, { status: 400 });
-    }
-
-    if (coupon.minPurchase && cartTotal < Number(coupon.minPurchase)) {
-      return NextResponse.json(
-        {
-          error: `Compra mínima de $${Number(coupon.minPurchase).toLocaleString("es-AR")} requerida`,
-        },
-        { status: 400 }
-      );
-    }
-
-    let discount = 0;
-    if (coupon.type === "percent") {
-      discount = (cartTotal * Number(coupon.value)) / 100;
-    } else {
-      discount = Number(coupon.value);
+    const result = validateCouponForCart(coupon, total);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json({
-      discount: Math.min(discount, cartTotal),
-      coupon: {
-        id: coupon.id,
-        code: coupon.code,
-        type: coupon.type,
-        value: Number(coupon.value),
-      },
+      discount: result.discount,
+      coupon: result.coupon,
     });
   } catch (error) {
     console.error("Error validating coupon:", error);

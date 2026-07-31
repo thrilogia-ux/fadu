@@ -12,12 +12,15 @@ import Link from "next/link";
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { items, total, clearCart } = useCart();
+  const { items, total, discount, finalTotal, clearCart, appliedCoupon, setAppliedCoupon, clearCoupon } = useCart();
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"mercadopago" | "transfer" | "test">("mercadopago");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
   const [pickupSchedule, setPickupSchedule] = useState<string[]>([]);
   const [pickupAddress, setPickupAddress] = useState("");
   const [fairMode, setFairMode] = useState({
@@ -51,6 +54,51 @@ export default function CheckoutPage() {
         }
       });
   }, []);
+
+  useEffect(() => {
+    if (appliedCoupon?.code) {
+      setCouponCode(appliedCoupon.code);
+    }
+  }, [appliedCoupon?.code]);
+
+  async function applyCoupon() {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode.trim(), cartTotal: total }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCouponError(data.error || "Cupón inválido");
+        clearCoupon();
+      } else {
+        setAppliedCoupon({
+          code: data.coupon.code,
+          couponId: data.coupon.id,
+          type: data.coupon.type,
+          value: data.coupon.value,
+          discount: data.discount,
+        });
+        setCouponCode(data.coupon.code);
+        setCouponError("");
+      }
+    } catch {
+      setCouponError("Error al validar cupón");
+    }
+    setCouponLoading(false);
+  }
+
+  function removeCoupon() {
+    clearCoupon();
+    setCouponCode("");
+    setCouponError("");
+  }
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -93,6 +141,7 @@ export default function CheckoutPage() {
           })),
           paymentMethod,
           phone: phone.trim() || null,
+          couponCode: appliedCoupon?.code ?? null,
         }),
       });
 
@@ -302,11 +351,55 @@ export default function CheckoutPage() {
                         </span>
                       </div>
                     ))}
+                    <div className="flex justify-between gap-2 border-t border-black/8 pt-2 text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-semibold shrink-0">${total.toLocaleString("es-AR")}</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between gap-2 text-sm text-green-600">
+                        <span>Descuento{appliedCoupon ? ` (${appliedCoupon.code})` : ""}</span>
+                        <span className="font-semibold shrink-0">-${discount.toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="mb-2 block text-sm font-medium">¿Tenés un cupón?</label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="CODIGO"
+                        className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-black/20 px-3 py-2 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={applyCoupon}
+                        disabled={couponLoading || !couponCode.trim()}
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gray-800 px-4 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:bg-gray-300"
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                    {couponError && <p className="mt-2 text-sm text-red-600">{couponError}</p>}
+                    {discount > 0 && (
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p className="text-sm text-green-600">✓ Cupón aplicado</p>
+                        <button
+                          type="button"
+                          onClick={removeCoupon}
+                          className="text-sm text-gray-600 hover:underline"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-6 flex justify-between gap-2 text-xl font-bold">
                     <span>Total</span>
-                    <span className="shrink-0">${total.toLocaleString("es-AR")}</span>
+                    <span className="shrink-0">${finalTotal.toLocaleString("es-AR")}</span>
                   </div>
 
                   {(pickupAddress || pickupSchedule.length > 0) && (

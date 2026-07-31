@@ -11,11 +11,10 @@ import Link from "next/link";
 
 export default function CarritoPage() {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, total, discount, finalTotal, clearCart, appliedCoupon, setAppliedCoupon, clearCoupon } = useCart();
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
-  const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -23,6 +22,12 @@ export default function CarritoPage() {
       .then((r) => r.json())
       .then((data) => setCategories(Array.isArray(data) ? data : []));
   }, []);
+
+  useEffect(() => {
+    if (appliedCoupon?.code) {
+      setCouponCode(appliedCoupon.code);
+    }
+  }, [appliedCoupon?.code]);
 
   async function applyCoupon() {
     if (!couponCode.trim()) return;
@@ -39,9 +44,16 @@ export default function CarritoPage() {
       
       if (!res.ok) {
         setCouponError(data.error || "Cupón inválido");
-        setDiscount(0);
+        clearCoupon();
       } else {
-        setDiscount(data.discount);
+        setAppliedCoupon({
+          code: data.coupon.code,
+          couponId: data.coupon.id,
+          type: data.coupon.type,
+          value: data.coupon.value,
+          discount: data.discount,
+        });
+        setCouponCode(data.coupon.code);
         setCouponError("");
       }
     } catch {
@@ -50,7 +62,11 @@ export default function CarritoPage() {
     setLoading(false);
   }
 
-  const finalTotal = total - discount;
+  function removeCoupon() {
+    clearCoupon();
+    setCouponCode("");
+    setCouponError("");
+  }
 
   return (
     <>
@@ -170,7 +186,7 @@ export default function CarritoPage() {
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between gap-2 text-green-600">
-                        <span>Descuento</span>
+                        <span>Descuento{appliedCoupon ? ` (${appliedCoupon.code})` : ""}</span>
                         <span className="font-semibold shrink-0">-${discount.toLocaleString("es-AR")}</span>
                       </div>
                     )}
@@ -202,7 +218,16 @@ export default function CarritoPage() {
                     </div>
                     {couponError && <p className="mt-2 text-sm text-red-600">{couponError}</p>}
                     {discount > 0 && (
-                      <p className="mt-2 text-sm text-green-600">✓ Cupón aplicado</p>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p className="text-sm text-green-600">✓ Cupón aplicado</p>
+                        <button
+                          type="button"
+                          onClick={removeCoupon}
+                          className="text-sm text-gray-600 hover:underline"
+                        >
+                          Quitar
+                        </button>
+                      </div>
                     )}
                   </div>
 

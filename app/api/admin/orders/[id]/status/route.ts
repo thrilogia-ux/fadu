@@ -93,6 +93,7 @@ export async function PATCH(
           const orderForEmail = {
             ...fullOrder,
             total: Number(fullOrder.total),
+            discountTotal: Number(fullOrder.discountTotal ?? 0),
             items: fullOrder.items.map((i) => ({
               quantity: i.quantity,
               price: Number(i.price),

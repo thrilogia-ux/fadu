@@ -3,6 +3,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { cartLineKey } from "@/lib/cart-line";
+import {
+  loadStoredCoupon,
+  recomputeStoredCouponDiscount,
+  saveStoredCoupon,
+  type StoredAppliedCoupon,
+} from "@/lib/cart-coupon";
 
 export interface CartItem {
   productId: string;
@@ -16,14 +22,21 @@ export interface CartItem {
   slug: string;
 }
 
+export type { StoredAppliedCoupon as AppliedCoupon };
+
 interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
   removeItem: (lineKey: string) => void;
   updateQuantity: (lineKey: string, quantity: number) => void;
   clearCart: () => void;
+  appliedCoupon: StoredAppliedCoupon | null;
+  setAppliedCoupon: (coupon: StoredAppliedCoupon | null) => void;
+  clearCoupon: () => void;
   itemCount: number;
   total: number;
+  discount: number;
+  finalTotal: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -50,30 +63,21 @@ function normalizeItems(parsed: unknown): CartItem[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const [items, setItems] = useState<CartItem[]>([]);
+  const [appliedCoupon, setAppliedCouponState] = useState<StoredAppliedCoupon | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (loaded) return;
 
-    if (session?.user) {
-      const savedCart = localStorage.getItem("cart");
-      if (savedCart) {
-        try {
-          setItems(normalizeItems(JSON.parse(savedCart)));
-        } catch {
-          setItems([]);
-        }
-      }
-    } else {
-      const savedCart = localStorage.getItem("cart");
-      if (savedCart) {
-        try {
-          setItems(normalizeItems(JSON.parse(savedCart)));
-        } catch {
-          setItems([]);
-        }
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      try {
+        setItems(normalizeItems(JSON.parse(savedCart)));
+      } catch {
+        setItems([]);
       }
     }
+    setAppliedCouponState(loadStoredCoupon());
     setLoaded(true);
   }, [session, loaded]);
 
@@ -112,14 +116,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function clearCart() {
     setItems([]);
+    setAppliedCouponState(null);
+    saveStoredCoupon(null);
+  }
+
+  function setAppliedCoupon(coupon: StoredAppliedCoupon | null) {
+    setAppliedCouponState(coupon);
+    saveStoredCoupon(coupon);
+  }
+
+  function clearCoupon() {
+    setAppliedCouponState(null);
+    saveStoredCoupon(null);
   }
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  useEffect(() => {
+    if (!loaded || !appliedCoupon) return;
+    const recomputed = recomputeStoredCouponDiscount(appliedCoupon, total);
+    if (Math.round(recomputed.discount) !== Math.round(appliedCoupon.discount)) {
+      setAppliedCouponState(recomputed);
+      saveStoredCoupon(recomputed);
+    }
+  }, [total, loaded, appliedCoupon?.code, appliedCoupon?.type, appliedCoupon?.value]);
+
+  const discount = appliedCoupon?.discount ?? 0;
+  const finalTotal = Math.max(0, total - discount);
+
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, itemCount, total }}
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        appliedCoupon,
+        setAppliedCoupon,
+        clearCoupon,
+        itemCount,
+        total,
+        discount,
+        finalTotal,
+      }}
     >
       {children}
     </CartContext.Provider>

@@ -57,6 +57,7 @@ export type OrderForEmail = {
   id: string;
   pickupCode: string | null;
   total: number;
+  discountTotal?: number;
   paymentMethod: string | null;
   items: {
     quantity: number;
@@ -103,6 +104,20 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
   const scheduleBlock = pickupScheduleHtml(pickup);
   const scheduleText = pickupScheduleText(pickup);
 
+  const itemsSubtotal = order.items.reduce(
+    (sum, i) => sum + Number(i.price) * i.quantity,
+    0
+  );
+  const discountTotal = Number(order.discountTotal ?? 0);
+  const discountLine =
+    discountTotal > 0
+      ? `<p style="color:#15803d"><strong>Descuento:</strong> -$${discountTotal.toLocaleString("es-AR")}</p>`
+      : "";
+  const discountText =
+    discountTotal > 0
+      ? `\nDescuento: -$${discountTotal.toLocaleString("es-AR")}\nSubtotal: $${itemsSubtotal.toLocaleString("es-AR")}`
+      : "";
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -113,6 +128,7 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
       <p>Recibimos tu pedido <strong>#${order.pickupCode || order.id}</strong>.</p>
       <h2>Resumen</h2>
       <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto;">${itemsList}</pre>
+      ${discountLine}
       <p><strong>Total: $${Number(order.total).toLocaleString("es-AR")}</strong></p>
       <p>Te avisaremos por email cuando tu pedido esté listo para retirar en el Pickup Point de FADU.</p>
       <h2>Retiro en FADU</h2>
@@ -122,7 +138,7 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
     </html>
   `;
 
-  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n\n${scheduleText}\n— Fadu.store`;
+  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}${discountText}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n\n${scheduleText}\n— Fadu.store`;
 
   const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) {
