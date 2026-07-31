@@ -2,9 +2,18 @@ import fs from "fs";
 import path from "path";
 import { PNG } from "pngjs";
 
+/**
+ * Opcional: regenera PNG desde source si recibís un raster nuevo.
+ * El footer usa franja-logos.svg (vector) para máxima nitidez.
+ */
 const root = path.resolve(import.meta.dirname, "..");
 const publicDir = path.join(root, "public");
 const source = path.join(publicDir, "franja-logos-source.png");
+
+if (!fs.existsSync(source)) {
+  console.log("Sin franja-logos-source.png; el footer usa el SVG vectorial.");
+  process.exit(0);
+}
 
 const png = PNG.sync.read(fs.readFileSync(source));
 
@@ -17,13 +26,5 @@ for (let i = 0; i < png.data.length; i += 4) {
   }
 }
 
-const base64 = PNG.sync.write(png).toString("base64");
-const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${png.width} ${png.height}" role="img" aria-label="Logos institucionales UBA, FADU, Diseño, SpICC y DIS">
-  <image width="${png.width}" height="${png.height}" href="data:image/png;base64,${base64}" />
-</svg>
-`;
-
 fs.writeFileSync(path.join(publicDir, "franja-logos.png"), PNG.sync.write(png));
-fs.writeFileSync(path.join(publicDir, "franja-logos.svg"), svg);
-console.log(`Generated franja-logos at ${png.width}x${png.height}`);
+console.log(`Generated franja-logos.png at ${png.width}x${png.height} (fallback raster)`);
