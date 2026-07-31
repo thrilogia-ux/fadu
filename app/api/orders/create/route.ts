@@ -12,7 +12,9 @@ import {
 import { validateCouponForCart } from "@/lib/coupons";
 import {
   ensureOrderSchema,
+  isMissingColumnError,
   isMissingDiscountColumnError,
+  isMissingPickupCodeColumnError,
   prismaErrorMessage,
 } from "@/lib/order-schema";
 import { isMaxConnectionsSessionError } from "@/lib/database-url";
@@ -483,11 +485,21 @@ export async function POST(request: Request) {
         );
       }
     }
-    if (isMissingDiscountColumnError(error)) {
+    if (isMissingDiscountColumnError(error) || isMissingPickupCodeColumnError(error)) {
       return NextResponse.json(
         {
           error:
-            "Falta actualizar la base de datos (columna discount_total). Ejecutá en Supabase: ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_total DECIMAL(10,2) NOT NULL DEFAULT 0;",
+            "Faltan columnas de pedidos en la base de datos. Ejecutá en Supabase SQL Editor el archivo prisma/fix-orders-production.sql y volvé a intentar.",
+        },
+        { status: 503 }
+      );
+    }
+    if (isMissingColumnError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "La base de datos no está actualizada para pedidos. Ejecutá prisma/fix-orders-production.sql en Supabase.",
+          detail: prismaErrorMessage(error),
         },
         { status: 503 }
       );

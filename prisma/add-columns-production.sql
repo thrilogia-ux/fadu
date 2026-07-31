@@ -170,6 +170,18 @@ ON CONFLICT ("key") DO NOTHING;
 
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_total" DECIMAL(10, 2) NOT NULL DEFAULT 0;
 
+-- Pedidos: pickup, pago, descuentos (ver también prisma/fix-orders-production.sql)
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "pickup_code" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "payment_method" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "payment_id" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "pickup_date" TIMESTAMPTZ;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "picked_up_by" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "picked_up_dni" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "validated_by" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "validated_at" TIMESTAMPTZ;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false;
+CREATE UNIQUE INDEX IF NOT EXISTS "orders_pickup_code_key" ON "orders" ("pickup_code") WHERE "pickup_code" IS NOT NULL;
+
 -- Páginas legales (JSON en store_settings, clave legal_pages)
 INSERT INTO "store_settings" ("key", "value", "updated_at")
 VALUES ('legal_pages', '{}', NOW())
