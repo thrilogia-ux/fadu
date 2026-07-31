@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { runWithDbRetries } from "@/lib/db-retry";
+import { runWithDbRetriesResult } from "@/lib/db-retry";
 import { findProductBySlugForApi } from "@/lib/fetch-product-by-slug";
 import { serializeProductForApi } from "@/lib/product-api-serialize";
 
@@ -12,12 +12,18 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  const product = await runWithDbRetries(`api.products.bySlug.${slug}`, () =>
+  const result = await runWithDbRetriesResult(`api.products.bySlug.${slug}`, () =>
     findProductBySlugForApi(slug)
   );
 
-  if (product === null) {
+  if (!result.ok) {
     return NextResponse.json({ error: "Error al obtener producto" }, { status: 503 });
+  }
+
+  const product = result.data;
+
+  if (!product) {
+    return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   }
 
   if (!product.active) {
