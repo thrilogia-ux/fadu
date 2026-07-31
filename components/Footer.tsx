@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { FooterInstitutionalStrip } from "@/components/FooterInstitutionalStrip";
 
 export function Footer() {
   const [email, setEmail] = useState("");
@@ -355,21 +356,7 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Franja logos institucionales */}
-      <div className="w-full bg-[#0f3bff]">
-        <div className="flex h-20 items-center justify-center px-4 sm:px-6">
-          {/* SVG vectorial: escala nítida en cualquier ancho */}
-          <img
-            src="/franja-logos.svg"
-            alt="Universidad de Buenos Aires, FADU, UBADiseño, UBASpICC y DIS"
-            className="h-[52px] w-full max-w-7xl object-contain object-center"
-            width={1200}
-            height={80}
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-      </div>
+      <FooterInstitutionalStrip />
 
       {/* Copyright footer */}
       <div className="border-t border-black/8 bg-gray-50">

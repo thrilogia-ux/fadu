@@ -2,29 +2,29 @@ import fs from "fs";
 import path from "path";
 import { PNG } from "pngjs";
 
-/**
- * Opcional: regenera PNG desde source si recibís un raster nuevo.
- * El footer usa franja-logos.svg (vector) para máxima nitidez.
- */
-const root = path.resolve(import.meta.dirname, "..");
-const publicDir = path.join(root, "public");
-const source = path.join(publicDir, "franja-logos-source.png");
+const publicDir = path.join(path.resolve(import.meta.dirname, ".."), "public", "franja-logos");
 
-if (!fs.existsSync(source)) {
-  console.log("Sin franja-logos-source.png; el footer usa el SVG vectorial.");
-  process.exit(0);
-}
-
-const png = PNG.sync.read(fs.readFileSync(source));
-
-for (let i = 0; i < png.data.length; i += 4) {
-  const r = png.data[i];
-  const g = png.data[i + 1];
-  const b = png.data[i + 2];
-  if (r <= 40 && g <= 40 && b <= 40) {
-    png.data[i + 3] = 0;
+/** Solo quita el fondo negro; no altera píxeles del logo blanco. */
+function makeBlackTransparent(png) {
+  for (let i = 0; i < png.data.length; i += 4) {
+    const r = png.data[i];
+    const g = png.data[i + 1];
+    const b = png.data[i + 2];
+    if (r <= 35 && g <= 35 && b <= 35) {
+      png.data[i + 3] = 0;
+    }
   }
+  return png;
 }
 
-fs.writeFileSync(path.join(publicDir, "franja-logos.png"), PNG.sync.write(png));
-console.log(`Generated franja-logos.png at ${png.width}x${png.height} (fallback raster)`);
+for (let n = 1; n <= 5; n++) {
+  const source = path.join(publicDir, `${n}-source.png`);
+  if (!fs.existsSync(source)) {
+    console.error(`Falta ${source}`);
+    process.exit(1);
+  }
+  const png = PNG.sync.read(fs.readFileSync(source));
+  makeBlackTransparent(png);
+  fs.writeFileSync(path.join(publicDir, `${n}.png`), PNG.sync.write(png));
+  console.log(`OK ${n}.png ${png.width}x${png.height}`);
+}
