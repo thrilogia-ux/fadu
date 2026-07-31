@@ -108,8 +108,8 @@ export function Header({ categories }: { categories: Category[] }) {
       {/* Header principal */}
       <div className="mx-auto max-w-7xl px-3 md:px-4">
         {/* Mobile: menú + búsqueda | logo centrado | cuenta + carrito */}
-        <div className="grid grid-cols-3 items-center gap-1 py-3 md:hidden">
-          <div className="flex items-center gap-0">
+        <div className="relative flex min-h-[76px] items-center justify-between py-3.5 md:hidden">
+          <div className="relative z-10 flex items-center">
             <button
               type="button"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -142,7 +142,7 @@ export function Header({ categories }: { categories: Category[] }) {
 
           <Link
             href="/"
-            className="flex justify-center justify-self-center"
+            className="pointer-events-auto absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2"
             onClick={closeMenus}
           >
             <Image
@@ -152,11 +152,11 @@ export function Header({ categories }: { categories: Category[] }) {
               height={92}
               priority
               unoptimized
-              className="h-11 w-auto max-w-[158px] object-contain"
+              className="h-[58px] w-auto max-w-[min(64vw,232px)] object-contain"
             />
           </Link>
 
-          <div className="flex items-center justify-end gap-0">
+          <div className="relative z-10 flex items-center justify-end">
             <Link
               href={session ? "/cuenta" : "/login"}
               className={tapIcon}
@@ -186,7 +186,7 @@ export function Header({ categories }: { categories: Category[] }) {
         </div>
 
         {/* Desktop: logo | búsqueda más corta | carrito + cuenta */}
-        <div className="hidden items-center gap-5 py-4 md:flex">
+        <div className="hidden min-h-[108px] items-center gap-6 py-5 md:flex lg:gap-8">
           <Link href="/" className="shrink-0" onClick={closeMenus}>
             <Image
               src="/ubafadushop-logo.svg"
@@ -195,7 +195,7 @@ export function Header({ categories }: { categories: Category[] }) {
               height={92}
               priority
               unoptimized
-              className="h-[58px] w-auto max-w-[248px] object-contain object-left"
+              className="h-[92px] w-[300px] max-w-none object-contain object-left"
             />
           </Link>
 
