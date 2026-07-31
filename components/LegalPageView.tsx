@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { STORE_NAME } from "@/lib/brand";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { getAllActiveCategories } from "@/lib/home-data";
@@ -53,7 +55,7 @@ export async function LegalPageView({ page, breadcrumbs }: Props) {
           <p className="mt-6 text-center text-sm text-gray-500">
             ¿Necesitás ayuda?{" "}
             <a
-              href="https://wa.me/5491168333363?text=Hola%2C%20consulta%20desde%20Fadu.store"
+              href={buildWhatsAppUrl(`Hola, consulta desde ${STORE_NAME}`)}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-[#0f3bff] hover:underline"

@@ -1,11 +1,12 @@
 import { Resend } from "resend";
+import { STORE_NAME } from "./brand";
 import { generateQRBuffer } from "./qr";
 import { orderItemProductName } from "./order-item-display";
 import { getPickupInfo } from "./pickup";
 import { buildWhatsAppUrl, buildOrderPickupWhatsAppMessage } from "./whatsapp";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Fadu.store <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || `${STORE_NAME} <onboarding@resend.dev>`;
 
 /**
  * Mails transaccionales: si `RESEND_TEST_TO` está definida, **siempre** se usa como `to`
@@ -51,6 +52,39 @@ function publicShopUrl(): string {
   if (u) return u.replace(/\/$/, "");
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://localhost:3000";
+}
+
+function emailHeaderHtml(): string {
+  const shop = publicShopUrl();
+  const logoUrl = `${shop}/ubafadushop-logo.svg`;
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;max-width:600px;border-collapse:collapse">
+      <tr>
+        <td style="padding:20px 24px;text-align:center;background:#ffffff;border-bottom:3px solid #0f3bff">
+          <a href="${shop}" style="text-decoration:none;display:inline-block">
+            <img src="${logoUrl}" alt="${STORE_NAME}" width="200" style="display:block;margin:0 auto;max-width:200px;height:auto;border:0" />
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailFooterHtml(): string {
+  return `<p style="margin-top:24px;color:#666;font-size:14px">— ${STORE_NAME}</p>`;
+}
+
+function emailLayoutHtml(bodyContent: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 0 20px 20px; background:#f9fafb">
+  ${emailHeaderHtml()}
+  <div style="background:#fff;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;border-top:none">
+    ${bodyContent}
+  </div>
+</body>
+</html>`;
 }
 
 export type OrderForEmail = {
@@ -118,12 +152,8 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
       ? `\nDescuento: -$${discountTotal.toLocaleString("es-AR")}\nSubtotal: $${itemsSubtotal.toLocaleString("es-AR")}`
       : "";
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #1d1d1b;">¡Gracias por tu compra!</h1>
+  const html = emailLayoutHtml(`
+      <h1 style="color: #1d1d1b;margin-top:0;">¡Gracias por tu compra!</h1>
       <p>Hola ${order.user.name || "Cliente"},</p>
       <p>Recibimos tu pedido <strong>#${order.pickupCode || order.id}</strong>.</p>
       <h2>Resumen</h2>
@@ -133,12 +163,10 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
       <p>Te avisaremos por email cuando tu pedido esté listo para retirar en el Pickup Point de FADU.</p>
       <h2>Retiro en FADU</h2>
       ${scheduleBlock}
-      <p>— Fadu.store</p>
-    </body>
-    </html>
-  `;
+      ${emailFooterHtml()}
+  `);
 
-  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}${discountText}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n\n${scheduleText}\n— Fadu.store`;
+  const text = `Hola ${order.user.name || "Cliente"},\n\nRecibimos tu pedido #${order.pickupCode || order.id}.\n\n${itemsList}${discountText}\n\nTotal: $${Number(order.total).toLocaleString("es-AR")}\n\nTe avisaremos cuando esté listo para retirar en FADU.\n\n${scheduleText}\n— ${STORE_NAME}`;
 
   const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) {
@@ -153,7 +181,7 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<SendE
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: toEmail,
-      subject: `Pedido #${order.pickupCode || order.id} confirmado — Fadu.store`,
+      subject: `Pedido #${order.pickupCode || order.id} confirmado — ${STORE_NAME}`,
       html: html.replace("</body>", `${redirectNote}</body>`),
       text:
         text +
@@ -238,15 +266,11 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
   });
   const waUrl = buildWhatsAppUrl(waMessage);
 
-  const subject = `Retirá tu pedido #${order.pickupCode} — Fadu.store`;
-  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n\n${scheduleText}\n\nConsultas por WhatsApp: ${waUrl}\n— Fadu.store${pickupRedirectNoteText}`;
+  const subject = `Retirá tu pedido #${order.pickupCode} — ${STORE_NAME}`;
+  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${order.pickupCode} está listo para retirar en el Pickup Point de FADU.\n\nCódigo: ${order.pickupCode}\n\nPresentá el QR del mail o este código al retirar.\n\n${scheduleText}\n\nConsultas por WhatsApp: ${waUrl}\n— ${STORE_NAME}${pickupRedirectNoteText}`;
 
-  const htmlWithCid = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #1d1d1b;">¡Tu pedido está listo!</h1>
+  const pickupBodyWithQr = `
+      <h1 style="color: #1d1d1b;margin-top:0;">¡Tu pedido está listo!</h1>
       <p>Hola ${order.user.name || "Cliente"},</p>
       <p>Tu pedido <strong>#${order.pickupCode}</strong> está listo para retirar en el <strong>Pickup Point de FADU</strong>.</p>
       <p>Presentá este código QR al retirar:</p>
@@ -259,18 +283,12 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
       <p style="text-align:center;margin-top:20px">
         <a href="${waUrl}" style="display:inline-block;background:#25D366;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Consultar por WhatsApp</a>
       </p>
-      <p>— Fadu.store</p>
+      ${emailFooterHtml()}
       ${pickupRedirectNoteHtml}
-    </body>
-    </html>
   `;
 
-  const htmlFallback = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #1d1d1b;">¡Tu pedido está listo!</h1>
+  const pickupBodyFallback = `
+      <h1 style="color: #1d1d1b;margin-top:0;">¡Tu pedido está listo!</h1>
       <p>Hola ${order.user.name || "Cliente"},</p>
       <p>Tu pedido <strong>#${order.pickupCode}</strong> está listo para retirar en el <strong>Pickup Point de FADU</strong>.</p>
       <p style="font-size: 18px; font-weight: bold; text-align: center; margin: 24px 0;">Código para retirar: ${order.pickupCode}</p>
@@ -280,11 +298,12 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
       <p style="text-align:center;margin-top:20px">
         <a href="${waUrl}" style="display:inline-block;background:#25D366;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Consultar por WhatsApp</a>
       </p>
-      <p>— Fadu.store</p>
+      ${emailFooterHtml()}
       ${pickupRedirectNoteHtml}
-    </body>
-    </html>
   `;
+
+  const htmlWithCid = emailLayoutHtml(pickupBodyWithQr);
+  const htmlFallback = emailLayoutHtml(pickupBodyFallback);
 
   try {
     const attempt1 = await resend.emails.send({
@@ -339,40 +358,32 @@ export async function sendPickupThankYouEmail(order: OrderThankYouForEmail): Pro
 
   const shop = publicShopUrl();
   const code = order.pickupCode || "";
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #1d1d1b;">¡Gracias por retirar tu pedido!</h1>
+  const testRedirect = resendTestOverride();
+  const redirectNote = testRedirect
+    ? `<p style="font-size:12px;color:#666;margin-top:16px">(Prueba Resend: enviado a <strong>${testRedirect}</strong>.)</p>`
+    : "";
+  const htmlOut = emailLayoutHtml(`
+      <h1 style="color: #1d1d1b;margin-top:0;">¡Gracias por retirar tu pedido!</h1>
       <p>Hola ${order.user.name || "Cliente"},</p>
       <p>Confirmamos el retiro${code ? ` del pedido <strong>#${code}</strong>` : " de tu pedido"} en el Pickup Point de FADU.</p>
       <p>Esperamos que disfrutes tu compra. Cuando quieras volver a ver novedades y ofertas, entrá a la tienda:</p>
       <p style="margin: 28px 0;">
         <a href="${shop}/productos" style="display: inline-block; background: #0f3bff; color: #fff; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-          Volver a comprar en Fadu.store
+          Volver a comprar en ${STORE_NAME}
         </a>
       </p>
-      <p style="color: #666; font-size: 14px;">— Fadu.store</p>
-    </body>
-    </html>
-  `;
+      ${emailFooterHtml()}
+      ${redirectNote}
+  `);
 
   const toEmail = resolveTransactionalTo(order.user.email);
   if (!toEmail) return false;
-
-  const testRedirect = resendTestOverride();
-  const htmlOut =
-    html +
-    (testRedirect
-      ? `<p style="font-size:12px;color:#666;margin-top:16px">(Prueba Resend: enviado a <strong>${testRedirect}</strong>.)</p>`
-      : "");
 
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: toEmail,
-      subject: `¡Gracias por tu compra!${code ? ` Pedido #${code}` : ""} — Fadu.store`,
+      subject: `¡Gracias por tu compra!${code ? ` Pedido #${code}` : ""} — ${STORE_NAME}`,
       html: htmlOut,
     });
     if (error) {

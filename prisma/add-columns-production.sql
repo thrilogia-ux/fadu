@@ -60,7 +60,7 @@ INSERT INTO "top_banner_messages" ("id", "text", "order", "active", "created_at"
 VALUES
   ('seed_topbanner_pickup', 'Retirás tu compra en el Pickup Point en FADU', 0, true, NOW()),
   ('seed_topbanner_fadu15', 'Usa el Cupón FADU15 para tener un 15% OFF en tu compra', 1, true, NOW()),
-  ('seed_topbanner_vivi', 'Viví tu identidad FADU en la nueva tienda FADU.Store', 2, true, NOW())
+  ('seed_topbanner_vivi', 'Viví tu identidad FADU en la nueva tienda UBAfadu.shop', 2, true, NOW())
 ON CONFLICT ("id") DO NOTHING;
 
 -- Perfil de usuario (carrera FADU, teléfono) para /cuenta/perfil

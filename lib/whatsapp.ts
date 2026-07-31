@@ -1,3 +1,5 @@
+import { STORE_NAME } from "./brand";
+
 export const DEFAULT_WHATSAPP_PHONE = "5491168333363";
 
 export function getWhatsAppPhone(): string {
@@ -70,7 +72,7 @@ export function buildPickupReadyNotifyMessage(options: PickupReadyNotifyOptions)
     lines.push("", `Ver pedido: ${publicSiteUrl()}/pedido/${options.orderId}`);
   }
 
-  lines.push("", "— Fadu.store");
+  lines.push("", `— ${STORE_NAME}`);
   return lines.join("\n");
 }
 
@@ -107,4 +109,4 @@ export function buildOrderPickupWhatsAppMessage(
 }
 
 export const DEFAULT_WHATSAPP_GREETING =
-  "Hola! Tengo una consulta sobre Fadu.store";
+  `Hola! Tengo una consulta sobre ${STORE_NAME}`;

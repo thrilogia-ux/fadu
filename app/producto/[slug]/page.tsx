@@ -11,6 +11,7 @@ import { useCart } from "@/lib/cart-context";
 import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { ProductCard } from "@/components/ProductCard";
 import { WaitlistButton } from "@/components/WaitlistButton";
+import { STORE_NAME } from "@/lib/brand";
 
 interface ProductVariant {
   id: string;
@@ -1000,7 +1001,7 @@ export default function ProductPage() {
                       F
                     </div>
                     <div>
-                      <p className="font-semibold">Fadu.store</p>
+                      <p className="font-semibold">{STORE_NAME}</p>
                       <p className="text-xs text-gray-500">Vendedor oficial</p>
                     </div>
                   </div>

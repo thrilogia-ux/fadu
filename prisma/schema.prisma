@@ -1,4 +1,4 @@
-// Fadu.store - E-commerce diseño y arquitectura
+// UBAfadu.shop - E-commerce diseño y arquitectura
 // PostgreSQL + Prisma
 
 generator client {

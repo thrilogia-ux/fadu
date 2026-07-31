@@ -1,4 +1,4 @@
-# Fadu.store — E-commerce diseño y arquitectura
+# UBAfadu.shop — E-commerce diseño y arquitectura
 
 Sitio de e-commerce para productos de diseño, arquitectura e iluminación. Inspirado en la usabilidad de Mercado Libre, con panel admin y área de usuarios.
 
@@ -7,7 +7,7 @@ Sitio de e-commerce para productos de diseño, arquitectura e iluminación. Insp
 - **Next.js 16** (App Router), TypeScript, Tailwind CSS
 - **Prisma** + PostgreSQL (usuarios, categorías, productos, pedidos, cupones, favoritos, notificaciones, hero)
 - **NextAuth** con registro manual (email/contraseña) y Google OAuth
-- **Logo** Fadu.store en header; estilo limpio y minimalista
+- **Logo** UBAfadu.shop en header; estilo limpio y minimalista
 
 ## Cómo arrancar
 

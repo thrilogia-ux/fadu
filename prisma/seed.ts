@@ -120,7 +120,7 @@ async function main() {
     },
     {
       id: "seed_topbanner_vivi",
-      text: "Viví tu identidad FADU en la nueva tienda FADU.Store",
+      text: "Viví tu identidad FADU en la nueva tienda UBAfadu.shop",
       order: 2,
     },
   ];

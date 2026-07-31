@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { FooterInstitutionalStrip } from "@/components/FooterInstitutionalStrip";
+import { STORE_NAME } from "@/lib/brand";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export function Footer() {
   const [email, setEmail] = useState("");
@@ -99,7 +101,7 @@ export function Footer() {
               <p className="mt-4 text-sm text-[#1d1d1b]/70">
                 ¿Consultas?{" "}
                 <a
-                  href="https://wa.me/5491168333363?text=Hola%2C%20consulta%20desde%20Fadu.store"
+                  href={buildWhatsAppUrl(`Hola, consulta desde ${STORE_NAME}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-[#0f3bff] underline-offset-2 hover:underline"
@@ -362,7 +364,7 @@ export function Footer() {
       <div className="border-t border-black/8 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-2 text-sm text-[#1d1d1b]/60">
-            <span>© 2026 FADU.Store — La tienda de FADU</span>
+            <span>© 2026 {STORE_NAME} — La tienda de FADU</span>
             <span className="hidden md:inline">|</span>
             <Image
               src="/Powered by OVNI.svg"

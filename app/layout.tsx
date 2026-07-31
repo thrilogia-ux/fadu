@@ -10,8 +10,10 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+import { STORE_NAME, STORE_TAGLINE } from "@/lib/brand";
+
 export const metadata: Metadata = {
-  title: "Fadu.store — Diseño y arquitectura",
+  title: `${STORE_NAME} — ${STORE_TAGLINE}`,
   description: "E-commerce de productos de diseño, arquitectura e iluminación.",
 };
 

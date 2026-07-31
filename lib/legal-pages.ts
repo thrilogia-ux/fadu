@@ -94,7 +94,7 @@ Cuando el pedido esté listo, te enviamos un email con el código QR. Presentalo
   "ayuda-devoluciones": {
     title: "Devoluciones y cambios",
     content: `Política general
-En Fadu.store trabajamos con productos de diseño y ediciones limitadas. Por eso, las devoluciones se evalúan caso por caso.
+En UBAfadu.shop trabajamos con productos de diseño y ediciones limitadas. Por eso, las devoluciones se evalúan caso por caso.
 
 Cambios por talle o modelo
 Si el producto no fue usado, conserva su embalaje original y el pedido fue retirado hace menos de 7 días, podés solicitar un cambio sujeto a disponibil de stock.
@@ -134,7 +134,7 @@ Importante: los precios están expresados en pesos argentinos (ARS).`,
     content: `Última actualización: julio 2026
 
 1. Identificación
-Fadu.store es la tienda online de productos de diseño vinculados a la Facultad de Arquitectura, Diseño y Urbanismo (FADU – UBA).
+UBAfadu.shop es la tienda online de productos de diseño vinculados a la Facultad de Arquitectura, Diseño y Urbanismo (FADU – UBA).
 
 2. Compras
 Al realizar un pedido aceptás estos términos, los precios publicados al momento de la compra y la modalidad de retiro en pickup.
@@ -182,7 +182,7 @@ Aplicamos medidas razonables para proteger tu información. Ningún sistema es 1
 Podés solicitar acceso, corrección o eliminación de tus datos escribiendo al contacto publicado en el sitio.
 
 8. Contacto
-Para consultas sobre privacidad, usá los canales oficiales de Fadu.store.
+Para consultas sobre privacidad, usá los canales oficiales de UBAfadu.shop.
 
 Texto simulado. Debe ser revisado y adaptado por el responsable legal de FADU antes de producción.`,
   },

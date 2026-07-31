@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeDatabaseUrl, normalizeServerlessDatabaseUrl } from "@/lib/database-url";
+import { STORE_NAME } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function GET() {
 
   const body = {
     ok,
-    message: ok ? "Fadu.store API OK" : "API con problemas de base de datos",
+    message: ok ? `${STORE_NAME} API OK` : "API con problemas de base de datos",
     database,
     databaseLatencyMs,
     databaseUrlConfigured: dbConfig.configured,

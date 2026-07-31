@@ -10,6 +10,7 @@ import { orderItemProductName } from "@/lib/order-item-display";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import { WhatsAppOrderLink } from "@/components/WhatsAppOrderLink";
 import { ReorderButton } from "@/components/ReorderButton";
+import { STORE_TRANSFER_ALIAS } from "@/lib/brand";
 import type { PickupInfo } from "@/lib/pickup";
 
 interface Order {
@@ -153,7 +154,7 @@ export default function PedidoPage() {
                     <span className="font-semibold">CBU:</span> 0000003100010000000000
                   </div>
                   <div>
-                    <span className="font-semibold">Alias:</span> FADU.STORE
+                    <span className="font-semibold">Alias:</span> {STORE_TRANSFER_ALIAS}
                   </div>
                   <div>
                     <span className="font-semibold">Titular:</span> FADU S.A.

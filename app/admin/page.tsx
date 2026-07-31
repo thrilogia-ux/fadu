@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { STORE_NAME } from "@/lib/brand";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -123,7 +124,7 @@ export default function AdminDashboard() {
       <header className="border-b border-black/8 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Panel Admin — Fadu.store</h1>
+            <h1 className="text-2xl font-bold">Panel Admin — {STORE_NAME}</h1>
             <Link href="/" className="text-sm text-[#0f3bff] hover:underline">
               Ver sitio →
             </Link>
