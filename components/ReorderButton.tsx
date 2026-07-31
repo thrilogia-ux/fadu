@@ -98,7 +98,7 @@ export function ReorderButton({ orderId, className = "", variant = "button" }: P
   const base =
     variant === "link"
       ? "text-sm font-semibold text-[#0f3bff] hover:underline disabled:opacity-50"
-      : "inline-flex min-h-[44px] items-center justify-center rounded-lg border border-[#0f3bff] bg-white px-4 py-2 text-sm font-semibold text-[#0f3bff] hover:bg-[#0f3bff]/5 disabled:opacity-50";
+      : "inline-flex min-h-[48px] w-full items-center justify-center rounded-lg border border-[#0f3bff] bg-white px-4 text-sm font-semibold text-[#0f3bff] transition hover:bg-[#0f3bff]/5 disabled:opacity-50";
 
   return (
     <button

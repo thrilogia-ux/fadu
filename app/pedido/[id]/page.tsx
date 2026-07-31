@@ -110,7 +110,7 @@ export default function PedidoPage() {
               <p className="mb-2 text-lg font-semibold text-green-800">
                 Tu compra se realizó con éxito.
               </p>
-              <p className="mb-6 text-green-700">
+              <p className="text-green-700">
                 {isTest
                   ? "Simulación completada. Revisá tu email para ver los correos de prueba (confirmación + QR para retiro)."
                   : isTransfer
@@ -119,12 +119,6 @@ export default function PedidoPage() {
                       ? "Te enviamos un email con el código QR para retirar tu pedido en el Pickup Point de FADU."
                       : "Te avisaremos por email cuando tu pedido esté listo para retirar en FADU."}
               </p>
-              <Link
-                href="/"
-                className="inline-block rounded-lg bg-green-600 px-8 py-3 font-semibold text-white hover:bg-green-700"
-              >
-                Volver a la tienda
-              </Link>
             </div>
           )}
 
@@ -238,9 +232,9 @@ export default function PedidoPage() {
             </div>
 
             {/* Retiro */}
-            <div className="rounded-lg bg-gray-50 p-4">
-              <h3 className="mb-2 font-semibold">📍 Retiro en FADU</h3>
-              <p className="mb-3 text-sm text-gray-700">
+            <div className="rounded-xl border border-black/8 bg-gray-50 p-4 sm:p-5">
+              <h3 className="mb-2 font-semibold text-[#1d1d1b]">Retiro en FADU</h3>
+              <p className="mb-4 text-sm leading-relaxed text-gray-700">
                 {order.status === "ready_for_pickup" || order.status === "completed"
                   ? "Tu pedido está listo. Presentá el código QR del email o tu número de pedido al retirar."
                   : "Cuando tu pedido esté listo, recibirás un email con un código QR para retirarlo en FADU."}
@@ -248,48 +242,59 @@ export default function PedidoPage() {
               {pickupInfo ? (
                 <PickupScheduleDisplay info={pickupInfo} showNotes className="mb-4" />
               ) : (
-                <p className="text-sm text-gray-600">Cargando horarios...</p>
+                <p className="mb-4 text-sm text-gray-600">Cargando horarios...</p>
               )}
-              {(order.status === "ready_for_pickup" || order.status === "completed") &&
-                pickupInfo && (
-                  <WhatsAppOrderLink
-                    pickupCode={order.pickupCode}
-                    scheduleLines={pickupInfo.scheduleLines}
-                    address={pickupInfo.address}
-                    className="mt-2"
-                  />
-                )}
-              <Link
-                href="/retiro"
-                className="mt-3 inline-block text-sm font-medium text-[#0f3bff] hover:underline"
-              >
-                Más info sobre el retiro →
-              </Link>
+              <div className="flex flex-col gap-3 border-t border-black/8 pt-4">
+                {(order.status === "ready_for_pickup" || order.status === "completed") &&
+                  pickupInfo && (
+                    <WhatsAppOrderLink
+                      pickupCode={order.pickupCode}
+                      scheduleLines={pickupInfo.scheduleLines}
+                      address={pickupInfo.address}
+                      className="w-full"
+                    />
+                  )}
+                <Link
+                  href="/retiro"
+                  className="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-black/12 bg-white px-4 text-sm font-medium text-[#0f3bff] transition hover:bg-[#0f3bff]/5"
+                >
+                  Más info sobre el retiro
+                </Link>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <ReorderButton orderId={order.id} className="flex-1" />
+            {/* Acciones */}
+            <div className="mt-8 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-600">¿Qué querés hacer ahora?</h3>
+
+              <Link
+                href="/cuenta/pedidos"
+                className="flex min-h-[48px] w-full items-center justify-center rounded-lg bg-[#0f3bff] px-4 text-sm font-semibold text-white transition hover:bg-[#0d32cc] active:bg-[#0a28a8]"
+              >
+                Ver mis pedidos
+              </Link>
+
               {(order.status === "ready_for_pickup" || order.status === "completed") &&
-                order.pickupCode && (
+              order.pickupCode ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <ReorderButton orderId={order.id} className="w-full" />
                   <a
                     href={`/api/orders/${order.id}/qr`}
                     download
-                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-black/20 py-3 text-center text-sm font-semibold hover:bg-black/5"
+                    className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg border border-black/15 bg-white px-4 text-center text-sm font-semibold text-[#1d1d1b] transition hover:bg-gray-50"
                   >
                     Descargar QR de retiro
                   </a>
-                )}
+                </div>
+              ) : (
+                <ReorderButton orderId={order.id} className="w-full" />
+              )}
+
               <Link
                 href="/"
-                className="flex-1 rounded-lg border border-black/20 py-3 text-center font-semibold hover:bg-black/5"
+                className="flex min-h-[48px] w-full items-center justify-center rounded-lg border border-black/15 bg-white px-4 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
               >
                 Volver a la tienda
-              </Link>
-              <Link
-                href="/cuenta/pedidos"
-                className="flex-1 rounded-lg bg-[#0f3bff] py-3 text-center font-semibold text-white hover:bg-[#0d32cc]"
-              >
-                Ver mis pedidos
               </Link>
             </div>
           </div>
