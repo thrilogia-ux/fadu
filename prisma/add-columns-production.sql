@@ -169,3 +169,8 @@ VALUES
 ON CONFLICT ("key") DO NOTHING;
 
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_total" DECIMAL(10, 2) NOT NULL DEFAULT 0;
+
+-- Páginas legales (JSON en store_settings, clave legal_pages)
+INSERT INTO "store_settings" ("key", "value", "updated_at")
+VALUES ('legal_pages', '{}', NOW())
+ON CONFLICT ("key") DO NOTHING;

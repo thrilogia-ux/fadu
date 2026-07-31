@@ -99,6 +99,12 @@ export default function AdminDashboard() {
       icon: "🎁",
     },
     {
+      title: "Páginas legales",
+      description: "Ayuda, términos, privacidad y medios de pago",
+      href: "/admin/legales",
+      icon: "📄",
+    },
+    {
       title: "Modo feria",
       description: "Checkout rápido en eventos y ferias",
       href: "/admin/feria",
