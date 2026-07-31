@@ -107,42 +107,99 @@ export function Header({ categories }: { categories: Category[] }) {
 
       {/* Header principal */}
       <div className="mx-auto max-w-7xl px-3 md:px-4">
-        {/* Fila: Logo, Búsqueda (desktop), Acciones */}
-        <div className="flex items-center gap-1.5 py-3 md:gap-5 md:py-4">
-          {/* Mobile: menú hamburguesa (izquierda, siempre visible) */}
-          <button
-            type="button"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className={`${tapIcon} shrink-0 md:hidden`}
-            aria-label={showMobileMenu ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={showMobileMenu}
-          >
-            {showMobileMenu ? (
+        {/* Mobile: menú + búsqueda | logo centrado | cuenta + carrito */}
+        <div className="grid grid-cols-3 items-center gap-1 py-3 md:hidden">
+          <div className="flex items-center gap-0">
+            <button
+              type="button"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className={`${tapIcon} shrink-0`}
+              aria-label={showMobileMenu ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={showMobileMenu}
+            >
+              {showMobileMenu ? (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMobileSearch(!showMobileSearch)}
+              className={tapIcon}
+              aria-label="Buscar"
+              aria-expanded={showMobileSearch}
+            >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-            ) : (
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+            </button>
+          </div>
 
-          {/* Logo */}
-          <Link href="/" className="min-w-0 shrink md:shrink-0" onClick={closeMenus}>
+          <Link
+            href="/"
+            className="flex justify-center justify-self-center"
+            onClick={closeMenus}
+          >
             <Image
               src="/ubafadushop-logo.svg"
               alt=".UBAfadu.shop"
               width={300}
-              height={71}
+              height={92}
               priority
               unoptimized
-              className="h-10 w-auto max-w-[min(36vw,142px)] object-contain object-left md:h-14 md:max-w-[280px]"
+              className="h-11 w-auto max-w-[158px] object-contain"
             />
           </Link>
 
-          {/* Búsqueda - Desktop (un poco más corta para compensar logo grande) */}
-          <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 max-w-md md:flex lg:max-w-lg">
+          <div className="flex items-center justify-end gap-0">
+            <Link
+              href={session ? "/cuenta" : "/login"}
+              className={tapIcon}
+              onClick={closeMenus}
+              aria-label={session ? "Mi cuenta" : "Iniciar sesión"}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </Link>
+            <Link
+              href="/carrito"
+              className={`relative ${tapIcon}`}
+              onClick={closeMenus}
+              aria-label="Carrito"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3bff] text-xs font-medium text-white">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+
+        {/* Desktop: logo | búsqueda más corta | carrito + cuenta */}
+        <div className="hidden items-center gap-5 py-4 md:flex">
+          <Link href="/" className="shrink-0" onClick={closeMenus}>
+            <Image
+              src="/ubafadushop-logo.svg"
+              alt=".UBAfadu.shop"
+              width={300}
+              height={92}
+              priority
+              unoptimized
+              className="h-[58px] w-auto max-w-[248px] object-contain object-left"
+            />
+          </Link>
+
+          <form onSubmit={handleSearch} className="flex w-full max-w-[300px] lg:max-w-[340px]">
             <input
               type="search"
               value={searchQuery}
@@ -161,101 +218,71 @@ export function Header({ categories }: { categories: Category[] }) {
             </button>
           </form>
 
-          {/* Espaciador en mobile */}
-          <div className="min-w-0 flex-1 md:hidden" />
-
-          <div className="flex shrink-0 items-center gap-0.5 md:gap-1">
-          {/* Mobile: cuenta */}
-          <Link
-            href={session ? "/cuenta" : "/login"}
-            className={`${tapIcon} md:hidden`}
-            onClick={closeMenus}
-            aria-label={session ? "Mi cuenta" : "Iniciar sesión"}
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </Link>
-
-          {/* Carrito - siempre visible */}
-          <Link
-            href="/carrito"
-            className={`relative ${tapIcon}`}
-            onClick={closeMenus}
-            aria-label="Carrito"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {itemCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3bff] text-xs font-medium text-white">
-                {itemCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Mobile: botón búsqueda */}
-          <button
-            type="button"
-            onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className={`${tapIcon} md:hidden`}
-            aria-label="Buscar"
-            aria-expanded={showMobileSearch}
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-          </div>
-
-          {/* Desktop: Cuenta */}
-          <div className="relative hidden md:block">
-            <button
-              type="button"
-              onClick={() => setShowAccountMenu(!showAccountMenu)}
-              className="flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-black/5 active:bg-black/10"
-              aria-expanded={showAccountMenu}
-              aria-haspopup="true"
+          <div className="ml-auto flex items-center gap-1">
+            <Link
+              href="/carrito"
+              className={`relative ${tapIcon}`}
+              onClick={closeMenus}
+              aria-label="Carrito"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span>{session?.user?.name || "Mi cuenta"}</span>
-            </button>
-            {showAccountMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-xl border border-black/10 bg-white py-2 shadow-xl">
-                {session ? (
-                  <>
-                    <Link href="/cuenta" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
-                      Mi perfil
-                    </Link>
-                    <Link href="/cuenta/favoritos" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
-                      Favoritos
-                    </Link>
-                    <Link href="/cuenta/pedidos" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
-                      Mis pedidos
-                    </Link>
-                    <hr className="my-2 border-black/10" />
-                    <button
-                      type="button"
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="block w-full px-4 py-2 text-left text-sm hover:bg-black/5"
-                    >
-                      Cerrar sesión
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
-                      Iniciar sesión
-                    </Link>
-                    <Link href="/register" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
-                      Registrarse
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
+              {itemCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3bff] text-xs font-medium text-white">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-black/5 active:bg-black/10"
+                aria-expanded={showAccountMenu}
+                aria-haspopup="true"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>{session?.user?.name || "Mi cuenta"}</span>
+              </button>
+              {showAccountMenu && (
+                <div className="absolute right-0 mt-2 w-48 rounded-xl border border-black/10 bg-white py-2 shadow-xl">
+                  {session ? (
+                    <>
+                      <Link href="/cuenta" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
+                        Mi perfil
+                      </Link>
+                      <Link href="/cuenta/favoritos" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
+                        Favoritos
+                      </Link>
+                      <Link href="/cuenta/pedidos" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
+                        Mis pedidos
+                      </Link>
+                      <hr className="my-2 border-black/10" />
+                      <button
+                        type="button"
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="block w-full px-4 py-2 text-left text-sm hover:bg-black/5"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
+                        Iniciar sesión
+                      </Link>
+                      <Link href="/register" className="block px-4 py-2 text-sm hover:bg-black/5" onClick={() => setShowAccountMenu(false)}>
+                        Registrarse
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
