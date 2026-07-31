@@ -53,6 +53,7 @@ Pegala en **Vercel → Project → Settings → Environment Variables → `DATAB
 
 | Problema | Síntoma | Solución |
 |----------|---------|----------|
+| **Session mode (puerto 5432 pooler)** | `EMAXCONNSESSION max clients reached pool_size: 15` | Cambiar a **Transaction mode puerto 6543** + `pgbouncer=true` |
 | Puerto 5432 (directo) | Timeouts, conexiones agotadas | Usar pooler **6543** |
 | Sin `pgbouncer=true` | Errores raros con Prisma | Agregar parámetro |
 | Sin `connection_limit=1` | Demasiadas conexiones en serverless | Agregar `connection_limit=1` |

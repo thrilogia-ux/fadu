@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { analyzeDatabaseUrl } from "@/lib/database-url";
+import { analyzeDatabaseUrl, normalizeServerlessDatabaseUrl } from "@/lib/database-url";
 
 export const dynamic = "force-dynamic";
 
 /** Comprueba API, PostgreSQL y configuración recomendada Vercel + Supabase. */
 export async function GET() {
   const dbConfig = analyzeDatabaseUrl(process.env.DATABASE_URL);
+  const normalizedUrl = normalizeServerlessDatabaseUrl(process.env.DATABASE_URL);
+  const urlNormalizedAtRuntime =
+    Boolean(process.env.DATABASE_URL?.trim()) &&
+    Boolean(normalizedUrl) &&
+    normalizedUrl !== process.env.DATABASE_URL?.trim();
   const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim());
 
   let database: "ok" | "error" = "error";
@@ -24,7 +29,6 @@ export async function GET() {
     console.error("[health] falló conexión a la base:", e);
   }
 
-  const configWarnings = dbConfig.warnings;
   const hints: string[] = [];
 
   if (database !== "ok") {
@@ -32,9 +36,14 @@ export async function GET() {
       "Revisá que el proyecto Supabase no esté pausado y que DATABASE_URL en Vercel use el pooler (puerto 6543) con pgbouncer=true."
     );
   }
-  if (!dbConfig.serverlessReady) {
+  if (!dbConfig.serverlessReady && !urlNormalizedAtRuntime) {
     hints.push(
-      "La URL de la base no cumple el mínimo recomendado para serverless (pooler 6543 + pgbouncer=true)."
+      "La URL de la base no cumple el mínimo recomendado para serverless (pooler 6543 + pgbouncer=true). Actualizala en Vercel."
+    );
+  }
+  if (urlNormalizedAtRuntime) {
+    hints.push(
+      "La app normaliza DATABASE_URL en runtime (5432→6543). Igual conviene corregir la variable en Vercel y redeploy."
     );
   }
   if (database === "ok" && databaseLatencyMs != null && databaseLatencyMs > 800) {
@@ -52,12 +61,14 @@ export async function GET() {
     databaseLatencyMs,
     databaseUrlConfigured: dbConfig.configured,
     databaseConfig: {
+      poolMode: dbConfig.poolMode,
       usesPooler: dbConfig.usesPooler,
       hasPgbouncer: dbConfig.hasPgbouncer,
       hasConnectionLimit: dbConfig.hasConnectionLimit,
       connectionLimit: dbConfig.connectionLimit,
-      serverlessReady: dbConfig.serverlessReady,
-      warnings: configWarnings,
+      serverlessReady: dbConfig.serverlessReady || urlNormalizedAtRuntime,
+      urlNormalizedAtRuntime,
+      warnings: dbConfig.warnings,
     },
     blobConfigured,
     hints: hints.length > 0 ? hints : undefined,

@@ -15,6 +15,7 @@ import {
   isMissingDiscountColumnError,
   prismaErrorMessage,
 } from "@/lib/order-schema";
+import { isMaxConnectionsSessionError } from "@/lib/database-url";
 
 class OrderCouponError extends Error {
   constructor(message: string) {
@@ -487,6 +488,15 @@ export async function POST(request: Request) {
         {
           error:
             "Falta actualizar la base de datos (columna discount_total). Ejecutá en Supabase: ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_total DECIMAL(10,2) NOT NULL DEFAULT 0;",
+        },
+        { status: 503 }
+      );
+    }
+    if (isMaxConnectionsSessionError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "Base de datos saturada (session mode). En Vercel → DATABASE_URL usá el pooler Transaction (puerto 6543) con ?pgbouncer=true&connection_limit=1&sslmode=require. Redeploy después de cambiar la variable.",
         },
         { status: 503 }
       );
