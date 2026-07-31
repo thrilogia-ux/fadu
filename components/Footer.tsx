@@ -355,6 +355,20 @@ export function Footer() {
         </div>
       </div>
 
+      {/* Franja logos institucionales */}
+      <div className="w-full bg-[#0f3bff]">
+        <div className="flex h-20 items-center justify-center px-3 sm:px-6">
+          <Image
+            src="/franja-logos.svg"
+            alt="Universidad de Buenos Aires, FADU, UBADiseño, UBASpICC y DIS"
+            width={300}
+            height={19}
+            unoptimized
+            className="h-auto max-h-[52px] w-full max-w-7xl object-contain"
+          />
+        </div>
+      </div>
+
       {/* Copyright footer */}
       <div className="border-t border-black/8 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-4">
