@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { TopBannerMarquee } from "@/components/TopBannerMarquee";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface Category {
   id: string;
@@ -163,9 +164,18 @@ export function Header({ categories }: { categories: Category[] }) {
               onClick={closeMenus}
               aria-label={session ? "Mi cuenta" : "Iniciar sesión"}
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              {session ? (
+                <UserAvatar
+                  src={session.user.image}
+                  name={session.user.name}
+                  email={session.user.email}
+                  size={28}
+                />
+              ) : (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              )}
             </Link>
             <Link
               href="/carrito"
@@ -245,9 +255,18 @@ export function Header({ categories }: { categories: Category[] }) {
                 aria-expanded={showAccountMenu}
                 aria-haspopup="true"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+                {session ? (
+                  <UserAvatar
+                    src={session.user.image}
+                    name={session.user.name}
+                    email={session.user.email}
+                    size={28}
+                  />
+                ) : (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
                 <span>{session?.user?.name || "Mi cuenta"}</span>
               </button>
               {showAccountMenu && (

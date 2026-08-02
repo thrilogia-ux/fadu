@@ -69,7 +69,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       if (trigger === "update" && session) {
         token.name = session.name;
-        token.picture = session.image;
+        if ("image" in session) {
+          token.picture = session.image ?? undefined;
+        }
       }
       return token;
     },

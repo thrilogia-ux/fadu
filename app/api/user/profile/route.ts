@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidFaduCareerSlug } from "@/lib/fadu-careers";
+import { isAllowedProfileImage, isGoogleProfileImage } from "@/lib/profile-avatars";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export async function GET() {
       faduCareer: true,
       faduCareerOther: true,
       image: true,
+      accounts: { where: { provider: "google" }, select: { id: true }, take: 1 },
     },
   });
 
@@ -27,7 +29,12 @@ export async function GET() {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json(user);
+  const { accounts, ...profile } = user;
+
+  return NextResponse.json({
+    ...profile,
+    hasGoogleAccount: accounts.length > 0,
+  });
 }
 
 export async function PATCH(request: Request) {
@@ -48,7 +55,31 @@ export async function PATCH(request: Request) {
     phone?: string | null;
     faduCareer?: string | null;
     faduCareerOther?: string | null;
+    image?: string | null;
   } = {};
+
+  if (typeof body.image === "string") {
+    const trimmed = body.image.trim();
+    if (trimmed === "") {
+      data.image = null;
+    } else if (!isAllowedProfileImage(trimmed)) {
+      return NextResponse.json({ error: "Avatar no válido" }, { status: 400 });
+    } else if (isGoogleProfileImage(trimmed)) {
+      const linked = await prisma.account.findFirst({
+        where: { userId: session.user.id, provider: "google" },
+        select: { id: true },
+      });
+      if (!linked) {
+        return NextResponse.json(
+          { error: "Solo podés usar la foto de Google si iniciaste sesión con Google" },
+          { status: 400 }
+        );
+      }
+      data.image = trimmed;
+    } else {
+      data.image = trimmed;
+    }
+  }
 
   if (typeof body.name === "string") {
     const t = body.name.trim();

@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AvatarPicker } from "@/components/AvatarPicker";
 import { FADU_CAREER_OPTIONS, faduCareerLabel } from "@/lib/fadu-careers";
+import { isGoogleProfileImage } from "@/lib/profile-avatars";
 
 type Profile = {
   name: string | null;
@@ -30,6 +32,8 @@ export default function PerfilPage() {
   const [faduCareer, setFaduCareer] = useState("");
   const [faduCareerOther, setFaduCareerOther] = useState("");
   const [emailDisplay, setEmailDisplay] = useState("");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [hasGoogleAccount, setHasGoogleAccount] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -53,13 +57,15 @@ export default function PerfilPage() {
         if (!res.ok) {
           throw new Error("No se pudieron cargar los datos");
         }
-        const data = (await res.json()) as Profile;
+        const data = (await res.json()) as Profile & { hasGoogleAccount?: boolean };
         if (cancelled) return;
         setName(data.name ?? "");
         setPhone(data.phone ?? "");
         setFaduCareer(data.faduCareer ?? "");
         setFaduCareerOther(data.faduCareerOther ?? "");
         setEmailDisplay(data.email ?? "");
+        setProfileImage(data.image ?? null);
+        setHasGoogleAccount(Boolean(data.hasGoogleAccount));
       } catch {
         if (!cancelled) setError("No se pudieron cargar tus datos. Probá de nuevo más tarde.");
       } finally {
@@ -86,6 +92,7 @@ export default function PerfilPage() {
           phone,
           faduCareer: faduCareer || "",
           faduCareerOther: faduCareer === "otra" ? faduCareerOther : "",
+          image: profileImage,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -95,7 +102,12 @@ export default function PerfilPage() {
       }
       setOk(true);
       const newName = typeof data.name === "string" ? data.name : name;
-      await update(newName ? { name: newName } : undefined);
+      const newImage = typeof data.image === "string" ? data.image : profileImage;
+      if (newImage !== session?.user?.image) {
+        await update({ name: newName || undefined, image: newImage ?? null });
+      } else {
+        await update(newName ? { name: newName } : undefined);
+      }
     } catch {
       setError("Error de conexión");
     } finally {
@@ -114,6 +126,13 @@ export default function PerfilPage() {
   if (!session) {
     return null;
   }
+
+  const googleImageOption =
+    session.user.image && isGoogleProfileImage(session.user.image)
+      ? session.user.image
+      : profileImage && isGoogleProfileImage(profileImage)
+        ? profileImage
+        : null;
 
   return (
     <>
@@ -137,6 +156,22 @@ export default function PerfilPage() {
             onSubmit={handleSubmit}
             className="space-y-5 rounded-lg border border-black/8 bg-white p-6 shadow-sm"
           >
+            <AvatarPicker
+              value={profileImage}
+              googleImage={googleImageOption}
+              name={name || session.user.name}
+              email={emailDisplay || session.user.email}
+              onChange={setProfileImage}
+              disabled={saving}
+            />
+            {hasGoogleAccount && !googleImageOption && (
+              <p className="-mt-2 text-xs text-gray-500">
+                Para volver a tu foto de Google, cerrá sesión e ingresá de nuevo con Google.
+              </p>
+            )}
+
+            <hr className="border-black/8" />
+
             <div>
               <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
                 Email

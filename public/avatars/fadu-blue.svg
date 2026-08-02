@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Avatar azul FADU">
+  <circle cx="32" cy="32" r="32" fill="#0f3bff"/>
+  <circle cx="32" cy="26" r="10" fill="#fff" opacity="0.95"/>
+  <path d="M14 54c4-10 12-14 18-14s14 4 18 14" fill="#fff" opacity="0.95"/>
+</svg>
