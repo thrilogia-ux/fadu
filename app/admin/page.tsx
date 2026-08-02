@@ -106,6 +106,12 @@ export default function AdminDashboard() {
       icon: "📄",
     },
     {
+      title: "Perfiles",
+      description: "Avatares que eligen los usuarios en su cuenta",
+      href: "/admin/perfiles",
+      icon: "👤",
+    },
+    {
       title: "Modo feria",
       description: "Checkout rápido en eventos y ferias",
       href: "/admin/feria",

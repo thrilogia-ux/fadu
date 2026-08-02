@@ -1,8 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { PROFILE_AVATARS } from "@/lib/profile-avatars";
 import { UserAvatar } from "@/components/UserAvatar";
+
+type AvatarOption = {
+  id: string;
+  src: string;
+  label: string;
+};
 
 type Props = {
   value: string | null;
@@ -14,9 +20,36 @@ type Props = {
 };
 
 export function AvatarPicker({ value, googleImage, name, email, onChange, disabled }: Props) {
+  const [presets, setPresets] = useState<AvatarOption[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/profile-avatars");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data)) {
+          setPresets(
+            data.map((a: { id: string; src: string; label: string }) => ({
+              id: a.id,
+              src: a.src,
+              label: a.label,
+            }))
+          );
+        }
+      } catch {
+        /* fallback vacío */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const options = [
     ...(googleImage ? [{ id: "google", src: googleImage, label: "Foto de Google" }] : []),
-    ...PROFILE_AVATARS,
+    ...presets,
   ];
 
   return (
@@ -26,7 +59,7 @@ export function AvatarPicker({ value, googleImage, name, email, onChange, disabl
         <UserAvatar src={value} name={name} email={email} size={56} />
         <p className="text-sm text-gray-600">Se muestra en el header cuando iniciás sesión.</p>
       </div>
-      <div className="grid grid-cols-4 gap-3 sm:grid-cols-5">
+      <div className="grid max-w-xs grid-cols-4 gap-3">
         {options.map((opt) => {
           const selected = value === opt.src;
           return (

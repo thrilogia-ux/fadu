@@ -10,9 +10,26 @@ const googleOAuth = getGoogleOAuthEnv();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" }, // credentials no persiste en DB session; usar JWT para incluir role
+  session: { strategy: "jwt" },
+  trustHost: true,
   pages: {
     signIn: "/login",
+  },
+  events: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" && user.id) {
+        const picture =
+          (profile as { picture?: string | null })?.picture ??
+          user.image ??
+          null;
+        if (picture) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { image: picture },
+          });
+        }
+      }
+    },
   },
   providers: [
     Credentials({
@@ -47,6 +64,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             clientId: googleOAuth.clientId,
             clientSecret: googleOAuth.clientSecret,
             allowDangerousEmailAccountLinking: true,
+            profile(profile) {
+              return {
+                id: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                image: profile.picture,
+              };
+            },
           }),
         ]
       : []),
@@ -57,15 +82,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.name = user.name ?? undefined;
         token.picture = user.image ?? undefined;
+      }
 
+      if (token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
+          where: { id: token.id as string },
           select: { role: true, name: true, image: true },
         });
+        if (dbUser) {
+          token.role = dbUser.role;
+          if (dbUser.name) token.name = dbUser.name;
+          if (dbUser.image) token.picture = dbUser.image;
+        }
+      }
+
+      if (user?.id) {
         token.role =
-          dbUser?.role ?? (user as { role?: string }).role ?? "user";
-        if (dbUser?.name) token.name = dbUser.name;
-        if (dbUser?.image) token.picture = dbUser.image;
+          token.role ?? (user as { role?: string }).role ?? "user";
       }
       if (trigger === "update" && session) {
         token.name = session.name;

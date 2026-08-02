@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidFaduCareerSlug } from "@/lib/fadu-careers";
-import { isAllowedProfileImage, isGoogleProfileImage } from "@/lib/profile-avatars";
+import { isGoogleProfileImage } from "@/lib/profile-avatars";
+import { isAllowedProfileImage } from "@/lib/profile-avatars-store";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,7 @@ export async function PATCH(request: Request) {
     const trimmed = body.image.trim();
     if (trimmed === "") {
       data.image = null;
-    } else if (!isAllowedProfileImage(trimmed)) {
+    } else if (!await isAllowedProfileImage(trimmed)) {
       return NextResponse.json({ error: "Avatar no válido" }, { status: 400 });
     } else if (isGoogleProfileImage(trimmed)) {
       const linked = await prisma.account.findFirst({
