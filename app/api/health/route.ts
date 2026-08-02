@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeDatabaseUrl, normalizeServerlessDatabaseUrl } from "@/lib/database-url";
 import { STORE_NAME } from "@/lib/brand";
+import { getAuthEnvStatus } from "@/lib/google-auth-env";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export async function GET() {
     Boolean(normalizedUrl) &&
     normalizedUrl !== process.env.DATABASE_URL?.trim();
   const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim());
+  const authEnv = getAuthEnvStatus();
 
   let database: "ok" | "error" = "error";
   let databaseLatencyMs: number | null = null;
@@ -53,6 +55,15 @@ export async function GET() {
     );
   }
 
+  if (!authEnv.googleOAuthConfigured) {
+    hints.push(
+      "Google OAuth: faltan GOOGLE_CLIENT_ID y/o GOOGLE_CLIENT_SECRET en Vercel (Environment Production) y redeploy."
+    );
+  }
+  if (!authEnv.authSecretConfigured) {
+    hints.push("Falta AUTH_SECRET en el servidor.");
+  }
+
   const ok = database === "ok";
 
   const body = {
@@ -72,6 +83,7 @@ export async function GET() {
       warnings: dbConfig.warnings,
     },
     blobConfigured,
+    auth: authEnv,
     hints: hints.length > 0 ? hints : undefined,
     ...(database !== "ok"
       ? {
