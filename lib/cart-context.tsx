@@ -38,6 +38,7 @@ interface CartContextType {
   total: number;
   discount: number;
   finalTotal: number;
+  loaded: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -164,6 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         total,
         discount,
         finalTotal,
+        loaded,
       }}
     >
       {children}

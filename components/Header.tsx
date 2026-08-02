@@ -8,7 +8,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { TopBannerMarquee } from "@/components/TopBannerMarquee";
 import { UserAvatar } from "@/components/UserAvatar";
-import { CartBadge } from "@/components/CartBadge";
+import { CartBadge, useCartBumpPulse } from "@/components/CartBadge";
 
 interface Category {
   id: string;
@@ -26,7 +26,8 @@ export function Header({ categories }: { categories: Category[] }) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const { itemCount } = useCart();
+  const { itemCount, loaded: cartLoaded } = useCart();
+  const cartBump = useCartBumpPulse(itemCount, cartLoaded);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -180,16 +181,14 @@ export function Header({ categories }: { categories: Category[] }) {
             </Link>
             <Link
               href="/carrito"
-              className={`relative ${tapIcon}`}
+              className={`relative ${tapIcon} ${cartBump ? "animate-cart-icon-bump" : ""}`}
               onClick={closeMenus}
-              aria-label="Carrito"
+              aria-label={itemCount > 0 ? `Carrito, ${itemCount} productos` : "Carrito"}
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              {itemCount > 0 && (
-                <CartBadge count={itemCount} />
-              )}
+              <CartBadge count={itemCount} bump={cartBump} />
             </Link>
           </div>
         </div>
@@ -232,16 +231,14 @@ export function Header({ categories }: { categories: Category[] }) {
           <div className="flex shrink-0 items-center gap-1">
             <Link
               href="/carrito"
-              className={`relative ${tapIcon}`}
+              className={`relative ${tapIcon} ${cartBump ? "animate-cart-icon-bump" : ""}`}
               onClick={closeMenus}
-              aria-label="Carrito"
+              aria-label={itemCount > 0 ? `Carrito, ${itemCount} productos` : "Carrito"}
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              {itemCount > 0 && (
-                <CartBadge count={itemCount} />
-              )}
+              <CartBadge count={itemCount} bump={cartBump} />
             </Link>
 
             <div className="relative">

@@ -56,6 +56,10 @@ body {
   .animate-cart-bump {
     animation: none;
   }
+
+  .animate-cart-icon-bump {
+    animation: none;
+  }
 }
 
 @keyframes cart-bump {
@@ -63,14 +67,30 @@ body {
   100% {
     transform: scale(1);
   }
-  40% {
-    transform: scale(1.35);
+  35% {
+    transform: scale(1.45);
   }
-  70% {
-    transform: scale(0.92);
+  65% {
+    transform: scale(0.9);
   }
 }
 
 .animate-cart-bump {
-  animation: cart-bump 0.45s ease;
+  animation: cart-bump 0.52s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transform-origin: center;
+}
+
+@keyframes cart-icon-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+}
+
+.animate-cart-icon-bump {
+  animation: cart-icon-bump 0.52s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transform-origin: center;
 }
