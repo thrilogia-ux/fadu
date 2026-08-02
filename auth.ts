@@ -38,20 +38,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
-    // Google OAuth deshabilitado temporalmente (configurar GOOGLE_CLIENT_ID para habilitar)
-    // Google({
-    //   clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    //   allowDangerousEmailAccountLinking: true,
-    // }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      if (user) {
+      if (user?.id) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role;
         token.name = user.name ?? undefined;
         token.picture = user.image ?? undefined;
+
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true, name: true, image: true },
+        });
+        token.role =
+          dbUser?.role ?? (user as { role?: string }).role ?? "user";
+        if (dbUser?.name) token.name = dbUser.name;
+        if (dbUser?.image) token.picture = dbUser.image;
       }
       if (trigger === "update" && session) {
         token.name = session.name;

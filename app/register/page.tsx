@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -66,6 +67,17 @@ export default function RegisterPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-[360px]">
           <h1 className="text-xl font-semibold text-[#1d1d1b] mb-6">Crear cuenta</h1>
+
+          <GoogleSignInButton callbackUrl="/" label="Registrarse con Google" />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center" aria-hidden>
+              <div className="w-full border-t border-black/10" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-3 text-[#1d1d1b]/50">o con email</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
