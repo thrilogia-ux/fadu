@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getFairModeSettings, upsertFairModeSettings } from "@/lib/fair-mode";
+import {
+  getFairModeSettings,
+  upsertFairModeSettings,
+  type FairModeType,
+} from "@/lib/fair-mode";
+
+function parseMode(v: unknown): FairModeType | null {
+  if (v === "off" || v === "pickup_qr" || v === "presencial") return v;
+  return null;
+}
 
 export async function GET() {
   const session = await auth();
@@ -19,8 +28,18 @@ export async function PUT(request: Request) {
 
   const body = await request.json();
   const current = await getFairModeSettings();
+
+  let mode: FairModeType = current.mode;
+  if (typeof body.mode === "string") {
+    const parsed = parseMode(body.mode);
+    if (parsed) mode = parsed;
+  } else if (typeof body.enabled === "boolean") {
+    mode = body.enabled ? (current.mode === "off" ? "pickup_qr" : current.mode) : "off";
+  }
+
   await upsertFairModeSettings({
-    enabled: typeof body.enabled === "boolean" ? body.enabled : current.enabled,
+    mode,
+    enabled: mode !== "off",
     title: typeof body.title === "string" ? body.title.trim().slice(0, 120) : current.title,
     message: typeof body.message === "string" ? body.message.trim().slice(0, 500) : current.message,
     hideMercadoPago:

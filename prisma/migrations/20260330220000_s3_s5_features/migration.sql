@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS "store_settings" (
 INSERT INTO "store_settings" ("key", "value", "updated_at")
 VALUES
   ('fair_mode_enabled', 'false', NOW()),
+  ('fair_mode_type', 'off', NOW()),
   ('fair_mode_title', 'Modo feria FADU', NOW()),
   ('fair_mode_message', 'Compra rápida en el stand. Retirá en el pickup con tu QR.', NOW()),
   ('fair_mode_hide_mercadopago', 'true', NOW())

@@ -90,6 +90,7 @@ export default function PedidoPage() {
   const isPendingPayment = order.status === "pending_payment";
   const isTransfer = order.paymentMethod === "transfer";
   const isTest = order.paymentMethod === "test";
+  const isFeriaPresencial = order.paymentMethod === "feria_presencial";
 
   const statusLabels: Record<string, string> = {
     pending_payment: "Pendiente de pago",
@@ -125,13 +126,15 @@ export default function PedidoPage() {
                 Tu compra se realizó con éxito.
               </p>
               <p className="text-green-700">
-                {isTest
-                  ? "Simulación completada. Revisá tu email para ver los correos de prueba (confirmación + QR para retiro)."
-                  : isTransfer
-                    ? "Te enviamos un email con los datos de transferencia. Una vez confirmado el pago, te avisaremos cuando tu pedido esté listo para retirar en FADU."
-                    : order.status === "ready_for_pickup"
-                      ? "Te enviamos un email con el código QR para retirar tu pedido en el Pickup Point de FADU."
-                      : "Te avisaremos por email cuando tu pedido esté listo para retirar en FADU."}
+                {isFeriaPresencial
+                  ? "Tu compra quedó registrada y te llevaste el producto en el stand. Te enviamos un email de confirmación."
+                  : isTest
+                    ? "Simulación completada. Revisá tu email para ver los correos de prueba (confirmación + QR para retiro)."
+                    : isTransfer
+                      ? "Te enviamos un email con los datos de transferencia. Una vez confirmado el pago, te avisaremos cuando tu pedido esté listo para retirar en FADU."
+                      : order.status === "ready_for_pickup"
+                        ? "Te enviamos un email con el código QR para retirar tu pedido en el Pickup Point de FADU."
+                        : "Te avisaremos por email cuando tu pedido esté listo para retirar en FADU."}
               </p>
             </div>
           )}
@@ -245,7 +248,15 @@ export default function PedidoPage() {
               </div>
             </div>
 
-            {/* Retiro */}
+            {/* Retiro / entrega */}
+            {isFeriaPresencial ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+                <h3 className="mb-2 font-semibold text-emerald-950">Entrega en feria</h3>
+                <p className="text-sm leading-relaxed text-emerald-900">
+                  Este pedido fue entregado en el stand de la feria. No requiere retiro en FADU ni código QR.
+                </p>
+              </div>
+            ) : (
             <div className="rounded-xl border border-black/8 bg-gray-50 p-4 sm:p-5">
               <h3 className="mb-2 font-semibold text-[#1d1d1b]">Retiro en FADU</h3>
               <p className="mb-4 text-sm leading-relaxed text-gray-700">
@@ -276,6 +287,7 @@ export default function PedidoPage() {
                 </Link>
               </div>
             </div>
+            )}
 
             {/* Acciones */}
             <div className="mt-8 space-y-3">
@@ -289,7 +301,8 @@ export default function PedidoPage() {
               </Link>
 
               {(order.status === "ready_for_pickup" || order.status === "completed") &&
-              order.pickupCode ? (
+              order.pickupCode &&
+              !isFeriaPresencial ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <ReorderButton orderId={order.id} className="w-full" />
                   <a

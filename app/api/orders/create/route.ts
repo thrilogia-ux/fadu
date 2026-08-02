@@ -18,6 +18,7 @@ import {
   prismaErrorMessage,
 } from "@/lib/order-schema";
 import { isMaxConnectionsSessionError } from "@/lib/database-url";
+import { getFairModeSettings } from "@/lib/fair-mode";
 
 class OrderCouponError extends Error {
   constructor(message: string) {
@@ -97,9 +98,24 @@ export async function POST(request: Request) {
     }
 
     const isAdmin = isAdminUser;
-    const validMethods = ["mercadopago", "transfer", ...(isAdmin ? ["test"] : [])];
+    const fairMode = await getFairModeSettings();
+    const isFairPresencial = fairMode.mode === "presencial";
+
+    const validMethods = [
+      "mercadopago",
+      "transfer",
+      ...(isFairPresencial ? ["feria_presencial"] : []),
+      ...(isAdmin ? ["test"] : []),
+    ];
     if (!validMethods.includes(paymentMethod)) {
       return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
+    }
+
+    if (paymentMethod === "feria_presencial" && !isFairPresencial) {
+      return NextResponse.json(
+        { error: "La venta presencial en feria no está activa." },
+        { status: 400 }
+      );
     }
 
     const lines: CartLine[] = [];
@@ -304,15 +320,25 @@ export async function POST(request: Request) {
           })
         : [];
 
-    const initialStatus = paymentMethod === "test" ? "ready_for_pickup" : "pending_payment";
+    const isFeriaPresencialOrder = paymentMethod === "feria_presencial";
+    const initialStatus = isFeriaPresencialOrder
+      ? "completed"
+      : paymentMethod === "test"
+        ? "ready_for_pickup"
+        : "pending_payment";
     const historyNoteBase = `Pedido creado. Método: ${paymentMethod}`;
     const historyNote =
       couponCodeStr && discountAmount > 0
         ? `${historyNoteBase}. Cupón ${couponCodeStr} (-$${discountAmount.toLocaleString("es-AR")})`
         : historyNoteBase;
 
-    const historyEntries =
-      paymentMethod === "test"
+    const historyEntries = isFeriaPresencialOrder
+      ? [
+          { status: "pending_payment", note: historyNote },
+          { status: "paid", note: "Pago en stand (feria presencial)" },
+          { status: "completed", note: "Entrega inmediata en el stand de la feria" },
+        ]
+      : paymentMethod === "test"
         ? [
             { status: "pending_payment", note: "Pedido creado (pago de prueba)" },
             { status: "paid", note: "Pago simulado (admin)" },
@@ -347,6 +373,9 @@ export async function POST(request: Request) {
               total: finalTotal,
               discountTotal: discountAmount,
               pickupCode,
+              ...(isFeriaPresencialOrder
+                ? { pickupDate: new Date(), pickedUpBy: "Entrega en stand (feria)" }
+                : {}),
               items: { create: lineCreates },
               history: { create: historyEntries },
             },
@@ -402,6 +431,18 @@ export async function POST(request: Request) {
         { error: "No se pudo generar un código de retiro único. Intentá de nuevo en unos segundos." },
         { status: 503 }
       );
+    }
+
+    if (paymentMethod === "feria_presencial") {
+      const conf = await sendOrderConfirmationBestEffort(order.id);
+      return NextResponse.json({
+        orderId: order.id,
+        pickupCode: order.pickupCode,
+        paymentMethod: "feria_presencial",
+        fairPresencial: true,
+        emailConfirmationSent: conf.ok,
+        emailConfirmationError: conf.ok ? undefined : conf.error,
+      });
     }
 
     if (paymentMethod === "test") {

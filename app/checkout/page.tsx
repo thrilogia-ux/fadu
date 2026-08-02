@@ -15,7 +15,17 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, discount, finalTotal, clearCart, appliedCoupon, setAppliedCoupon, clearCoupon } = useCart();
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<"mercadopago" | "transfer" | "test">("mercadopago");
+  const [fairMode, setFairMode] = useState({
+    mode: "off" as "off" | "pickup_qr" | "presencial",
+    enabled: false,
+    title: "",
+    message: "",
+    hideMercadoPago: false,
+  });
+  const [paymentMethod, setPaymentMethod] = useState<
+    "mercadopago" | "transfer" | "test" | "feria_presencial"
+  >("mercadopago");
+  const isCompletingOrderRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
@@ -24,13 +34,6 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [pickupSchedule, setPickupSchedule] = useState<string[]>([]);
   const [pickupAddress, setPickupAddress] = useState("");
-  const [fairMode, setFairMode] = useState({
-    enabled: false,
-    title: "",
-    message: "",
-    hideMercadoPago: false,
-  });
-  const isCompletingOrderRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -47,9 +50,11 @@ export default function CheckoutPage() {
     fetch("/api/fair-mode")
       .then((r) => r.json())
       .then((data) => {
-        if (data && typeof data.enabled === "boolean") {
+        if (data && (typeof data.enabled === "boolean" || typeof data.mode === "string")) {
           setFairMode(data);
-          if (data.enabled && data.hideMercadoPago) {
+          if (data.mode === "presencial") {
+            setPaymentMethod("feria_presencial");
+          } else if (data.enabled && data.hideMercadoPago) {
             setPaymentMethod("transfer");
           }
         }
@@ -204,6 +209,9 @@ export default function CheckoutPage() {
     return null;
   }
 
+  const isFairPresencial = fairMode.mode === "presencial";
+  const showFairBanner = fairMode.enabled && fairMode.mode !== "off";
+
   return (
     <>
       <Header categories={categories} />
@@ -213,10 +221,24 @@ export default function CheckoutPage() {
           <h1 className="mb-2 text-2xl font-bold text-[#1d1d1b] text-center md:text-left md:text-3xl">Finalizar compra</h1>
           <CheckoutSteps current={2} />
 
-          {fairMode.enabled && (
-            <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4">
-              <h2 className="font-semibold text-amber-950">{fairMode.title}</h2>
-              <p className="mt-1 text-sm text-amber-900">{fairMode.message}</p>
+          {showFairBanner && (
+            <div
+              className={`mb-6 rounded-lg border p-4 ${
+                isFairPresencial
+                  ? "border-emerald-300 bg-emerald-50"
+                  : "border-amber-300 bg-amber-50"
+              }`}
+            >
+              <h2
+                className={`font-semibold ${isFairPresencial ? "text-emerald-950" : "text-amber-950"}`}
+              >
+                {fairMode.title}
+              </h2>
+              <p
+                className={`mt-1 text-sm ${isFairPresencial ? "text-emerald-900" : "text-amber-900"}`}
+              >
+                {fairMode.message}
+              </p>
             </div>
           )}
 
@@ -250,8 +272,9 @@ export default function CheckoutPage() {
                         autoComplete="tel"
                       />
                       <p className="mt-1 text-xs text-gray-600">
-                        Para avisarte por email y, si lo cargás, para que el equipo te contacte por
-                        WhatsApp cuando el pedido esté listo para retirar.
+                        {isFairPresencial
+                          ? "Para el comprobante de compra y seguimiento del pedido."
+                          : "Para avisarte por email y, si lo cargás, para que el equipo te contacte por WhatsApp cuando el pedido esté listo para retirar."}
                       </p>
                     </div>
                   </div>
@@ -261,7 +284,31 @@ export default function CheckoutPage() {
                 <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
                   <h2 className="mb-4 text-lg font-semibold">Método de pago</h2>
                   <div className="space-y-3">
-                    {(!fairMode.enabled || !fairMode.hideMercadoPago) && (
+                    {isFairPresencial && (
+                      <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-emerald-500/60 bg-emerald-50/50 p-4 transition hover:border-emerald-500 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-100/50">
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="feria_presencial"
+                          checked={paymentMethod === "feria_presencial"}
+                          onChange={() => setPaymentMethod("feria_presencial")}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">Pago en el stand</span>
+                            <span className="rounded bg-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-900">
+                              Entrega inmediata
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            Pagás en efectivo o con el POS del stand. Te llevás el producto al instante.
+                          </p>
+                        </div>
+                      </label>
+                    )}
+
+                    {(!showFairBanner || !fairMode.hideMercadoPago) && !isFairPresencial && (
                     <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-black/10 p-4 transition hover:border-[#0f3bff] has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5">
                       <input
                         type="radio"
@@ -285,6 +332,7 @@ export default function CheckoutPage() {
                     </label>
                     )}
 
+                    {!isFairPresencial && (
                     <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-black/10 p-4 transition hover:border-[#0f3bff] has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5">
                       <input
                         type="radio"
@@ -301,6 +349,7 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     </label>
+                    )}
 
                     {(session.user as { role?: string })?.role === "admin" && (
                       <label className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-dashed border-amber-500/60 bg-amber-50/50 p-4 transition hover:border-amber-500 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-100/50">
@@ -406,7 +455,7 @@ export default function CheckoutPage() {
                     <span className="shrink-0">${finalTotal.toLocaleString("es-AR")}</span>
                   </div>
 
-                  {(pickupAddress || pickupSchedule.length > 0) && (
+                  {(pickupAddress || pickupSchedule.length > 0) && !isFairPresencial && (
                     <div className="mb-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
                       <p className="mb-2 font-semibold text-[#1d1d1b]">Retiro en FADU</p>
                       {pickupAddress ? <p className="mb-1">{pickupAddress}</p> : null}
@@ -434,7 +483,9 @@ export default function CheckoutPage() {
                         ? "Ir a pagar"
                         : paymentMethod === "test"
                           ? "Simular compra completa"
-                          : "Confirmar pedido"}
+                          : paymentMethod === "feria_presencial"
+                            ? "Confirmar y retirar en el stand"
+                            : "Confirmar pedido"}
                   </button>
 
                   <Link
