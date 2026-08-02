@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
+import { showToast } from "@/lib/toast";
 
 type ReorderItem = {
   productId: string | null;
@@ -62,16 +63,28 @@ export function ReorderButton({ orderId, className = "", variant = "button" }: P
         const parts: string[] = [];
         if (line.variantSizeLabel?.trim()) parts.push(`Talle ${line.variantSizeLabel.trim()}`);
         if (line.variantColorLabel?.trim()) parts.push(line.variantColorLabel.trim());
-        addItem({
-          productId: p.id,
-          variantId: line.variantId ?? undefined,
-          name: p.name,
-          slug: p.slug,
-          price: Number(p.price),
-          quantity: line.quantity,
-          image: p.images[0]?.url,
-          variantLabel: parts.length ? parts.join(" · ") : undefined,
-        });
+        addItem(
+          {
+            productId: p.id,
+            variantId: line.variantId ?? undefined,
+            name: p.name,
+            slug: p.slug,
+            price: Number(p.price),
+            quantity: line.quantity,
+            image: p.images[0]?.url,
+            variantLabel: parts.length ? parts.join(" · ") : undefined,
+          },
+          { silent: true }
+        );
+      }
+
+      if (added.length > 0) {
+        showToast(
+          added.length === 1
+            ? "Producto agregado al carrito"
+            : `${added.length} productos agregados al carrito`,
+          { variant: "success", actionLabel: "Ver carrito", actionHref: "/carrito" }
+        );
       }
 
       if (skipped.length > 0) {

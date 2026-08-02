@@ -9,6 +9,8 @@ import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import { WhatsAppOrderLink } from "@/components/WhatsAppOrderLink";
+import { OrderListSkeleton } from "@/components/ProductCardSkeleton";
+import { CheckoutSteps } from "@/components/CheckoutSteps";
 import { ReorderButton } from "@/components/ReorderButton";
 import { STORE_TRANSFER_ALIAS } from "@/lib/brand";
 import type { PickupInfo } from "@/lib/pickup";
@@ -55,7 +57,17 @@ export default function PedidoPage() {
   }, [params.id]);
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
+    return (
+      <>
+        <Header categories={[]} />
+        <main className="min-h-screen bg-gray-50 py-8">
+          <div className="mx-auto max-w-2xl px-4">
+            <OrderListSkeleton count={1} />
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
   }
 
   if (!order) {
@@ -102,6 +114,7 @@ export default function PedidoPage() {
 
       <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
         <div className="mx-auto w-full max-w-2xl px-4 sm:px-6">
+          {success ? <CheckoutSteps current={3} /> : null}
           {success && (
             <div className="mb-6 rounded-xl border-2 border-green-300 bg-green-50 p-8 text-center shadow-sm">
               <div className="mb-4 text-5xl">✅</div>

@@ -11,6 +11,7 @@ import { useCart } from "@/lib/cart-context";
 import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { ProductCard } from "@/components/ProductCard";
 import { WaitlistButton } from "@/components/WaitlistButton";
+import { ShareProductButton } from "@/components/ShareProductButton";
 import { STORE_NAME } from "@/lib/brand";
 
 interface ProductVariant {
@@ -142,7 +143,6 @@ export default function ProductPage() {
   const [serverError, setServerError] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [addedToCart, setAddedToCart] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   
@@ -655,8 +655,6 @@ export default function ProductPage() {
       variantId: product!.useVariants ? selectedVariant?.id : undefined,
       variantLabel: vLabel || undefined,
     });
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
   }
 
   return (
@@ -815,9 +813,12 @@ export default function ProductPage() {
                   <p className="mb-2 text-sm text-gray-500">Nuevo | +50 vendidos</p>
                   
                   {/* Título */}
-                  <h1 className="mb-4 text-2xl font-semibold text-[#1d1d1b] leading-tight">
+                  <h1 className="mb-3 text-2xl font-semibold text-[#1d1d1b] leading-tight">
                     {product.name}
                   </h1>
+                  <div className="mb-4">
+                    <ShareProductButton productName={product.name} slug={product.slug} />
+                  </div>
 
                   {/* Precio */}
                   <div className="mb-4">
@@ -982,7 +983,7 @@ export default function ProductPage() {
                       }
                       className="w-full rounded-lg bg-[#e6f0ff] py-3.5 font-semibold text-[#0f3bff] transition hover:bg-[#d9e8ff] disabled:bg-gray-100 disabled:text-gray-400"
                     >
-                      {addedToCart ? "✓ Agregado al carrito" : "Agregar al carrito"}
+                      Agregar al carrito
                     </button>
                     {effectiveStock === 0 && (
                       <WaitlistButton

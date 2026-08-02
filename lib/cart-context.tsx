@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { cartLineKey } from "@/lib/cart-line";
+import { showAddedToCartToast } from "@/lib/toast";
 import {
   loadStoredCoupon,
   recomputeStoredCouponDiscount,
@@ -26,7 +27,7 @@ export type { StoredAppliedCoupon as AppliedCoupon };
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
+  addItem: (item: CartItem, options?: { silent?: boolean }) => void;
   removeItem: (lineKey: string) => void;
   updateQuantity: (lineKey: string, quantity: number) => void;
   clearCart: () => void;
@@ -87,7 +88,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, loaded]);
 
-  function addItem(item: CartItem) {
+  function addItem(item: CartItem, options?: { silent?: boolean }) {
     const key = cartLineKey(item);
     setItems((prev) => {
       const existing = prev.find((i) => cartLineKey(i) === key);
@@ -98,6 +99,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, item];
     });
+    if (!options?.silent) {
+      showAddedToCartToast(item.name);
+    }
   }
 
   function removeItem(lineKey: string) {

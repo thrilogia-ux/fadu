@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { productTypeLabel } from "@/lib/product-stock";
+import { lowStockLabel } from "@/lib/product-badges";
+import { StarRating } from "@/components/StarRating";
 
 interface ProductCardProps {
   id: string;
@@ -12,6 +14,10 @@ interface ProductCardProps {
   category?: { name: string; slug: string };
   inStock?: boolean;
   productType?: string | null;
+  totalStock?: number;
+  isNew?: boolean;
+  reviewRating?: number | null;
+  reviewCount?: number;
 }
 
 export function ProductCard({
@@ -23,12 +29,22 @@ export function ProductCard({
   category,
   inStock = true,
   productType,
+  totalStock = 0,
+  isNew = false,
+  reviewRating,
+  reviewCount = 0,
 }: ProductCardProps) {
   const hasDiscount = compareAtPrice && compareAtPrice > price;
   const discountPercent = hasDiscount
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : 0;
   const typeLabel = productTypeLabel(productType);
+  const stockLabel = lowStockLabel(totalStock, inStock);
+
+  const leftBadges: string[] = [];
+  if (isNew && inStock) leftBadges.push("Nuevo");
+  if (typeLabel) leftBadges.push(typeLabel);
+  if (hasDiscount && inStock) leftBadges.push(`${discountPercent}% OFF`);
 
   return (
     <Link
@@ -55,15 +71,28 @@ export function ProductCard({
             Sin stock
           </span>
         )}
-        {typeLabel && (
-          <span className="absolute left-2 top-2 rounded-full bg-[#0f3bff] px-2 py-1 text-[10px] font-bold text-white sm:text-xs">
-            {typeLabel}
+        {stockLabel && (
+          <span className="absolute right-2 top-2 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold text-white sm:text-xs">
+            {stockLabel}
           </span>
         )}
-        {hasDiscount && inStock && (
-          <span className={`absolute rounded-full bg-green-500 px-2 py-1 text-xs font-bold text-white ${typeLabel ? "left-2 top-9" : "left-2 top-2"}`}>
-            {discountPercent}% OFF
-          </span>
+        {leftBadges.length > 0 && (
+          <div className="absolute left-2 top-2 flex flex-col gap-1">
+            {leftBadges.map((label) => (
+              <span
+                key={label}
+                className={`rounded-full px-2 py-1 text-[10px] font-bold text-white sm:text-xs ${
+                  label === "Nuevo"
+                    ? "bg-[#1d1d1b]"
+                    : label.endsWith("OFF")
+                      ? "bg-green-500"
+                      : "bg-[#0f3bff]"
+                }`}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
         )}
       </div>
       <div className="flex flex-1 flex-col p-3 sm:p-4">
@@ -73,6 +102,13 @@ export function ProductCard({
         <h3 className="mb-2 line-clamp-2 min-h-[2.75rem] flex-1 text-[15px] font-semibold leading-snug text-[#1d1d1b] sm:min-h-[3rem] sm:text-base">
           {name}
         </h3>
+        {reviewRating != null && reviewCount > 0 ? (
+          <div className="mb-2">
+            <StarRating rating={reviewRating} count={reviewCount} />
+          </div>
+        ) : (
+          <div className="mb-2 min-h-[1rem]" aria-hidden />
+        )}
         <div className="mt-auto flex min-h-[4.25rem] flex-col items-start justify-end gap-0.5">
           <span
             className={`text-xs line-through ${hasDiscount ? "text-gray-400" : "invisible"}`}

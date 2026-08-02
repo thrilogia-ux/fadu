@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { EmptyState } from "@/components/EmptyState";
 import { mapProductToCatalog } from "@/lib/catalog-product-map";
 import Link from "next/link";
 
@@ -62,7 +64,17 @@ export default function FavoritosPage() {
   }
 
   if (status === "loading" || loading) {
-    return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
+    return (
+      <>
+        <Header categories={[]} />
+        <main className="min-h-screen bg-gray-50 py-8">
+          <div className="mx-auto max-w-7xl px-4">
+            <ProductGridSkeleton count={4} />
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
   }
 
   if (!session) {
@@ -91,19 +103,15 @@ export default function FavoritosPage() {
           </div>
 
           {favorites.length === 0 ? (
-            <div className="rounded-lg border border-black/8 bg-white p-12 text-center">
-              <div className="mb-4 text-6xl">❤️</div>
-              <h2 className="mb-2 text-xl font-semibold">No tenés favoritos todavía</h2>
-              <p className="mb-6 text-gray-600">
-                Guardá los productos que te gusten para encontrarlos fácilmente
-              </p>
-              <Link
-                href="/"
-                className="inline-block rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc]"
-              >
-                Explorar productos
-              </Link>
-            </div>
+            <EmptyState
+              icon="❤️"
+              title="No tenés favoritos todavía"
+              description="Guardá los productos que te gusten para encontrarlos fácilmente cuando vuelvas a la tienda."
+              primaryHref="/productos"
+              primaryLabel="Explorar productos"
+              secondaryHref="/cuenta"
+              secondaryLabel="Mi cuenta"
+            />
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {favorites.map((fav) => (

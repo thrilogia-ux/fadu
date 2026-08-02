@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CheckoutSteps } from "@/components/CheckoutSteps";
 import { useCart } from "@/lib/cart-context";
 import { cartLineKey } from "@/lib/cart-line";
 import Link from "next/link";
@@ -209,7 +210,8 @@ export default function CheckoutPage() {
 
       <main className="min-h-screen overflow-x-hidden bg-gray-50 py-6 pb-12 md:py-8">
         <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
-          <h1 className="mb-6 text-2xl font-bold text-[#1d1d1b] text-center md:mb-8 md:text-left md:text-3xl">Finalizar compra</h1>
+          <h1 className="mb-2 text-2xl font-bold text-[#1d1d1b] text-center md:text-left md:text-3xl">Finalizar compra</h1>
+          <CheckoutSteps current={2} />
 
           {fairMode.enabled && (
             <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4">

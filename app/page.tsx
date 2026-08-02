@@ -129,7 +129,9 @@ async function HomePageContent() {
                   <Image src="/pickup.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold">Retiro en FADU</h3>
+                  <Link href="/retiro" className="font-semibold hover:text-[#0f3bff]">
+                    Retiro en FADU
+                  </Link>
                   <p className="text-xs text-gray-600 md:text-sm">Tu pedido listo en 7 días</p>
                 </div>
               </div>

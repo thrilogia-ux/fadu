@@ -7,6 +7,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { ReorderButton } from "@/components/ReorderButton";
+import { OrderListSkeleton } from "@/components/ProductCardSkeleton";
+import { EmptyState } from "@/components/EmptyState";
 import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
 
@@ -67,7 +69,17 @@ export default function MisPedidosPage() {
   }, [session]);
 
   if (status === "loading" || loading) {
-    return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
+    return (
+      <>
+        <Header categories={[]} />
+        <main className="min-h-screen bg-gray-50 py-8">
+          <div className="mx-auto max-w-4xl px-4">
+            <OrderListSkeleton />
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
   }
 
   if (!session) {
@@ -92,19 +104,15 @@ export default function MisPedidosPage() {
           <h1 className="mb-6 text-center text-2xl font-bold text-[#1d1d1b] md:mb-8 md:text-left md:text-3xl">Mis compras</h1>
 
           {orders.length === 0 ? (
-            <div className="rounded-lg border border-black/8 bg-white p-12 text-center">
-              <div className="mb-4 text-6xl">📦</div>
-              <h2 className="mb-2 text-xl font-semibold">No tenés compras todavía</h2>
-              <p className="mb-6 text-gray-600">
-                Cuando hagas tu primera compra, va a aparecer acá
-              </p>
-              <Link
-                href="/"
-                className="inline-block rounded-lg bg-[#0f3bff] px-6 py-3 font-semibold text-white hover:bg-[#0d32cc]"
-              >
-                Empezar a comprar
-              </Link>
-            </div>
+            <EmptyState
+              icon="📦"
+              title="No tenés compras todavía"
+              description="Cuando hagas tu primera compra, vas a ver acá el estado, el código de retiro y el detalle de cada pedido."
+              primaryHref="/productos"
+              primaryLabel="Empezar a comprar"
+              secondaryHref="/ofertas"
+              secondaryLabel="Ver ofertas"
+            />
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (

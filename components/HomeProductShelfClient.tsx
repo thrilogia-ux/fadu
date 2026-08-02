@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import type { HomeProductPlain } from "@/lib/home-data";
 import { normalizeApiProductList } from "@/lib/normalize-api-product";
 
@@ -54,11 +55,7 @@ export function HomeProductShelfClient({ initial, hydrateUrls, emptyFallback }: 
   }, [initialKey, hydrateUrls]);
 
   if (loading && items.length === 0) {
-    return (
-      <div className="rounded-lg border border-black/10 bg-gray-50 px-4 py-10 text-center text-sm text-gray-600">
-        Cargando productos…
-      </div>
-    );
+    return <ProductGridSkeleton count={8} />;
   }
 
   if (items.length === 0) {

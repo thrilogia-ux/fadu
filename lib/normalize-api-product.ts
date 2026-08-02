@@ -1,5 +1,6 @@
 import type { HomeProductPlain } from "@/lib/home-data";
-import { productInStock } from "@/lib/product-stock";
+import { averageRating, isProductNew } from "@/lib/product-badges";
+import { productInStock, productTotalStock } from "@/lib/product-stock";
 
 export function normalizeApiProduct(p: unknown): HomeProductPlain | null {
   if (!p || typeof p !== "object") return null;
@@ -15,6 +16,10 @@ export function normalizeApiProduct(p: unknown): HomeProductPlain | null {
     : undefined;
   const stock = Number(o.stock ?? 0);
   const useVariants = Boolean(o.useVariants);
+  const stockInput = { stock, useVariants, variants };
+  const approvedRatings = Array.isArray(o.reviews)
+    ? o.reviews.map((r) => Number((r as { rating?: number }).rating ?? 0)).filter((n) => n > 0)
+    : [];
   return {
     id: o.id,
     name: o.name,
@@ -27,8 +32,12 @@ export function normalizeApiProduct(p: unknown): HomeProductPlain | null {
       cat?.name && cat?.slug
         ? { name: cat.name, slug: cat.slug }
         : { name: "Productos", slug: "productos" },
-    inStock: productInStock({ stock, useVariants, variants }),
+    inStock: productInStock(stockInput),
     productType: typeof o.productType === "string" ? o.productType : "standard",
+    totalStock: productTotalStock(stockInput),
+    isNew: isProductNew(o.createdAt as string | undefined),
+    reviewRating: averageRating(approvedRatings),
+    reviewCount: approvedRatings.length,
   };
 }
 

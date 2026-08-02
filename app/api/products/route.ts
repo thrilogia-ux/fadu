@@ -63,6 +63,7 @@ export async function GET(request: Request) {
           take: 1,
         },
         variants: { select: { stock: true } },
+        reviews: { where: { status: "approved" }, select: { rating: true } },
       },
     });
   });
