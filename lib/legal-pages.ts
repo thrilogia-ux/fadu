@@ -250,3 +250,16 @@ export function formatLegalContent(content: string): string[] {
     .map((p) => p.trim())
     .filter(Boolean);
 }
+
+/** Bloques FAQ con preguntas que empiezan con ¿ */
+export function parseFaqItems(content: string): { question: string; answer: string }[] {
+  return formatLegalContent(content)
+    .map((block) => {
+      const lines = block.split("\n");
+      const first = lines[0]?.trim() ?? "";
+      if (!first.startsWith("¿")) return null;
+      const answer = lines.slice(1).join("\n").trim();
+      return { question: first, answer: answer || block.replace(first, "").trim() };
+    })
+    .filter((item): item is { question: string; answer: string } => item != null);
+}

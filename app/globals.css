@@ -52,4 +52,25 @@ body {
     animation: none;
     transform: none;
   }
+
+  .animate-cart-bump {
+    animation: none;
+  }
+}
+
+@keyframes cart-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  70% {
+    transform: scale(0.92);
+  }
+}
+
+.animate-cart-bump {
+  animation: cart-bump 0.45s ease;
 }

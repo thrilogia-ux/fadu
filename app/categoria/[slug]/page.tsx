@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { EmptyState } from "@/components/EmptyState";
 import { catalogListInclude, mapProductToCatalog } from "@/lib/catalog-product-map";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -86,24 +87,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           </div>
 
           {products.length === 0 ? (
-            <div className="rounded-lg bg-white px-6 py-14 text-center shadow-sm sm:py-16">
-              <p className="font-medium text-[#1d1d1b]">Todavía no hay productos en {category.name}</p>
-              <p className="mt-2 text-sm text-gray-600">Volvé pronto o explorá el resto del catálogo.</p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href="/productos"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#0f3bff] px-6 font-semibold text-white transition hover:bg-[#0d32cc]"
-                >
-                  Ver todos los productos
-                </Link>
-                <Link
-                  href="/"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-black/15 px-6 font-medium text-[#1d1d1b] hover:bg-gray-50"
-                >
-                  Ir al inicio
-                </Link>
-              </div>
-            </div>
+            <EmptyState
+              icon="📂"
+              title={`Todavía no hay productos en ${category.name}`}
+              description="Volvé pronto o explorá el resto del catálogo para descubrir novedades."
+              primaryHref="/productos"
+              primaryLabel="Ver todos los productos"
+              secondaryHref="/"
+              secondaryLabel="Ir al inicio"
+            />
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.map((product) => (

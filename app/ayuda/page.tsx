@@ -1,9 +1,23 @@
-import { LegalPageView } from "@/components/LegalPageView";
-import { getLegalPage } from "@/lib/legal-pages";
+import { HelpCenterView } from "@/components/HelpCenterView";
+import { getLegalPage, parseFaqItems } from "@/lib/legal-pages";
+import { getAllActiveCategories } from "@/lib/home-data";
+import { getPickupInfo } from "@/lib/pickup";
 
 export const dynamic = "force-dynamic";
 
 export default async function AyudaPage() {
-  const page = await getLegalPage("ayuda");
-  return <LegalPageView page={page} breadcrumbs={[{ label: "Ayuda" }]} />;
+  const [page, categories, pickup] = await Promise.all([
+    getLegalPage("ayuda"),
+    getAllActiveCategories(),
+    getPickupInfo(),
+  ]);
+
+  return (
+    <HelpCenterView
+      faqPage={page}
+      faqItems={parseFaqItems(page.content)}
+      categories={categories}
+      pickup={pickup}
+    />
+  );
 }

@@ -18,6 +18,8 @@ import {
   HomeShelfEmptyDestacados,
   HomeShelfEmptyOfertas,
 } from "@/components/HomeProductShelfClient";
+import { PickupPromoBanner } from "@/components/PickupPromoBanner";
+import { getPickupInfo } from "@/lib/pickup";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -43,11 +45,12 @@ const ALLOWED_CATEGORY_SLUGS = [
 ];
 
 async function HomePageContent() {
-  const [heroSlides, featured, offers, categoriesRaw] = await Promise.all([
+  const [heroSlides, featured, offers, categoriesRaw, pickup] = await Promise.all([
     getHeroSlidesForHome(),
     getFeaturedProductsForHome(),
     getOffersProductsForHome(),
     getAllActiveCategories(),
+    getPickupInfo(),
   ]);
 
   const allCategories = mergeHomeCategories(categoriesRaw);
@@ -154,6 +157,12 @@ async function HomePageContent() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="border-t border-black/8 bg-[#fafafa] py-8 md:py-12">
+          <div className="mx-auto max-w-7xl px-4">
+            <PickupPromoBanner pickup={pickup} />
           </div>
         </section>
 
