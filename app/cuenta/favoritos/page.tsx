@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCatalogCard } from "@/components/ProductCatalogCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { BrandLoader } from "@/components/BrandLoader";
 import { EmptyState } from "@/components/EmptyState";
 import { mapProductToCatalog } from "@/lib/catalog-product-map";
 import Link from "next/link";
@@ -69,6 +70,7 @@ export default function FavoritosPage() {
         <Header categories={[]} />
         <main className="min-h-screen bg-gray-50 py-8">
           <div className="mx-auto max-w-7xl px-4">
+            <BrandLoader fullScreen size="lg" />
             <ProductGridSkeleton count={4} />
           </div>
         </main>

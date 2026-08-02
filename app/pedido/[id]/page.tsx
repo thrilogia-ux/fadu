@@ -9,7 +9,7 @@ import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import { WhatsAppOrderLink } from "@/components/WhatsAppOrderLink";
-import { OrderListSkeleton } from "@/components/ProductCardSkeleton";
+import { BrandLoader } from "@/components/BrandLoader";
 import { CheckoutSteps } from "@/components/CheckoutSteps";
 import { ReorderButton } from "@/components/ReorderButton";
 import { STORE_TRANSFER_ALIAS } from "@/lib/brand";
@@ -62,7 +62,7 @@ export default function PedidoPage() {
         <Header categories={[]} />
         <main className="min-h-screen bg-gray-50 py-8">
           <div className="mx-auto max-w-2xl px-4">
-            <OrderListSkeleton count={1} />
+            <BrandLoader fullScreen size="lg" label="Cargando pedido…" />
           </div>
         </main>
         <Footer />

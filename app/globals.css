@@ -94,3 +94,26 @@ body {
   animation: cart-icon-bump 0.52s cubic-bezier(0.34, 1.4, 0.64, 1);
   transform-origin: center;
 }
+
+@keyframes brand-loader {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.06);
+    opacity: 0.88;
+  }
+}
+
+.animate-brand-loader {
+  animation: brand-loader 1.15s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-brand-loader {
+    animation: none;
+  }
+}

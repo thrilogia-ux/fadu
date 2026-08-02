@@ -12,6 +12,7 @@ import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { ProductCard } from "@/components/ProductCard";
 import { WaitlistButton } from "@/components/WaitlistButton";
 import { ShareProductButton } from "@/components/ShareProductButton";
+import { BrandLoader } from "@/components/BrandLoader";
 import { STORE_NAME } from "@/lib/brand";
 
 interface ProductVariant {
@@ -562,9 +563,13 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Cargando...</p>
-      </div>
+      <>
+        <Header categories={categories} />
+        <main className="min-h-screen bg-[#ededed]">
+          <BrandLoader fullScreen size="lg" label="Cargando producto…" />
+        </main>
+        <Footer />
+      </>
     );
   }
 

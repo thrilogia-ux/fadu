@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { ReorderButton } from "@/components/ReorderButton";
 import { OrderListSkeleton } from "@/components/ProductCardSkeleton";
+import { BrandLoader } from "@/components/BrandLoader";
 import { EmptyState } from "@/components/EmptyState";
 import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
@@ -74,6 +75,7 @@ export default function MisPedidosPage() {
         <Header categories={[]} />
         <main className="min-h-screen bg-gray-50 py-8">
           <div className="mx-auto max-w-4xl px-4">
+            <BrandLoader fullScreen size="lg" />
             <OrderListSkeleton />
           </div>
         </main>

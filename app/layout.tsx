@@ -18,8 +18,12 @@ export const metadata: Metadata = {
   title: `${STORE_NAME} — ${STORE_TAGLINE}`,
   description: "E-commerce de productos de diseño, arquitectura e iluminación. Retiro en FADU.",
   icons: {
-    icon: "/ubafadushop-logo.svg",
-    apple: "/ubafadushop-logo.svg",
+    icon: [
+      { url: "/banquito.png", type: "image/png" },
+      { url: "/banquito.svg", type: "image/svg+xml" },
+    ],
+    apple: "/banquito.png",
+    shortcut: "/banquito.png",
   },
   openGraph: {
     title: `${STORE_NAME} — ${STORE_TAGLINE}`,
@@ -27,7 +31,7 @@ export const metadata: Metadata = {
     siteName: STORE_NAME,
     locale: "es_AR",
     type: "website",
-    images: [{ url: "/ubafadushop-logo.svg", alt: STORE_NAME }],
+    images: [{ url: "/banquito.png", alt: STORE_NAME, width: 512, height: 512 }],
   },
 };
 

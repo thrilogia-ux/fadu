@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { formatVariantLabel, sortSizeLabels } from "@/lib/cart-line";
 import { productInStock } from "@/lib/product-stock";
 import { WaitlistButton } from "@/components/WaitlistButton";
+import { BrandLoader } from "@/components/BrandLoader";
 import type { HomeProductPlain } from "@/lib/home-data";
 
 type Variant = {
@@ -234,7 +235,9 @@ export function ProductQuickView({ slug, initial, onClose }: Props) {
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {loading && !product && (
-          <div className="px-4 py-16 text-center text-sm text-gray-600">Cargando…</div>
+          <div className="px-4 py-10">
+            <BrandLoader size="md" />
+          </div>
         )}
         {error && !product && (
           <div className="px-4 py-16 text-center text-sm text-red-600">{error}</div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { ProductCatalogCard } from "@/components/ProductCatalogCard";
+import { BrandLoader } from "@/components/BrandLoader";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import type { HomeProductPlain } from "@/lib/home-data";
 import { normalizeApiProductList } from "@/lib/normalize-api-product";
@@ -55,7 +56,14 @@ export function HomeProductShelfClient({ initial, hydrateUrls, emptyFallback }: 
   }, [initialKey, hydrateUrls]);
 
   if (loading && items.length === 0) {
-    return <ProductGridSkeleton count={8} />;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center py-4">
+          <BrandLoader size="md" label="Cargando productos…" />
+        </div>
+        <ProductGridSkeleton count={8} />
+      </div>
+    );
   }
 
   if (items.length === 0) {
