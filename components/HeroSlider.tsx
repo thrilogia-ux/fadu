@@ -61,7 +61,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   const slideWidth =
     containerWidth > 0
-      ? Math.min(containerWidth * 0.92, 1120)
+      ? Math.min(containerWidth * 0.88, 1080)
       : 0;
 
   const updateWidth = useCallback(() => {
@@ -165,11 +165,21 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative bg-[#fafafa] px-0 py-6 md:py-10"
+      className="relative bg-[#fafafa] py-6 md:py-10"
       aria-roledescription="carousel"
       aria-label="Destacados de la tienda"
     >
-      <div ref={containerRef} className="relative mx-auto max-w-[1400px] overflow-hidden">
+      {/* Esfumado lateral — oculta el corte brusco de los slides vecinos */}
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-r from-[#fafafa] via-[#fafafa]/90 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-l from-[#fafafa] via-[#fafafa]/90 to-transparent"
+        aria-hidden
+      />
+
+      <div ref={containerRef} className="relative w-full">
         <div
           ref={trackRef}
           className={`flex cursor-grab active:cursor-grabbing ${isDragging ? "" : "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"}`}
@@ -205,7 +215,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`${index + 1} de ${slides.length}`}
-                className="relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[28px] bg-[#f5f5f7] shadow-sm transition-[transform,opacity] duration-500 ease-out sm:min-h-[300px] md:h-[min(48vw,520px)] md:min-h-[360px]"
+                className="relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[28px] bg-[#f5f5f7] transition-[transform,opacity] duration-500 ease-out sm:min-h-[300px] md:h-[min(48vw,520px)] md:min-h-[360px]"
                 style={{
                   width: slideWidth || "92%",
                   transform: `scale(${scale})`,

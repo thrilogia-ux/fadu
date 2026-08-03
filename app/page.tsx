@@ -68,9 +68,10 @@ async function HomePageContent() {
     <>
       <Header categories={allCategories} />
 
-      <main className="min-w-0 overflow-x-hidden">
+      <main className="min-w-0">
         <HomeHero slides={heroSlides} />
 
+        <div className="overflow-x-hidden">
         <section className="bg-white py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4">
             <div className="mb-6 flex items-center justify-between md:mb-8">
@@ -181,6 +182,7 @@ async function HomePageContent() {
             />
           </div>
         </section>
+        </div>
       </main>
 
       <Footer />

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runWithDbRetries } from "@/lib/db-retry";
 import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
+import { ensureFinanceSchema } from "@/lib/finance-schema";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
   }
 
   const products = await runWithDbRetries("api.products.list", async () => {
+    await ensureFinanceSchema();
     if (!q?.trim() && categorySlug) {
       const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
       if (category) where.categoryId = category.id;
@@ -52,20 +54,38 @@ export async function GET(request: Request) {
           ? homeOffersOrderBy
           : { createdAt: "desc" as const };
 
-    return prisma.product.findMany({
-      where,
-      take: limit,
-      orderBy,
-      include: {
-        category: { select: { name: true, slug: true } },
-        images: {
-          where: { isPrimary: true },
-          take: 1,
+    try {
+      return await prisma.product.findMany({
+        where,
+        take: limit,
+        orderBy,
+        include: {
+          category: { select: { name: true, slug: true } },
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
+          variants: { select: { stock: true } },
+          reviews: { where: { status: "approved" }, select: { rating: true } },
         },
-        variants: { select: { stock: true } },
-        reviews: { where: { status: "approved" }, select: { rating: true } },
-      },
-    });
+      });
+    } catch (orderErr) {
+      console.warn("[api/products] orderBy fallback", orderErr);
+      return prisma.product.findMany({
+        where,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          category: { select: { name: true, slug: true } },
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
+          variants: { select: { stock: true } },
+          reviews: { where: { status: "approved" }, select: { rating: true } },
+        },
+      });
+    }
   });
 
   /* Lista vacía mejor que 500: la tienda sigue navegable ante fallos puntuales */

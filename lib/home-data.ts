@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { HomeHeroSlide } from "@/components/HomeHero";
 import { runWithDbRetries } from "@/lib/db-retry";
 import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
+import { ensureFinanceSchema } from "@/lib/finance-schema";
 
 import { averageRating, isProductNew } from "@/lib/product-badges";
 import { productInStock, productTotalStock } from "@/lib/product-stock";
@@ -22,6 +23,18 @@ async function getFeaturedProductsForHomeRaw() {
     orderBy: homeFeaturedOrderBy,
     include: productHomeInclude,
   });
+}
+
+async function findHomeProducts(
+  label: string,
+  query: () => Promise<ProductHomeRow[]>,
+  fallbackQuery: () => Promise<ProductHomeRow[]>
+): Promise<ProductHomeRow[]> {
+  await ensureFinanceSchema();
+  const primary = await runWithDbRetries(label, query);
+  if (primary && primary.length > 0) return primary;
+  const fallback = await runWithDbRetries(`${label}.fallback`, fallbackQuery);
+  return fallback ?? [];
 }
 
 /** Props listas para ProductCard y para el payload RSC (sin Decimal ni tipos raros de Prisma) */
@@ -130,22 +143,31 @@ export async function getHeroSlidesForHome(): Promise<HomeHeroSlide[]> {
 }
 
 async function getRecentActiveProducts(take: number): Promise<ProductHomeRow[]> {
-  const r = await runWithDbRetries("home.products.recent", () =>
-    prisma.product.findMany({
-      where: { active: true },
-      take,
-      orderBy: { createdAt: "desc" },
-      include: productHomeInclude,
-    })
-  );
-  return r ?? [];
+  return prisma.product.findMany({
+    where: { active: true },
+    take,
+    orderBy: { createdAt: "desc" },
+    include: productHomeInclude,
+  });
+}
+
+function featuredFallbackQuery() {
+  return prisma.product.findMany({
+    where: { active: true, featured: true },
+    take: 8,
+    orderBy: { createdAt: "desc" },
+    include: productHomeInclude,
+  });
 }
 
 export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> {
-  let rows =
-    (await runWithDbRetries("home.products.featured", () => getFeaturedProductsForHomeRaw())) ?? [];
+  let rows = await findHomeProducts(
+    "home.products.featured",
+    () => getFeaturedProductsForHomeRaw(),
+    () => featuredFallbackQuery()
+  );
   if (rows.length === 0) {
-    rows = await getRecentActiveProducts(8);
+    rows = (await runWithDbRetries("home.products.recent", () => getRecentActiveProducts(8))) ?? [];
   }
   if (rows.length === 0) {
     const { loadFeaturedFromApi } = await import("@/lib/home-api-fallback");
@@ -157,15 +179,23 @@ export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> 
 }
 
 export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
-  let rows =
-    (await runWithDbRetries("home.products.offers", () =>
+  let rows = await findHomeProducts(
+    "home.products.offers",
+    () =>
       prisma.product.findMany({
         where: { active: true, compareAtPrice: { not: null } },
         take: 8,
         orderBy: homeOffersOrderBy,
         include: productHomeInclude,
+      }),
+    () =>
+      prisma.product.findMany({
+        where: { active: true, compareAtPrice: { not: null } },
+        take: 8,
+        orderBy: { createdAt: "desc" },
+        include: productHomeInclude,
       })
-    )) ?? [];
+  );
 
   if (rows.length === 0) {
     const { loadOffersFromApi } = await import("@/lib/home-api-fallback");

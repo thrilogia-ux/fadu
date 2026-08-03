@@ -102,7 +102,7 @@ export function Header({ categories }: { categories: Category[] }) {
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/8 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-black/8 bg-white">
       {/* Barra superior */}
       <div className="bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white">
         <TopBannerMarquee />
