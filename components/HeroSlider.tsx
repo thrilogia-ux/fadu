@@ -23,8 +23,8 @@ const AUTOPLAY_MS = 6000;
 
 function FallbackHero() {
   return (
-    <section className="bg-[#fafafa] px-4 py-6 md:py-10">
-      <div className="mx-auto max-w-[1200px]">
+    <section className="bg-[#fafafa] py-6 md:py-10">
+      <div className="mx-auto max-w-7xl px-4">
         <div className="relative flex h-[min(72vw,520px)] min-h-[280px] flex-col justify-end overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0f3bff] to-[#0a2699] p-8 md:p-12">
           <div className="relative z-10 max-w-xl text-white">
             <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-5xl">
@@ -52,6 +52,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const [containerWidth, setContainerWidth] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -59,10 +60,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const touchStartY = useRef<number | null>(null);
   const dragStartX = useRef<number | null>(null);
 
-  const slideWidth =
-    containerWidth > 0
-      ? Math.min(containerWidth * 0.88, 1080)
-      : 0;
+  const slideWidth = containerWidth > 0 ? containerWidth : 0;
 
   const updateWidth = useCallback(() => {
     if (containerRef.current) {
@@ -104,9 +102,17 @@ export function HeroSlider({ slides }: HeroSliderProps) {
     if (reduced) setIsAutoPlaying(false);
   }, []);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   const baseOffset =
     slideWidth > 0 && containerWidth > 0
-      ? -current * (slideWidth + GAP_PX) + (containerWidth - slideWidth) / 2
+      ? -current * (slideWidth + GAP_PX)
       : 0;
 
   const translateX = baseOffset + (isDragging ? dragOffset : 0);
@@ -165,21 +171,22 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative bg-[#fafafa] py-6 md:py-10"
+      className="relative overflow-x-hidden bg-[#fafafa] py-6 md:py-10"
       aria-roledescription="carousel"
       aria-label="Destacados de la tienda"
     >
-      {/* Esfumado lateral — oculta el corte brusco de los slides vecinos */}
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-r from-[#fafafa] via-[#fafafa]/90 to-transparent"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-l from-[#fafafa] via-[#fafafa]/90 to-transparent"
-        aria-hidden
-      />
+      <div className="relative mx-auto max-w-7xl px-4">
+        {/* Esfumado lateral solo en desktop — en mobile oculta los slides vecinos */}
+        <div
+          className="pointer-events-none absolute inset-y-0 left-4 z-20 hidden w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-r from-[#fafafa] via-[#fafafa]/90 to-transparent md:block"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-4 z-20 hidden w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-l from-[#fafafa] via-[#fafafa]/90 to-transparent md:block"
+          aria-hidden
+        />
 
-      <div ref={containerRef} className="relative w-full">
+        <div ref={containerRef} className="relative w-full">
         <div
           ref={trackRef}
           className={`flex cursor-grab active:cursor-grabbing ${isDragging ? "" : "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"}`}
@@ -206,8 +213,8 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           {slides.map((slide, index) => {
             const isActive = index === current;
             const distance = Math.abs(index - current);
-            const scale = isActive ? 1 : distance === 1 ? 0.97 : 0.94;
-            const opacity = isActive ? 1 : distance === 1 ? 0.88 : 0.72;
+            const scale = isMobile ? 1 : isActive ? 1 : distance === 1 ? 0.97 : 0.94;
+            const opacity = isMobile ? 1 : isActive ? 1 : distance === 1 ? 0.88 : 0.72;
 
             return (
               <article
@@ -217,7 +224,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                 aria-label={`${index + 1} de ${slides.length}`}
                 className="relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[28px] bg-[#f5f5f7] transition-[transform,opacity] duration-500 ease-out sm:min-h-[300px] md:h-[min(48vw,520px)] md:min-h-[360px]"
                 style={{
-                  width: slideWidth || "92%",
+                  width: slideWidth || "100%",
                   transform: `scale(${scale})`,
                   opacity,
                 }}
@@ -276,6 +283,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
               </article>
             );
           })}
+        </div>
         </div>
       </div>
 
