@@ -2,40 +2,12 @@ import { prisma } from "@/lib/prisma";
 import type { HomeHeroSlide } from "@/components/HomeHero";
 import { runWithDbRetries } from "@/lib/db-retry";
 import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
-import { ensureFinanceSchema } from "@/lib/finance-schema";
+import { findProductsForList } from "@/lib/product-queries";
 
 import { averageRating, isProductNew } from "@/lib/product-badges";
 import { productInStock, productTotalStock } from "@/lib/product-stock";
 
-const productHomeInclude = {
-  category: { select: { name: true, slug: true } as const },
-  images: { where: { isPrimary: true }, take: 1 },
-  variants: { select: { stock: true } },
-  reviews: { where: { status: "approved" }, select: { rating: true } },
-} as const;
-
-type ProductHomeRow = Awaited<ReturnType<typeof getFeaturedProductsForHomeRaw>>[number];
-
-async function getFeaturedProductsForHomeRaw() {
-  return prisma.product.findMany({
-    where: { active: true, featured: true },
-    take: 8,
-    orderBy: homeFeaturedOrderBy,
-    include: productHomeInclude,
-  });
-}
-
-async function findHomeProducts(
-  label: string,
-  query: () => Promise<ProductHomeRow[]>,
-  fallbackQuery: () => Promise<ProductHomeRow[]>
-): Promise<ProductHomeRow[]> {
-  await ensureFinanceSchema();
-  const primary = await runWithDbRetries(label, query);
-  if (primary && primary.length > 0) return primary;
-  const fallback = await runWithDbRetries(`${label}.fallback`, fallbackQuery);
-  return fallback ?? [];
-}
+type ProductHomeRow = Awaited<ReturnType<typeof findProductsForList>>[number];
 
 /** Props listas para ProductCard y para el payload RSC (sin Decimal ni tipos raros de Prisma) */
 export type HomeProductPlain = {
@@ -142,33 +114,30 @@ export async function getHeroSlidesForHome(): Promise<HomeHeroSlide[]> {
   return [];
 }
 
-async function getRecentActiveProducts(take: number): Promise<ProductHomeRow[]> {
-  return prisma.product.findMany({
-    where: { active: true },
-    take,
-    orderBy: { createdAt: "desc" },
-    include: productHomeInclude,
-  });
-}
+async function loadFeaturedRows(): Promise<ProductHomeRow[]> {
+  const featured = await runWithDbRetries("home.products.featured", () =>
+    findProductsForList({
+      where: { active: true, featured: true },
+      take: 8,
+      orderBy: homeFeaturedOrderBy,
+    })
+  );
+  if (featured && featured.length > 0) return featured;
 
-function featuredFallbackQuery() {
-  return prisma.product.findMany({
-    where: { active: true, featured: true },
-    take: 8,
-    orderBy: { createdAt: "desc" },
-    include: productHomeInclude,
-  });
+  return (
+    (await runWithDbRetries("home.products.recent", () =>
+      findProductsForList({
+        where: { active: true },
+        take: 8,
+        orderBy: { createdAt: "desc" },
+      })
+    )) ?? []
+  );
 }
 
 export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> {
-  let rows = await findHomeProducts(
-    "home.products.featured",
-    () => getFeaturedProductsForHomeRaw(),
-    () => featuredFallbackQuery()
-  );
-  if (rows.length === 0) {
-    rows = (await runWithDbRetries("home.products.recent", () => getRecentActiveProducts(8))) ?? [];
-  }
+  let rows = await loadFeaturedRows();
+
   if (rows.length === 0) {
     const { loadFeaturedFromApi } = await import("@/lib/home-api-fallback");
     const viaApi = await loadFeaturedFromApi();
@@ -179,23 +148,14 @@ export async function getFeaturedProductsForHome(): Promise<HomeProductPlain[]> 
 }
 
 export async function getOffersProductsForHome(): Promise<HomeProductPlain[]> {
-  let rows = await findHomeProducts(
-    "home.products.offers",
-    () =>
-      prisma.product.findMany({
+  let rows =
+    (await runWithDbRetries("home.products.offers", () =>
+      findProductsForList({
         where: { active: true, compareAtPrice: { not: null } },
         take: 8,
         orderBy: homeOffersOrderBy,
-        include: productHomeInclude,
-      }),
-    () =>
-      prisma.product.findMany({
-        where: { active: true, compareAtPrice: { not: null } },
-        take: 8,
-        orderBy: { createdAt: "desc" },
-        include: productHomeInclude,
       })
-  );
+    )) ?? [];
 
   if (rows.length === 0) {
     const { loadOffersFromApi } = await import("@/lib/home-api-fallback");

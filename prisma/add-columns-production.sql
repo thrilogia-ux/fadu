@@ -100,8 +100,12 @@ VALUES ('default', 'Av. San Juan 350, CABA', 'Presentá el código QR del email 
 ON CONFLICT ("id") DO NOTHING;
 
 -- S3-S5: waitlist, bundles, modo feria
-ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "product_type" TEXT NOT NULL DEFAULT 'standard';
-ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "bundle_discount_percent" INTEGER;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "product_type" TEXT NOT NULL DEFAULT 'standard';
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "bundle_discount_percent" INTEGER;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "use_variants" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "show_size_selector" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "show_color_selector" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2);
 
 CREATE TABLE IF NOT EXISTS "stock_waitlist" (
     "id" TEXT NOT NULL,

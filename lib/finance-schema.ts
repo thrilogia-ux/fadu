@@ -2,10 +2,6 @@ import { prisma } from "@/lib/prisma";
 
 let ensured = false;
 
-const PRODUCT_COLUMNS_SQL = [
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2)`,
-];
-
 const ORDER_FINANCE_COLUMNS_SQL = [
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paid_at" TIMESTAMPTZ`,
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "platform_fee" DECIMAL(10, 2)`,
@@ -63,9 +59,6 @@ const DEFAULT_EXPENSE_CATEGORIES = [
 export async function ensureFinanceSchema(): Promise<void> {
   if (ensured) return;
   try {
-    for (const sql of PRODUCT_COLUMNS_SQL) {
-      await prisma.$executeRawUnsafe(sql);
-    }
     for (const sql of ORDER_FINANCE_COLUMNS_SQL) {
       await prisma.$executeRawUnsafe(sql);
     }
@@ -77,15 +70,19 @@ export async function ensureFinanceSchema(): Promise<void> {
     await prisma.$executeRawUnsafe(FINANCIAL_EXPENSE_TABLE_SQL);
     await prisma.$executeRawUnsafe(FINANCIAL_EXPENSE_INDEX_SQL);
 
-    const count = await prisma.expenseCategory.count();
-    if (count === 0) {
-      await prisma.expenseCategory.createMany({
-        data: DEFAULT_EXPENSE_CATEGORIES.map((name, i) => ({
-          name,
-          sortOrder: i,
-          active: true,
-        })),
-      });
+    try {
+      const count = await prisma.expenseCategory.count();
+      if (count === 0) {
+        await prisma.expenseCategory.createMany({
+          data: DEFAULT_EXPENSE_CATEGORIES.map((name, i) => ({
+            name,
+            sortOrder: i,
+            active: true,
+          })),
+        });
+      }
+    } catch {
+      /* seed opcional */
     }
 
     ensured = true;

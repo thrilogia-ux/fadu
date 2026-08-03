@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { runWithDbRetries } from "@/lib/db-retry";
 import { mergeHomeCategories } from "@/lib/home-fallback";
+import { findProductsForList } from "@/lib/product-queries";
 
 export const dynamic = "force-dynamic";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCatalogCard } from "@/components/ProductCatalogCard";
-import { catalogListInclude, mapProductToCatalog } from "@/lib/catalog-product-map";
+import { mapProductToCatalog } from "@/lib/catalog-product-map";
 
 export default async function ProductosPage() {
   const categoriesRaw =
@@ -20,10 +21,10 @@ export default async function ProductosPage() {
 
   const products =
     (await runWithDbRetries("productos.products", () =>
-      prisma.product.findMany({
+      findProductsForList({
         where: { active: true },
+        take: 200,
         orderBy: { createdAt: "desc" },
-        include: catalogListInclude,
       })
     )) ?? [];
 
