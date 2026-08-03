@@ -41,20 +41,33 @@ export async function GET(request: Request) {
     }
   }
 
-  const products = await runWithDbRetries("api.products.list", async () => {
-    if (!q?.trim() && categorySlug) {
-      const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
-      if (category) where.categoryId = category.id;
-    }
-    const orderBy =
-      !q?.trim() && featured === "true"
-        ? homeFeaturedOrderBy
-        : !q?.trim() && searchParams.get("onSale") === "true"
-          ? homeOffersOrderBy
-          : { createdAt: "desc" as const };
+  if (!q?.trim() && categorySlug) {
+    const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
+    if (category) where.categoryId = category.id;
+  }
 
-    return findProductsForList({ where, take: limit, orderBy });
-  });
+  const orderBy =
+    !q?.trim() && featured === "true"
+      ? homeFeaturedOrderBy
+      : !q?.trim() && searchParams.get("onSale") === "true"
+        ? homeOffersOrderBy
+        : { createdAt: "desc" as const };
+
+  const listArgs = { where, take: limit, orderBy };
+
+  let products = await runWithDbRetries("api.products.list", () => findProductsForList(listArgs));
+
+  if (products === null) {
+    try {
+      products = await findProductsForList({
+        ...listArgs,
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (e) {
+      console.error("[api/products] direct fallback failed:", e);
+      products = [];
+    }
+  }
 
   return NextResponse.json(products ?? []);
 }

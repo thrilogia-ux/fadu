@@ -3,33 +3,49 @@ import type { Prisma } from "@prisma/client";
 
 let ensured = false;
 
-/** Columnas que Prisma espera pero pueden faltar en Supabase producción */
-const PRODUCT_COLUMNS_SQL = [
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2)`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "featured_order" INTEGER`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "offers_order" INTEGER`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "use_variants" BOOLEAN NOT NULL DEFAULT false`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "show_size_selector" BOOLEAN NOT NULL DEFAULT false`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "show_color_selector" BOOLEAN NOT NULL DEFAULT false`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "product_type" TEXT NOT NULL DEFAULT 'standard'`,
-  `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "bundle_discount_percent" INTEGER`,
+/** Prisma usa la tabla "Product" (sin @@map). Algunos scripts viejos usaban "products". */
+const PRODUCT_TABLE_NAMES = ["Product", "products"] as const;
+
+const PRODUCT_COLUMN_DEFS: { name: string; ddl: string }[] = [
+  { name: "cost_price", ddl: `DECIMAL(10, 2)` },
+  { name: "featured_order", ddl: `INTEGER` },
+  { name: "offers_order", ddl: `INTEGER` },
+  { name: "use_variants", ddl: `BOOLEAN NOT NULL DEFAULT false` },
+  { name: "show_size_selector", ddl: `BOOLEAN NOT NULL DEFAULT false` },
+  { name: "show_color_selector", ddl: `BOOLEAN NOT NULL DEFAULT false` },
+  { name: "product_type", ddl: `TEXT NOT NULL DEFAULT 'standard'` },
+  { name: "bundle_discount_percent", ddl: `INTEGER` },
 ];
 
-const PRODUCT_REVIEW_STATUS_SQL = `
-ALTER TABLE "product_reviews" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'pending'
-`;
+async function tableExists(tableName: string): Promise<boolean> {
+  const rows = await prisma.$queryRaw<{ exists: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = ${tableName}
+    ) AS "exists"
+  `;
+  return Boolean(rows[0]?.exists);
+}
 
 export async function ensureProductSchema(): Promise<void> {
   if (ensured) return;
   try {
-    for (const sql of PRODUCT_COLUMNS_SQL) {
-      await prisma.$executeRawUnsafe(sql);
+    for (const tableName of PRODUCT_TABLE_NAMES) {
+      if (!(await tableExists(tableName))) continue;
+      const quoted = `"${tableName}"`;
+      for (const col of PRODUCT_COLUMN_DEFS) {
+        await prisma.$executeRawUnsafe(
+          `ALTER TABLE ${quoted} ADD COLUMN IF NOT EXISTS "${col.name}" ${col.ddl}`
+        );
+      }
     }
-    try {
-      await prisma.$executeRawUnsafe(PRODUCT_REVIEW_STATUS_SQL);
-    } catch {
-      /* tabla product_reviews puede no existir aún */
+
+    if (await tableExists("product_reviews")) {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE "product_reviews" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'pending'`
+      );
     }
+
     ensured = true;
   } catch (e) {
     console.error("[product-schema] ensureProductSchema:", e);
@@ -63,11 +79,11 @@ type ListArgs = {
 export async function findProductsForList(args: ListArgs) {
   await ensureProductSchema();
 
-  const attempts: Array<typeof productListIncludeFull | typeof productListIncludeWithVariants | typeof productListIncludeMinimal> = [
-    productListIncludeFull,
-    productListIncludeWithVariants,
-    productListIncludeMinimal,
-  ];
+  const attempts: Array<
+    | typeof productListIncludeFull
+    | typeof productListIncludeWithVariants
+    | typeof productListIncludeMinimal
+  > = [productListIncludeFull, productListIncludeWithVariants, productListIncludeMinimal];
 
   let lastError: unknown;
   for (const include of attempts) {
@@ -84,7 +100,6 @@ export async function findProductsForList(args: ListArgs) {
     }
   }
 
-  /* Último intento: sin orderBy custom (p. ej. featured_order faltante) */
   try {
     return await prisma.product.findMany({
       where: args.where,
@@ -95,5 +110,17 @@ export async function findProductsForList(args: ListArgs) {
   } catch (e) {
     console.error("[product-queries] findProductsForList failed:", lastError, e);
     throw e;
+  }
+}
+
+/**
+ * Conteo rápido para diagnóstico (health / debug).
+ */
+export async function countActiveProducts(): Promise<number | null> {
+  try {
+    await ensureProductSchema();
+    return await prisma.product.count({ where: { active: true } });
+  } catch {
+    return null;
   }
 }

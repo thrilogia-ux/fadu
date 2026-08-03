@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { analyzeDatabaseUrl, normalizeServerlessDatabaseUrl } from "@/lib/database-url";
 import { STORE_NAME } from "@/lib/brand";
 import { getAuthEnvStatus } from "@/lib/google-auth-env";
+import { countActiveProducts } from "@/lib/product-queries";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +23,12 @@ export async function GET() {
   let databaseError: string | undefined;
 
   const started = Date.now();
+  let activeProductCount: number | null = null;
   try {
     await prisma.$queryRaw`SELECT 1`;
     database = "ok";
     databaseLatencyMs = Date.now() - started;
+    activeProductCount = await countActiveProducts();
   } catch (e) {
     databaseLatencyMs = Date.now() - started;
     databaseError = e instanceof Error ? e.message : String(e);
@@ -71,6 +74,7 @@ export async function GET() {
     message: ok ? `${STORE_NAME} API OK` : "API con problemas de base de datos",
     database,
     databaseLatencyMs,
+    activeProductCount,
     databaseUrlConfigured: dbConfig.configured,
     databaseConfig: {
       poolMode: dbConfig.poolMode,

@@ -6,8 +6,15 @@
 -- y luego todo este script.
 
 -- 1) Productos: orden en home (Destacados / Ofertas)
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "featured_order" INTEGER;
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "offers_order" INTEGER;
+-- Prisma usa la tabla "Product" (modelo sin @@map)
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "featured_order" INTEGER;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "offers_order" INTEGER;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "use_variants" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "show_size_selector" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "show_color_selector" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "product_type" TEXT NOT NULL DEFAULT 'standard';
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "bundle_discount_percent" INTEGER;
 
 -- 2) Hero slides: encuadre de imagen
 ALTER TABLE "hero_slides" ADD COLUMN IF NOT EXISTS "image_position" TEXT DEFAULT '50% 50%';
@@ -16,7 +23,7 @@ ALTER TABLE "hero_slides" ADD COLUMN IF NOT EXISTS "image_position" TEXT DEFAULT
 -- Si falla con "User", probá cambiar "User" por "users" (según tu schema)
 CREATE TABLE IF NOT EXISTS "product_reviews" (
   "id" TEXT PRIMARY KEY,
-  "product_id" TEXT NOT NULL REFERENCES "products"("id") ON DELETE CASCADE,
+  "product_id" TEXT NOT NULL REFERENCES "Product"("id") ON DELETE CASCADE,
   "user_id" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
   "rating" INTEGER NOT NULL,
   "comment" TEXT,
@@ -43,7 +50,7 @@ CREATE TABLE IF NOT EXISTS "product_videos" (
   "file_path" TEXT,
   "type" TEXT NOT NULL DEFAULT 'url',
   CONSTRAINT "product_videos_pkey" PRIMARY KEY ("id"),
-  CONSTRAINT "product_videos_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT "product_videos_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- 5) Mensajes marquesina franja superior del header
@@ -99,13 +106,7 @@ INSERT INTO "pickup_config" ("id", "address", "notes", "updated_at")
 VALUES ('default', 'Av. San Juan 350, CABA', 'Presentá el código QR del email o tu número de pedido al retirar.', NOW())
 ON CONFLICT ("id") DO NOTHING;
 
--- S3-S5: waitlist, bundles, modo feria
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "product_type" TEXT NOT NULL DEFAULT 'standard';
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "bundle_discount_percent" INTEGER;
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "use_variants" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "show_size_selector" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "show_color_selector" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2);
+-- S3-S5: waitlist, bundles, modo feria (tabla Product)
 
 CREATE TABLE IF NOT EXISTS "stock_waitlist" (
     "id" TEXT NOT NULL,
@@ -187,8 +188,8 @@ ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "validated_at" TIMESTAMPTZ;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false;
 CREATE UNIQUE INDEX IF NOT EXISTS "orders_pickup_code_key" ON "orders" ("pickup_code") WHERE "pickup_code" IS NOT NULL;
 
--- Finanzas: costos, cobros, facturación, gastos
-ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2);
+-- Finanzas: costos, cobros, facturación, gastos (tabla Product)
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2);
 ALTER TABLE "order_items" ADD COLUMN IF NOT EXISTS "unit_cost_snapshot" DECIMAL(10, 2);
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paid_at" TIMESTAMPTZ;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "platform_fee" DECIMAL(10, 2);
