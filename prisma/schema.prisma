@@ -114,6 +114,7 @@ model Product {
   slug           String   @unique
   description    String?  @db.Text
   price          Decimal  @db.Decimal(10, 2)
+  costPrice      Decimal? @map("cost_price") @db.Decimal(10, 2) // costo unitario para margen / liquidación
   compareAtPrice Decimal? @map("compare_at_price") @db.Decimal(10, 2) // precio tachado / oferta
   stock          Int      @default(0)
   sku            String?  @unique
@@ -231,10 +232,16 @@ model Order {
   id              String    @id @default(cuid())
   userId          String    @map("user_id")
   status          String    // pending_payment, paid, preparing, ready_for_pickup, completed, cancelled
-  paymentMethod   String?   @map("payment_method") // "mercadopago" | "transfer"
+  paymentMethod   String?   @map("payment_method") // mercadopago | transfer | feria_presencial | test
   paymentId       String?   @map("payment_id") // ID de MP si aplica
   total           Decimal   @db.Decimal(10, 2)
   discountTotal   Decimal   @default(0) @map("discount_total") @db.Decimal(10, 2)
+  paidAt          DateTime? @map("paid_at") // cuándo se confirmó el cobro
+  platformFee     Decimal?  @map("platform_fee") @db.Decimal(10, 2)
+  netReceived     Decimal?  @map("net_received") @db.Decimal(10, 2)
+  invoicedAt      DateTime? @map("invoiced_at")
+  invoiceNumber   String?   @map("invoice_number")
+  invoiceAmount   Decimal?  @map("invoice_amount") @db.Decimal(10, 2)
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   
@@ -265,6 +272,7 @@ model OrderItem {
   variantColorLabel String? @map("variant_color_label")
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
+  unitCostSnapshot Decimal? @map("unit_cost_snapshot") @db.Decimal(10, 2)
 
   order   Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -436,6 +444,37 @@ model BundleItem {
 
   @@index([bundleProductId])
   @@map("bundle_items")
+}
+
+// --- Finanzas: tipos de gasto y gastos mensuales ---
+model ExpenseCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  expenses FinancialExpense[]
+
+  @@map("expense_categories")
+}
+
+model FinancialExpense {
+  id          String   @id @default(cuid())
+  categoryId  String   @map("category_id")
+  year        Int
+  month       Int
+  expenseDate DateTime @map("expense_date") @db.Date
+  description String   @db.Text
+  amount      Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([year, month])
+  @@map("financial_expenses")
 }
 
 // --- Configuración global (modo feria, etc.) ---

@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { sendPickupReadyEmail } from "@/lib/email";
 import { getPickupInfo } from "@/lib/pickup";
 import { buildPickupReadyNotifyUrl } from "@/lib/whatsapp";
+import { buildPaidOrderUpdate } from "@/lib/finance-order";
+import { ensureFinanceSchema } from "@/lib/finance-schema";
 
 // PATCH /api/admin/orders/[id]/status - Cambiar estado del pedido
 export async function PATCH(
@@ -38,7 +40,13 @@ export async function PATCH(
 
     const existing = await prisma.order.findUnique({
       where: { id },
-      select: { status: true, archived: true },
+      select: {
+        status: true,
+        archived: true,
+        paymentMethod: true,
+        total: true,
+        paidAt: true,
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
@@ -50,9 +58,32 @@ export async function PATCH(
       );
     }
 
+    await ensureFinanceSchema();
+
+    const updateData: {
+      status: string;
+      updatedAt: Date;
+      paidAt?: Date;
+      platformFee?: number | null;
+      netReceived?: number | null;
+    } = { status, updatedAt: new Date() };
+
+    const shouldMarkPaid =
+      status === "paid" && existing.status === "pending_payment" && !existing.paidAt;
+
+    if (shouldMarkPaid) {
+      const paidUpdate = await buildPaidOrderUpdate(
+        existing.paymentMethod,
+        Number(existing.total)
+      );
+      updateData.paidAt = paidUpdate.paidAt;
+      updateData.platformFee = paidUpdate.platformFee;
+      updateData.netReceived = paidUpdate.netReceived;
+    }
+
     const order = await prisma.order.update({
       where: { id },
-      data: { status, updatedAt: new Date() },
+      data: updateData,
     });
 
     await prisma.orderStatusHistory.create({

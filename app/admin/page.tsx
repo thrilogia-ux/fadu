@@ -154,6 +154,22 @@ export default function AdminDashboard() {
             </Link>
           ))}
         </div>
+
+        <Link
+          href="/admin/finanzas"
+          className="mt-10 block rounded-xl border-2 border-[#0f3bff]/30 bg-gradient-to-r from-[#0f3bff]/10 to-indigo-500/10 p-8 transition hover:border-[#0f3bff] hover:shadow-lg"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="mb-2 text-3xl">💰</div>
+              <h2 className="text-xl font-bold text-[#1d1d1b]">Administración financiera</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Liquidación mensual, costos de producto, gastos operativos, comisiones y conciliación con facturación
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-[#0f3bff]">Ir al módulo →</span>
+          </div>
+        </Link>
       </main>
     </div>
   );

@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       description,
       price,
       compareAtPrice,
+      costPrice,
       stock,
       sku,
       categoryId,
@@ -108,6 +109,10 @@ export async function POST(request: Request) {
         description: description || null,
         price: parseFloat(price),
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        costPrice:
+          costPrice != null && String(costPrice).trim() !== ""
+            ? parseFloat(String(costPrice))
+            : null,
         stock: stockTotal,
         sku: sku || null,
         categoryId,

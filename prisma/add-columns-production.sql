@@ -183,6 +183,47 @@ ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "validated_at" TIMESTAMPTZ;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false;
 CREATE UNIQUE INDEX IF NOT EXISTS "orders_pickup_code_key" ON "orders" ("pickup_code") WHERE "pickup_code" IS NOT NULL;
 
+-- Finanzas: costos, cobros, facturación, gastos
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "cost_price" DECIMAL(10, 2);
+ALTER TABLE "order_items" ADD COLUMN IF NOT EXISTS "unit_cost_snapshot" DECIMAL(10, 2);
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paid_at" TIMESTAMPTZ;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "platform_fee" DECIMAL(10, 2);
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "net_received" DECIMAL(10, 2);
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiced_at" TIMESTAMPTZ;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoice_number" TEXT;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoice_amount" DECIMAL(10, 2);
+
+CREATE TABLE IF NOT EXISTS "expense_categories" (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "active" BOOLEAN NOT NULL DEFAULT true,
+  "sort_order" INTEGER NOT NULL DEFAULT 0,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT "expense_categories_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "expense_categories_name_key" ON "expense_categories" ("name");
+
+CREATE TABLE IF NOT EXISTS "financial_expenses" (
+  "id" TEXT NOT NULL,
+  "category_id" TEXT NOT NULL,
+  "year" INTEGER NOT NULL,
+  "month" INTEGER NOT NULL,
+  "expense_date" DATE NOT NULL,
+  "description" TEXT NOT NULL,
+  "amount" DECIMAL(10, 2) NOT NULL,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT "financial_expenses_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "financial_expenses_year_month_idx" ON "financial_expenses" ("year", "month");
+
+INSERT INTO "store_settings" ("key", "value", "updated_at")
+VALUES
+  ('finance_mp_commission_percent', '5.99', NOW()),
+  ('finance_mp_fixed_fee', '0', NOW())
+ON CONFLICT ("key") DO NOTHING;
+
 -- Páginas legales (JSON en store_settings, clave legal_pages)
 INSERT INTO "store_settings" ("key", "value", "updated_at")
 VALUES ('legal_pages', '{}', NOW())

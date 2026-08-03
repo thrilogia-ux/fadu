@@ -35,6 +35,7 @@ interface Product {
   description: string | null;
   price: number;
   compareAtPrice: number | null;
+  costPrice: number | null;
   stock: number;
   sku: string | null;
   categoryId: string;
@@ -65,6 +66,7 @@ export default function AdminProductosPage() {
     description: "",
     price: "",
     compareAtPrice: "",
+    costPrice: "",
     stock: "0",
     sku: "",
     categoryId: "",
@@ -108,6 +110,7 @@ export default function AdminProductosPage() {
       description: "",
       price: "",
       compareAtPrice: "",
+      costPrice: "",
       stock: "0",
       sku: "",
       categoryId: categories[0]?.id || "",
@@ -130,6 +133,7 @@ export default function AdminProductosPage() {
       description: product.description || "",
       price: String(product.price),
       compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
+      costPrice: product.costPrice != null ? String(product.costPrice) : "",
       stock: String(product.stock),
       sku: product.sku || "",
       categoryId: product.categoryId,
@@ -296,6 +300,7 @@ export default function AdminProductosPage() {
       description: form.description,
       price: form.price,
       compareAtPrice: form.compareAtPrice || null,
+      costPrice: form.costPrice.trim() ? form.costPrice : null,
       stock: form.stock,
       sku: form.sku || null,
       categoryId: form.categoryId,
@@ -467,6 +472,19 @@ export default function AdminProductosPage() {
                       step="0.01"
                       value={form.compareAtPrice}
                       onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })}
+                      className="w-full rounded-lg border border-black/20 px-4 py-2.5 outline-none focus:border-[#0f3bff]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Costo unitario (finanzas)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.costPrice}
+                      onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
+                      placeholder="Opcional — para margen y liquidación"
                       className="w-full rounded-lg border border-black/20 px-4 py-2.5 outline-none focus:border-[#0f3bff]"
                     />
                   </div>

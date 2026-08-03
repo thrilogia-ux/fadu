@@ -19,6 +19,8 @@ import {
 } from "@/lib/order-schema";
 import { isMaxConnectionsSessionError } from "@/lib/database-url";
 import { getFairModeSettings } from "@/lib/fair-mode";
+import { buildPaidOrderUpdate } from "@/lib/finance-order";
+import { ensureFinanceSchema } from "@/lib/finance-schema";
 
 class OrderCouponError extends Error {
   constructor(message: string) {
@@ -83,6 +85,7 @@ export async function POST(request: Request) {
 
   try {
     await ensureOrderSchema();
+    await ensureFinanceSchema();
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -164,6 +167,7 @@ export async function POST(request: Request) {
         stock: true,
         useVariants: true,
         productType: true,
+        costPrice: true,
       },
     });
     if (products.length !== productIds.length) {
@@ -266,6 +270,7 @@ export async function POST(request: Request) {
         productNameSnapshot: p.name,
         quantity: qty,
         price: p.price,
+        unitCostSnapshot: p.costPrice ?? null,
         ...(v
           ? {
               variant: { connect: { id: v.id } },
@@ -321,6 +326,9 @@ export async function POST(request: Request) {
         : [];
 
     const isFeriaPresencialOrder = paymentMethod === "feria_presencial";
+    const feriaPaidUpdate = isFeriaPresencialOrder
+      ? await buildPaidOrderUpdate("feria_presencial", subtotal - discountAmount)
+      : null;
     const initialStatus = isFeriaPresencialOrder
       ? "completed"
       : paymentMethod === "test"
@@ -373,8 +381,14 @@ export async function POST(request: Request) {
               total: finalTotal,
               discountTotal: discountAmount,
               pickupCode,
-              ...(isFeriaPresencialOrder
-                ? { pickupDate: new Date(), pickedUpBy: "Entrega en stand (feria)" }
+              ...(isFeriaPresencialOrder && feriaPaidUpdate
+                ? {
+                    pickupDate: new Date(),
+                    pickedUpBy: "Entrega en stand (feria)",
+                    paidAt: feriaPaidUpdate.paidAt,
+                    platformFee: feriaPaidUpdate.platformFee,
+                    netReceived: feriaPaidUpdate.netReceived,
+                  }
                 : {}),
               items: { create: lineCreates },
               history: { create: historyEntries },

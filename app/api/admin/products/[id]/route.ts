@@ -30,6 +30,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       description,
       price,
       compareAtPrice,
+      costPrice,
       stock,
       sku,
       categoryId,
@@ -64,6 +65,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         description: description || null,
         price: parseFloat(price),
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        costPrice:
+          costPrice != null && String(costPrice).trim() !== ""
+            ? parseFloat(String(costPrice))
+            : null,
         stock: stockTotal,
         sku: sku || null,
         categoryId,
