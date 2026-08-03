@@ -104,7 +104,7 @@ export function Header({ categories }: { categories: Category[] }) {
   return (
     <header className="sticky top-0 z-50 border-b border-black/8 bg-white">
       {/* Barra superior */}
-      <div className="bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white">
+      <div className="overflow-hidden bg-[#0f3bff] px-4 py-2 text-sm font-medium text-white">
         <TopBannerMarquee />
       </div>
 
@@ -194,8 +194,8 @@ export function Header({ categories }: { categories: Category[] }) {
         </div>
 
         {/* Desktop: logo | búsqueda centrada | carrito + cuenta */}
-        <div className="hidden min-h-[108px] items-center py-5 md:flex">
-          <Link href="/" className="shrink-0" onClick={closeMenus}>
+        <div className="hidden w-full items-center gap-4 py-4 md:flex md:min-h-[88px]">
+          <Link href="/" className="shrink-0 self-center" onClick={closeMenus}>
             <Image
               src="/ubafadushop-logo.svg"
               alt=".UBAfadu.shop"
@@ -203,11 +203,11 @@ export function Header({ categories }: { categories: Category[] }) {
               height={92}
               priority
               unoptimized
-              className="h-[92px] w-[300px] max-w-none object-contain object-left"
+              className="h-[72px] w-auto max-w-[240px] object-contain object-left lg:h-[80px] lg:max-w-[260px]"
             />
           </Link>
 
-          <div className="flex flex-1 items-center justify-center px-6 lg:px-10">
+          <div className="flex flex-1 items-center justify-center px-4 lg:px-8">
             <form onSubmit={handleSearch} className="flex w-full max-w-[450px] lg:max-w-[510px]">
               <input
                 type="search"
@@ -228,7 +228,7 @@ export function Header({ categories }: { categories: Category[] }) {
             </form>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1 self-center">
             <Link
               href="/carrito"
               className={`relative ${tapIcon} ${cartBump ? "animate-cart-icon-bump" : ""}`}

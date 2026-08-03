@@ -60,6 +60,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const touchStartY = useRef<number | null>(null);
   const dragStartX = useRef<number | null>(null);
 
+  /** Mismo ancho que la grilla de productos (max-w-7xl px-4). */
   const slideWidth = containerWidth > 0 ? containerWidth : 0;
 
   const updateWidth = useCallback(() => {
@@ -171,119 +172,113 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative overflow-x-hidden bg-[#fafafa] py-6 md:py-10"
+      className="relative bg-[#fafafa] py-6 md:py-10"
       aria-roledescription="carousel"
       aria-label="Destacados de la tienda"
     >
-      <div className="relative mx-auto max-w-7xl px-4">
-        {/* Esfumado lateral solo en desktop — en mobile oculta los slides vecinos */}
+      <div className="mx-auto max-w-7xl px-4">
         <div
-          className="pointer-events-none absolute inset-y-0 left-4 z-20 hidden w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-r from-[#fafafa] via-[#fafafa]/90 to-transparent md:block"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-y-0 right-4 z-20 hidden w-[10vw] min-w-[32px] max-w-[120px] bg-gradient-to-l from-[#fafafa] via-[#fafafa]/90 to-transparent md:block"
-          aria-hidden
-        />
-
-        <div ref={containerRef} className="relative w-full">
-        <div
-          ref={trackRef}
-          className={`flex cursor-grab active:cursor-grabbing ${isDragging ? "" : "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"}`}
-          style={{
-            gap: GAP_PX,
-            transform: `translate3d(${translateX}px, 0, 0)`,
-            willChange: "transform",
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            onPointerDown(e.clientX);
-          }}
-          onMouseMove={(e) => {
-            if (isDragging) onPointerMove(e.clientX);
-          }}
-          onMouseUp={onPointerUp}
-          onMouseLeave={() => {
-            if (isDragging) onPointerUp();
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          ref={containerRef}
+          className="relative w-full overflow-hidden md:overflow-visible"
         >
-          {slides.map((slide, index) => {
-            const isActive = index === current;
-            const distance = Math.abs(index - current);
-            const scale = isMobile ? 1 : isActive ? 1 : distance === 1 ? 0.97 : 0.94;
-            const opacity = isMobile ? 1 : isActive ? 1 : distance === 1 ? 0.88 : 0.72;
+          <div
+            ref={trackRef}
+            className={`flex cursor-grab active:cursor-grabbing ${isDragging ? "" : "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"}`}
+            style={{
+              gap: GAP_PX,
+              transform: `translate3d(${translateX}px, 0, 0)`,
+              willChange: "transform",
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onPointerDown(e.clientX);
+            }}
+            onMouseMove={(e) => {
+              if (isDragging) onPointerMove(e.clientX);
+            }}
+            onMouseUp={onPointerUp}
+            onMouseLeave={() => {
+              if (isDragging) onPointerUp();
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {slides.map((slide, index) => {
+              const isActive = index === current;
+              const distance = Math.abs(index - current);
+              const scale =
+                isMobile ? 1 : isActive ? 1 : distance === 1 ? 0.98 : 0.95;
+              const opacity =
+                isMobile ? 1 : isActive ? 1 : distance === 1 ? 0.92 : 0.8;
 
-            return (
-              <article
-                key={slide.id}
-                role="group"
-                aria-roledescription="slide"
-                aria-label={`${index + 1} de ${slides.length}`}
-                className="relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[28px] bg-[#f5f5f7] transition-[transform,opacity] duration-500 ease-out sm:min-h-[300px] md:h-[min(48vw,520px)] md:min-h-[360px]"
-                style={{
-                  width: slideWidth || "100%",
-                  transform: `scale(${scale})`,
-                  opacity,
-                }}
-                aria-hidden={!isActive}
-                onClick={() => {
-                  if (!isActive && Math.abs(dragOffset) < 8) goTo(index);
-                }}
-              >
-                {slide.imageUrl ? (
-                  <Image
-                    src={slide.imageUrl}
-                    alt={slide.title || "Promoción"}
-                    fill
-                    className="object-cover"
-                    style={{ objectPosition: slide.imagePosition || "50% 50%" }}
-                    priority={index === 0}
-                    unoptimized
-                    draggable={false}
+              return (
+                <article
+                  key={slide.id}
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`${index + 1} de ${slides.length}`}
+                  className={`relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[28px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(48vw,520px)] md:min-h-[360px] ${!isActive && !isMobile ? "grayscale" : ""}`}
+                  style={{
+                    width: slideWidth || "100%",
+                    transform: `scale(${scale})`,
+                    opacity,
+                  }}
+                  aria-hidden={!isActive}
+                  onClick={() => {
+                    if (!isActive && Math.abs(dragOffset) < 8) goTo(index);
+                  }}
+                >
+                  {slide.imageUrl ? (
+                    <Image
+                      src={slide.imageUrl}
+                      alt={slide.title || "Promoción"}
+                      fill
+                      className="object-cover"
+                      style={{ objectPosition: slide.imagePosition || "50% 50%" }}
+                      priority={index === 0}
+                      unoptimized
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#0f3bff] to-[#0a2699]" />
+                  )}
+
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent"
+                    aria-hidden
                   />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#0f3bff] to-[#0a2699]" />
-                )}
 
-                {/* Scrim inferior suave — estilo Apple, sin oscurecer toda la foto */}
-                <div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent"
-                  aria-hidden
-                />
-
-                <div className="relative flex h-full flex-col justify-end p-6 sm:p-8 md:p-10">
-                  <div className="max-w-lg text-white">
-                    {slide.title && (
-                      <h2 className="mb-2 text-2xl font-bold tracking-tight drop-shadow-sm sm:text-3xl md:text-4xl lg:text-[2.75rem] lg:leading-tight">
-                        {slide.title}
-                      </h2>
-                    )}
-                    {slide.subtitle && (
-                      <p className="mb-5 text-sm leading-relaxed text-white/90 sm:text-base md:text-lg">
-                        {slide.subtitle}
-                      </p>
-                    )}
-                    {slide.buttonText && slide.buttonLink && (
-                      <Link
-                        href={slide.buttonLink}
-                        className="inline-flex items-center rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#1d1d1b] shadow-sm transition hover:bg-white"
-                        onClick={(e) => isDragging && Math.abs(dragOffset) > 8 && e.preventDefault()}
-                      >
-                        {slide.buttonText}
-                        <span className="ml-1.5 text-[#0f3bff]" aria-hidden>
-                          →
-                        </span>
-                      </Link>
-                    )}
+                  <div className="relative flex h-full flex-col justify-end p-6 sm:p-8 md:p-10">
+                    <div className="max-w-lg text-white">
+                      {slide.title && (
+                        <h2 className="mb-2 text-2xl font-bold tracking-tight drop-shadow-sm sm:text-3xl md:text-4xl lg:text-[2.75rem] lg:leading-tight">
+                          {slide.title}
+                        </h2>
+                      )}
+                      {slide.subtitle && (
+                        <p className="mb-5 text-sm leading-relaxed text-white/90 sm:text-base md:text-lg">
+                          {slide.subtitle}
+                        </p>
+                      )}
+                      {slide.buttonText && slide.buttonLink && (
+                        <Link
+                          href={slide.buttonLink}
+                          className="inline-flex items-center rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#1d1d1b] shadow-sm transition hover:bg-white"
+                          onClick={(e) => isDragging && Math.abs(dragOffset) > 8 && e.preventDefault()}
+                        >
+                          {slide.buttonText}
+                          <span className="ml-1.5 text-[#0f3bff]" aria-hidden>
+                            →
+                          </span>
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
 
