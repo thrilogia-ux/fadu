@@ -30,7 +30,7 @@ function FallbackHero() {
   return (
     <section className="bg-[#0f3bff] py-6 md:py-10">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="relative flex h-[min(72vw,520px)] min-h-[280px] flex-col justify-end overflow-hidden rounded-[20px] bg-gradient-to-br from-[#0f3bff] to-[#0a2699] p-8 md:p-12">
+        <div className="relative flex h-[min(72vw,520px)] min-h-[280px] flex-col justify-end overflow-hidden rounded-[20px] bg-gradient-to-br from-[#0f3bff] to-[#0a2699] p-8 md:h-[min(34vw,364px)] md:min-h-[196px] md:p-10">
           <div className="relative z-10 max-w-xl text-white">
             <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-5xl">
               Diseño y arquitectura para tu espacio
@@ -291,7 +291,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                   role="group"
                   aria-roledescription="slide"
                   aria-label={`${slide.realIndex + 1} de ${slides.length}`}
-                  className={`relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[20px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(48vw,520px)] md:min-h-[360px] ${!isActive && !isMobile ? "grayscale" : ""}`}
+                  className={`relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[20px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(34vw,364px)] md:min-h-[252px] ${!isActive && !isMobile ? "grayscale" : ""}`}
                   style={{
                     width: slideWidth || "100%",
                     transform: `scale(${scale})`,

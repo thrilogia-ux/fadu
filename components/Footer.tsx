@@ -50,9 +50,9 @@ export function Footer() {
                 src="/ubafadushop-logo-gris.svg"
                 alt=".UBAfadu.shop"
                 width={300}
-                height={57}
+                height={92}
                 unoptimized
-                className="h-12 w-auto opacity-90 md:h-14 md:max-w-[300px]"
+                className="h-[58px] w-auto max-w-[min(64vw,232px)] object-contain opacity-90 md:h-[72px] md:max-w-[240px] lg:h-[80px] lg:max-w-[260px]"
               />
             </Link>
             
