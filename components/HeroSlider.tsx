@@ -28,7 +28,7 @@ const AUTOPLAY_MS = 6000;
 
 function FallbackHero() {
   return (
-    <section className="bg-[#0f3bff] py-6 md:py-10">
+    <section className="bg-[#0f3bff] py-6 md:py-8">
       <div className="mx-auto max-w-7xl px-4">
         <div className="relative flex h-[min(72vw,520px)] min-h-[280px] flex-col justify-end overflow-hidden rounded-[20px] bg-gradient-to-br from-[#0f3bff] to-[#0a2699] p-8 md:h-[min(34vw,364px)] md:min-h-[196px] md:p-10">
           <div className="relative z-10 max-w-xl text-white">
@@ -68,6 +68,43 @@ function buildExtendedSlides(slides: HeroSlide[]): ExtendedSlide[] {
   ];
 }
 
+function SlideDots({
+  slides,
+  current,
+  onSelect,
+}: {
+  slides: HeroSlide[];
+  current: number;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div
+      className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 md:bottom-6"
+      role="tablist"
+      aria-label="Slides"
+    >
+      {slides.map((slide, idx) => (
+        <button
+          key={slide.id}
+          type="button"
+          role="tab"
+          aria-selected={idx === current}
+          aria-label={`Slide ${idx + 1}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(idx);
+          }}
+          className={`rounded-full transition-all duration-300 ${
+            idx === current
+              ? "h-1.5 w-5 bg-white shadow-sm"
+              : "h-1.5 w-1.5 bg-white/50 hover:bg-white/75"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function HeroSlider({ slides }: HeroSliderProps) {
   const canLoop = slides.length > 1;
   const extendedSlides = useMemo(() => buildExtendedSlides(slides), [slides]);
@@ -81,12 +118,12 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const lastWidthRef = useRef(0);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const dragStartX = useRef<number | null>(null);
 
-  const slideWidth = containerWidth > 0 ? containerWidth : 0;
+  const slideWidth = containerWidth > 0 ? containerWidth : lastWidthRef.current;
   const step = slideWidth + GAP_PX;
 
   const current = canLoop
@@ -94,8 +131,11 @@ export function HeroSlider({ slides }: HeroSliderProps) {
     : position;
 
   const updateWidth = useCallback(() => {
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.offsetWidth);
+    if (!containerRef.current) return;
+    const w = containerRef.current.offsetWidth;
+    if (w > 0) {
+      lastWidthRef.current = w;
+      setContainerWidth(w);
     }
   }, []);
 
@@ -104,9 +144,18 @@ export function HeroSlider({ slides }: HeroSliderProps) {
     const ro = new ResizeObserver(updateWidth);
     if (containerRef.current) ro.observe(containerRef.current);
     window.addEventListener("resize", updateWidth);
+    window.addEventListener("focus", updateWidth);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") updateWidth();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", updateWidth);
+      window.removeEventListener("focus", updateWidth);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [updateWidth]);
 
@@ -160,7 +209,6 @@ export function HeroSlider({ slides }: HeroSliderProps) {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  /** Salto instantáneo al slide real cuando llegamos a un clon. */
   const handleTransitionEnd = useCallback(() => {
     if (!canLoop || isDragging) return;
     const lastClonePos = slides.length + 1;
@@ -188,7 +236,8 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const animateTrack = transitionEnabled && !isDragging;
 
   function commitDrag(delta: number) {
-    const threshold = slideWidth * 0.18;
+    const w = slideWidth || lastWidthRef.current;
+    const threshold = w * 0.18;
     if (delta > threshold) prevSlide();
     else if (delta < -threshold) nextSlide();
     setDragOffset(0);
@@ -241,7 +290,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <section
-      className="relative bg-[#0f3bff] py-6 md:py-10"
+      className="relative bg-[#0f3bff] py-6 md:py-8"
       aria-roledescription="carousel"
       aria-label="Destacados de la tienda"
     >
@@ -251,11 +300,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           className="relative w-full overflow-hidden md:overflow-visible"
         >
           <div
-            ref={trackRef}
             className={`flex cursor-grab active:cursor-grabbing ${animateTrack ? "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]" : ""}`}
             style={{
               gap: GAP_PX,
-              transform: `translate3d(${translateX}px, 0, 0)`,
+              transform: slideWidth > 0 ? `translate3d(${translateX}px, 0, 0)` : undefined,
               willChange: "transform",
             }}
             onTransitionEnd={(e) => {
@@ -291,9 +339,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                   role="group"
                   aria-roledescription="slide"
                   aria-label={`${slide.realIndex + 1} de ${slides.length}`}
-                  className={`relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[20px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(34vw,364px)] md:min-h-[252px] ${!isActive && !isMobile ? "grayscale" : ""}`}
+                  className={`relative h-[min(70vw,480px)] min-h-[260px] w-full shrink-0 overflow-hidden rounded-[20px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(34vw,364px)] md:min-h-[252px] ${!isActive && !isMobile ? "grayscale" : ""}`}
                   style={{
-                    width: slideWidth || "100%",
+                    flexBasis: slideWidth > 0 ? slideWidth : undefined,
+                    maxWidth: slideWidth > 0 ? slideWidth : undefined,
                     transform: `scale(${scale})`,
                     opacity,
                   }}
@@ -348,60 +397,16 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                       )}
                     </div>
                   </div>
+
+                  {isActive && slides.length > 1 && (
+                    <SlideDots slides={slides} current={current} onSelect={goTo} />
+                  )}
                 </article>
               );
             })}
           </div>
         </div>
       </div>
-
-      {slides.length > 1 && (
-        <div className="mx-auto mt-5 flex justify-center px-4 md:mt-7">
-          <div className="inline-flex items-center gap-3 rounded-full bg-[#e8e8ed]/90 px-4 py-2 backdrop-blur-sm">
-            <div className="flex items-center gap-1.5" role="tablist" aria-label="Slides">
-              {slides.map((slide, idx) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={idx === current}
-                  aria-label={`Slide ${idx + 1}`}
-                  onClick={() => {
-                    goTo(idx);
-                    setIsAutoPlaying(false);
-                    setTimeout(() => setIsAutoPlaying(true), AUTOPLAY_MS);
-                  }}
-                  className={`rounded-full transition-all duration-300 ${
-                    idx === current
-                      ? "h-2 w-6 bg-[#1d1d1b]"
-                      : "h-2 w-2 bg-[#86868b] hover:bg-[#6e6e73]"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <span className="h-4 w-px bg-[#c7c7cc]" aria-hidden />
-
-            <button
-              type="button"
-              onClick={() => setIsAutoPlaying((p) => !p)}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[#1d1d1b] transition hover:bg-black/5"
-              aria-label={isAutoPlaying ? "Pausar carrusel" : "Reproducir carrusel"}
-            >
-              {isAutoPlaying ? (
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <rect x="6" y="5" width="4" height="14" rx="1" />
-                  <rect x="14" y="5" width="4" height="14" rx="1" />
-                </svg>
-              ) : (
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M8 5.14v14.72a1 1 0 001.5.86l11.04-7.36a1 1 0 000-1.72L9.5 4.28A1 1 0 008 5.14z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
