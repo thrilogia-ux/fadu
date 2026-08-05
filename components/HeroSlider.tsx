@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -25,6 +25,7 @@ type ExtendedSlide = HeroSlide & {
 
 const GAP_PX = 16;
 const AUTOPLAY_MS = 6000;
+const TRANSITION_MS = 500;
 
 function FallbackHero() {
   return (
@@ -112,52 +113,93 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const [position, setPosition] = useState(canLoop ? 1 : 0);
   const [transitionEnabled, setTransitionEnabled] = useState(true);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [containerWidth, setContainerWidth] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  /** Fuerza recalcular transform tras recuperación de pestaña. */
+  const [layoutTick, setLayoutTick] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const lastWidthRef = useRef(0);
+  const positionRef = useRef(position);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const dragStartX = useRef<number | null>(null);
 
-  const slideWidth = containerWidth > 0 ? containerWidth : lastWidthRef.current;
-  const step = slideWidth + GAP_PX;
+  positionRef.current = position;
 
   const current = canLoop
     ? extendedSlides[position]?.realIndex ?? 0
     : position;
 
-  const updateWidth = useCallback(() => {
-    if (!containerRef.current) return;
-    const w = containerRef.current.offsetWidth;
-    if (w > 0) {
-      lastWidthRef.current = w;
-      setContainerWidth(w);
+  const getSlideWidth = useCallback(() => {
+    const live = containerRef.current?.offsetWidth ?? 0;
+    if (live > 0) {
+      lastWidthRef.current = live;
+      containerRef.current?.style.setProperty("--hero-slide-w", `${live}px`);
+      return live;
     }
+    return lastWidthRef.current;
   }, []);
+
+  const updateWidth = useCallback(() => {
+    const w = getSlideWidth();
+    if (w > 0) setLayoutTick((t) => t + 1);
+  }, [getSlideWidth]);
+
+  /** Si quedó en un clon (p. ej. pestaña en background), saltar al slide real sin animación. */
+  const snapFromClone = useCallback(
+    (disableTransition = true) => {
+      if (!canLoop) return false;
+      const p = positionRef.current;
+      const lastClonePos = slides.length + 1;
+      if (p === lastClonePos) {
+        if (disableTransition) setTransitionEnabled(false);
+        setPosition(1);
+        return true;
+      }
+      if (p === 0) {
+        if (disableTransition) setTransitionEnabled(false);
+        setPosition(slides.length);
+        return true;
+      }
+      return false;
+    },
+    [canLoop, slides.length]
+  );
+
+  const recoverCarousel = useCallback(() => {
+    updateWidth();
+    snapFromClone(true);
+    setLayoutTick((t) => t + 1);
+  }, [snapFromClone, updateWidth]);
 
   useEffect(() => {
     updateWidth();
     const ro = new ResizeObserver(updateWidth);
     if (containerRef.current) ro.observe(containerRef.current);
     window.addEventListener("resize", updateWidth);
-    window.addEventListener("focus", updateWidth);
+    window.addEventListener("focus", recoverCarousel);
+    window.addEventListener("pageshow", recoverCarousel);
 
     const onVisible = () => {
-      if (document.visibilityState === "visible") updateWidth();
+      if (document.visibilityState === "visible") {
+        setIsAutoPlaying(true);
+        recoverCarousel();
+      } else {
+        setIsAutoPlaying(false);
+      }
     };
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", updateWidth);
-      window.removeEventListener("focus", updateWidth);
+      window.removeEventListener("focus", recoverCarousel);
+      window.removeEventListener("pageshow", recoverCarousel);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [updateWidth]);
+  }, [recoverCarousel, updateWidth]);
 
   const goTo = useCallback(
     (realIndex: number) => {
@@ -177,21 +219,26 @@ export function HeroSlider({ slides }: HeroSliderProps) {
       setPosition((p) => Math.min(p + 1, slides.length - 1));
       return;
     }
+    if (document.visibilityState === "hidden") return;
+    snapFromClone(true);
     setTransitionEnabled(true);
     setPosition((p) => p + 1);
-  }, [canLoop, slides.length]);
+  }, [canLoop, slides.length, snapFromClone]);
 
   const prevSlide = useCallback(() => {
     if (!canLoop) {
       setPosition((p) => Math.max(p - 1, 0));
       return;
     }
+    if (document.visibilityState === "hidden") return;
+    snapFromClone(true);
     setTransitionEnabled(true);
     setPosition((p) => p - 1);
-  }, [canLoop]);
+  }, [canLoop, snapFromClone]);
 
   useEffect(() => {
     if (!isAutoPlaying || slides.length <= 1) return;
+    if (document.visibilityState === "hidden") return;
     const interval = setInterval(nextSlide, AUTOPLAY_MS);
     return () => clearInterval(interval);
   }, [isAutoPlaying, nextSlide, slides.length]);
@@ -211,32 +258,40 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
   const handleTransitionEnd = useCallback(() => {
     if (!canLoop || isDragging) return;
-    const lastClonePos = slides.length + 1;
+    snapFromClone(true);
+  }, [canLoop, isDragging, snapFromClone]);
 
-    if (position === lastClonePos) {
-      setTransitionEnabled(false);
-      setPosition(1);
-    } else if (position === 0) {
-      setTransitionEnabled(false);
-      setPosition(slides.length);
-    }
-  }, [canLoop, isDragging, position, slides.length]);
-
+  /** Fallback si transitionend no dispara (pestaña en background). */
   useEffect(() => {
-    if (transitionEnabled) return;
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setTransitionEnabled(true));
-    });
-    return () => cancelAnimationFrame(id);
+    if (!canLoop || isDragging) return;
+    const lastClonePos = slides.length + 1;
+    if (position !== 0 && position !== lastClonePos) return;
+
+    const t = setTimeout(() => {
+      snapFromClone(true);
+    }, TRANSITION_MS + 40);
+    return () => clearTimeout(t);
+  }, [canLoop, isDragging, position, slides.length, snapFromClone]);
+
+  useLayoutEffect(() => {
+    if (!transitionEnabled) {
+      const id = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setTransitionEnabled(true));
+      });
+      return () => cancelAnimationFrame(id);
+    }
   }, [transitionEnabled, position]);
 
-  const baseOffset = slideWidth > 0 ? -position * step : 0;
+  const slideWidth = getSlideWidth();
+  const step = slideWidth > 0 ? slideWidth + GAP_PX : 0;
+  const baseOffset = step > 0 ? -position * step : 0;
   const translateX = baseOffset + (isDragging ? dragOffset : 0);
-
   const animateTrack = transitionEnabled && !isDragging;
 
+  void layoutTick;
+
   function commitDrag(delta: number) {
-    const w = slideWidth || lastWidthRef.current;
+    const w = getSlideWidth();
     const threshold = w * 0.18;
     if (delta > threshold) prevSlide();
     else if (delta < -threshold) nextSlide();
@@ -298,12 +353,13 @@ export function HeroSlider({ slides }: HeroSliderProps) {
         <div
           ref={containerRef}
           className="relative w-full overflow-hidden md:overflow-visible"
+          style={{ ["--hero-slide-w" as string]: slideWidth > 0 ? `${slideWidth}px` : "100%" }}
         >
           <div
             className={`flex cursor-grab active:cursor-grabbing ${animateTrack ? "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]" : ""}`}
             style={{
               gap: GAP_PX,
-              transform: slideWidth > 0 ? `translate3d(${translateX}px, 0, 0)` : undefined,
+              transform: step > 0 ? `translate3d(${translateX}px, 0, 0)` : "none",
               willChange: "transform",
             }}
             onTransitionEnd={(e) => {
@@ -339,10 +395,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                   role="group"
                   aria-roledescription="slide"
                   aria-label={`${slide.realIndex + 1} de ${slides.length}`}
-                  className={`relative h-[min(70vw,480px)] min-h-[260px] w-full shrink-0 overflow-hidden rounded-[20px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(34vw,364px)] md:min-h-[252px] ${!isActive && !isMobile ? "grayscale" : ""}`}
+                  className={`relative h-[min(70vw,480px)] min-h-[260px] shrink-0 overflow-hidden rounded-[20px] bg-[#f5f5f7] transition-[transform,opacity,filter] duration-500 ease-out sm:min-h-[300px] md:h-[min(34vw,364px)] md:min-h-[252px] ${!isActive && !isMobile ? "grayscale" : ""}`}
                   style={{
-                    flexBasis: slideWidth > 0 ? slideWidth : undefined,
-                    maxWidth: slideWidth > 0 ? slideWidth : undefined,
+                    flex: "0 0 var(--hero-slide-w, 100%)",
+                    maxWidth: "var(--hero-slide-w, 100%)",
                     transform: `scale(${scale})`,
                     opacity,
                   }}
