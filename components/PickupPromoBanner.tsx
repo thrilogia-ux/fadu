@@ -15,7 +15,7 @@ export function PickupPromoBanner({ pickup, compact = false }: Props) {
       aria-labelledby="pickup-promo-title"
     >
       <div className={`grid ${compact ? "md:grid-cols-[1fr_1.2fr]" : "md:grid-cols-2"}`}>
-        <div className="relative min-h-[180px] bg-gradient-to-br from-[#0f3bff]/15 via-[#e6f0ff] to-gray-100 md:min-h-[240px]">
+        <div className="relative min-h-[180px] bg-white md:min-h-[240px] md:border-r md:border-black/8">
           <Image
             src="/retirar-pedido.png"
             alt="Comprá online, recibí el QR por email y retirá tu pedido en el Pickup Point FADU"
