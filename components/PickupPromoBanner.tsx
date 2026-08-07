@@ -17,10 +17,10 @@ export function PickupPromoBanner({ pickup, compact = false }: Props) {
       <div className={`grid ${compact ? "md:grid-cols-[1fr_1.2fr]" : "md:grid-cols-2"}`}>
         <div className="relative min-h-[180px] bg-gradient-to-br from-[#0f3bff]/15 via-[#e6f0ff] to-gray-100 md:min-h-[240px]">
           <Image
-            src="/pickup.png"
-            alt="Pickup Point FADU — retirá tu compra en la facultad"
+            src="/retirar-pedido.png"
+            alt="Comprá online, recibí el QR por email y retirá tu pedido en el Pickup Point FADU"
             fill
-            className="object-contain p-6 md:p-8"
+            className="object-contain p-4 md:p-6"
             sizes="(max-width: 768px) 100vw, 50vw"
             unoptimized
           />
