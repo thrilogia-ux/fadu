@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
+import { PickupStepsGuide } from "@/components/PickupStepsGuide";
 import { getAllActiveCategories } from "@/lib/home-data";
 import { getPickupInfo } from "@/lib/pickup";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -23,7 +24,7 @@ export default async function RetiroPage() {
       <Header categories={categories} />
 
       <main className="min-h-screen bg-gray-50 py-8 md:py-12">
-        <div className="mx-auto max-w-2xl px-4">
+        <div className="mx-auto max-w-4xl px-4">
           <nav className="mb-6 text-sm text-gray-600">
             <Link href="/" className="hover:text-[#0f3bff] hover:underline">
               Inicio
@@ -46,17 +47,7 @@ export default async function RetiroPage() {
               <PickupScheduleDisplay info={pickup} />
             </div>
 
-            <div className="space-y-3 text-sm text-gray-700">
-              <p>
-                <strong>1.</strong> Comprá en la tienda y elegí retiro en pickup.
-              </p>
-              <p>
-                <strong>2.</strong> Te avisamos por email cuando el pedido esté listo.
-              </p>
-              <p>
-                <strong>3.</strong> Presentá el QR o tu código de pedido en el horario indicado.
-              </p>
-            </div>
+            <PickupStepsGuide />
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
