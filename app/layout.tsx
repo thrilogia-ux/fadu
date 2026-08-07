@@ -11,12 +11,12 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-import { STORE_NAME, STORE_TAGLINE } from "@/lib/brand";
+import { STORE_NAME, STORE_SHARE_DESCRIPTION, STORE_TAGLINE } from "@/lib/brand";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ubafadu.shop"),
   title: `${STORE_NAME} — ${STORE_TAGLINE}`,
-  description: "E-commerce de productos de diseño, arquitectura e iluminación. Retiro en FADU.",
+  description: STORE_SHARE_DESCRIPTION,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: `${STORE_NAME} — ${STORE_TAGLINE}`,
-    description: "Productos de diseño y arquitectura. Retirá tu compra en el Pickup Point FADU.",
+    description: STORE_SHARE_DESCRIPTION,
     siteName: STORE_NAME,
     locale: "es_AR",
     type: "website",
