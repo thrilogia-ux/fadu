@@ -184,7 +184,7 @@ export function Header({ categories }: { categories: Category[] }) {
         {/* Desktop: logo | búsqueda centrada | carrito + cuenta */}
         <div className="hidden w-full items-center gap-4 py-4 md:flex md:min-h-[88px]">
           <div className="shrink-0 self-center">
-            <StoreLogo variant="header" priority link objectPosition="left" onClick={closeMenus} />
+            <StoreLogo variant="header" priority link onClick={closeMenus} />
           </div>
 
           <div className="flex flex-1 items-center justify-center px-4 lg:px-8">

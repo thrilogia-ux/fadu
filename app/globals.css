@@ -118,31 +118,24 @@ body {
   }
 }
 
-/* Logo dinámico (header/footer) — contenedor con altura fija e imagen object-contain */
-.store-logo-slot {
-  height: var(--logo-h);
-  max-width: var(--logo-max-w);
-  min-width: 0;
-}
-
-.store-logo-slot .store-logo-img {
+/* Logo dinámico (header/footer) */
+.store-logo-img {
   display: block;
-  max-height: 100%;
-  max-width: 100%;
+  height: var(--logo-h);
   width: auto;
-  height: auto;
+  max-width: min(72vw, var(--logo-max-w));
   object-fit: contain;
 }
 
 @media (min-width: 768px) {
-  .store-logo-slot {
+  .store-logo-img {
     height: var(--logo-h-md);
     max-width: var(--logo-max-w-md);
   }
 }
 
 @media (min-width: 1024px) {
-  .store-logo-slot {
+  .store-logo-img {
     height: var(--logo-h-lg);
     max-width: var(--logo-max-w-lg);
   }
