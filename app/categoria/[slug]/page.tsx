@@ -55,11 +55,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             <span className="text-gray-800">{category.name}</span>
           </nav>
 
-          <CategoryPageHeader
-            name={category.name}
-            slug={category.slug}
-            productCount={products.length}
-          />
+          <CategoryPageHeader name={category.name} slug={category.slug} />
 
           {products.length === 0 ? (
             <EmptyState
