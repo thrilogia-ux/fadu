@@ -127,8 +127,8 @@ async function HomePageContent() {
                   <p className="text-xs text-gray-600 md:text-sm">Mercado Pago o transferencia</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
                   <Image src="/compra-segura.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">

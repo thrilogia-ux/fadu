@@ -14,14 +14,14 @@ export function PickupPromoBanner({ pickup, compact = false }: Props) {
       className={`overflow-hidden rounded-xl border border-black/8 bg-white shadow-sm ${compact ? "" : "md:rounded-2xl"}`}
       aria-labelledby="pickup-promo-title"
     >
-      <div className={`grid ${compact ? "md:grid-cols-[1fr_1.2fr]" : "md:grid-cols-2"}`}>
-        <div className="relative min-h-[180px] bg-white md:min-h-[240px] md:border-r md:border-black/8">
+      <div className={`grid ${compact ? "md:grid-cols-[1fr_1.2fr]" : "md:grid-cols-[1.15fr_0.85fr]"}`}>
+        <div className="relative min-h-[200px] bg-white md:min-h-[280px] md:border-r md:border-black/8">
           <Image
             src="/retirar-pedido.png"
             alt="Comprá online, recibí el QR por email y retirá tu pedido en el Pickup Point FADU"
             fill
-            className="object-contain p-4 md:p-6"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-contain object-center p-2 md:p-3"
+            sizes="(max-width: 768px) 100vw, 55vw"
             unoptimized
           />
         </div>
