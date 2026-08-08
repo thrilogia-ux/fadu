@@ -32,17 +32,17 @@ export function StoreLogo({
   const src =
     variant === "header" ? resolveHeaderLogo(config) : resolveFooterLogo(config);
   const baseHeight = variant === "header" ? config.headerHeight : config.footerHeight;
-  const sizes = logoResponsiveSizes(baseHeight);
+  const sizes = logoResponsiveSizes(baseHeight, variant);
 
   const image = (
     <span
       className={`inline-block ${className}`}
       style={
         {
-          "--logo-h": `${sizes.mobile}px`,
-          "--logo-h-md": `${sizes.md}px`,
-          "--logo-h-lg": `${sizes.lg}px`,
-          "--logo-max-w": `min(64vw, ${sizes.maxMobile}px)`,
+          "--logo-max-h": `${sizes.mobile}px`,
+          "--logo-max-h-md": `${sizes.md}px`,
+          "--logo-max-h-lg": `${sizes.lg}px`,
+          "--logo-max-w": `min(72vw, ${sizes.maxMobile}px)`,
           "--logo-max-w-md": `${sizes.maxMd}px`,
           "--logo-max-w-lg": `${sizes.maxLg}px`,
         } as React.CSSProperties
@@ -55,7 +55,7 @@ export function StoreLogo({
         height={92}
         priority={priority}
         unoptimized
-        className={`h-[var(--logo-h)] w-auto max-w-[var(--logo-max-w)] object-contain md:h-[var(--logo-h-md)] md:max-w-[var(--logo-max-w-md)] lg:h-[var(--logo-h-lg)] lg:max-w-[var(--logo-max-w-lg)] ${
+        className={`h-auto w-auto max-h-[var(--logo-max-h)] max-w-[var(--logo-max-w)] object-contain md:max-h-[var(--logo-max-h-md)] md:max-w-[var(--logo-max-w-md)] lg:max-h-[var(--logo-max-h-lg)] lg:max-w-[var(--logo-max-w-lg)] ${
           objectPosition === "left" ? "object-left" : ""
         } ${variant === "footer" ? "opacity-90" : ""}`}
       />

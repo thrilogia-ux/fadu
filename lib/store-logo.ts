@@ -15,14 +15,14 @@ export const DEFAULT_STORE_LOGO_SETTINGS: StoreLogoSettings = {
   headerUrl: null,
   footerUrl: null,
   useSameForFooter: true,
-  headerHeight: 58,
+  headerHeight: 70,
   footerHeight: 58,
 };
 
 const STORAGE_KEY = "store_logo";
 
 const MIN_HEIGHT = 36;
-const MAX_HEIGHT = 100;
+const MAX_HEIGHT = 120;
 
 function clampHeight(value: unknown, fallback: number): number {
   const n = typeof value === "number" ? value : Number(value);
@@ -38,11 +38,19 @@ function normalizeUrl(value: unknown): string | null {
 
 export function normalizeStoreLogoSettings(raw: unknown): StoreLogoSettings {
   const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const headerUrl = normalizeUrl(o.headerUrl);
+  let headerHeight = clampHeight(o.headerHeight, DEFAULT_STORE_LOGO_SETTINGS.headerHeight);
+
+  // Logos custom guardados con el default viejo (58px) → subir ~20% automáticamente
+  if (headerUrl && headerHeight === 58) {
+    headerHeight = 70;
+  }
+
   return {
-    headerUrl: normalizeUrl(o.headerUrl),
+    headerUrl,
     footerUrl: normalizeUrl(o.footerUrl),
     useSameForFooter: o.useSameForFooter !== false,
-    headerHeight: clampHeight(o.headerHeight, DEFAULT_STORE_LOGO_SETTINGS.headerHeight),
+    headerHeight,
     footerHeight: clampHeight(o.footerHeight, DEFAULT_STORE_LOGO_SETTINGS.footerHeight),
   };
 }
@@ -58,15 +66,19 @@ export function resolveFooterLogo(settings: StoreLogoSettings): string {
   return settings.footerUrl ?? DEFAULT_FOOTER_LOGO;
 }
 
-/** Alturas responsive proporcionales al valor base (mobile). */
-export function logoResponsiveSizes(baseHeight: number) {
+/** Límites responsive según altura base (mobile). El logo encaja solo con object-contain. */
+export function logoResponsiveSizes(
+  baseHeight: number,
+  variant: "header" | "footer" = "header"
+) {
+  const widthBoost = variant === "header" ? 1.25 : 1;
   return {
     mobile: baseHeight,
     md: Math.round(baseHeight * 1.24),
     lg: Math.round(baseHeight * 1.38),
-    maxMobile: Math.round(baseHeight * 4),
-    maxMd: Math.round(baseHeight * 3.33),
-    maxLg: Math.round(baseHeight * 3.25),
+    maxMobile: Math.round(baseHeight * 5 * widthBoost),
+    maxMd: Math.round(baseHeight * 4.2 * widthBoost),
+    maxLg: Math.round(baseHeight * 4 * widthBoost),
   };
 }
 

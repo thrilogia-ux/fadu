@@ -22,13 +22,15 @@ function LogoPreview({
   baseHeight,
   label,
   bgClass,
+  variant = "header",
 }: {
   src: string;
   baseHeight: number;
   label: string;
   bgClass: string;
+  variant?: "header" | "footer";
 }) {
-  const sizes = logoResponsiveSizes(baseHeight);
+  const sizes = logoResponsiveSizes(baseHeight, variant);
 
   return (
     <div className={`rounded-xl border border-black/10 p-4 ${bgClass}`}>
@@ -37,9 +39,9 @@ function LogoPreview({
         <span
           style={
             {
-              "--logo-h": `${sizes.mobile}px`,
-              "--logo-h-md": `${sizes.md}px`,
-              "--logo-max-w": `min(64vw, ${sizes.maxMobile}px)`,
+              "--logo-max-h": `${sizes.mobile}px`,
+              "--logo-max-h-md": `${sizes.md}px`,
+              "--logo-max-w": `min(72vw, ${sizes.maxMobile}px)`,
               "--logo-max-w-md": `${sizes.maxMd}px`,
             } as React.CSSProperties
           }
@@ -50,7 +52,7 @@ function LogoPreview({
             width={300}
             height={92}
             unoptimized
-            className="h-[var(--logo-h)] w-auto max-w-[var(--logo-max-w)] object-contain md:h-[var(--logo-h-md)] md:max-w-[var(--logo-max-w-md)]"
+            className="h-auto w-auto max-h-[var(--logo-max-h)] max-w-[var(--logo-max-w)] object-contain md:max-h-[var(--logo-max-h-md)] md:max-w-[var(--logo-max-w-md)]"
           />
         </span>
       </div>
@@ -186,6 +188,7 @@ export default function AdminLogoPage() {
               baseHeight={settings.headerHeight}
               label="Vista previa"
               bgClass="bg-white mb-4"
+              variant="header"
             />
 
             <div className="mb-4 flex flex-wrap gap-3">
