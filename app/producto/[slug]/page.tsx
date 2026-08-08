@@ -13,7 +13,9 @@ import { ProductCard } from "@/components/ProductCard";
 import { WaitlistButton } from "@/components/WaitlistButton";
 import { ShareProductButton } from "@/components/ShareProductButton";
 import { BrandLoader } from "@/components/BrandLoader";
+import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import { STORE_NAME } from "@/lib/brand";
+import { DEFAULT_PICKUP_INFO, type PickupInfo } from "@/lib/pickup";
 
 interface ProductVariant {
   id: string;
@@ -176,6 +178,7 @@ export default function ProductPage() {
   const [loadingReview, setLoadingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [relatedProducts, setRelatedProducts] = useState<RelatedCardProduct[]>([]);
+  const [pickupInfo, setPickupInfo] = useState<PickupInfo>(DEFAULT_PICKUP_INFO);
 
   // Combinar imágenes y videos en una sola galería
   const mediaItems = useMemo<MediaItem[]>(() => {
@@ -282,9 +285,10 @@ export default function ProductPage() {
 
     (async () => {
       try {
-        const [productRes, categoriesRes] = await Promise.all([
+        const [productRes, categoriesRes, pickupRes] = await Promise.all([
           fetch(`/api/products/${encodeURIComponent(slug)}`, { cache: "no-store" }),
           fetch("/api/categories", { cache: "no-store" }),
+          fetch("/api/pickup-info", { cache: "no-store" }),
         ]);
 
         let categoriesData: unknown = [];
@@ -305,6 +309,15 @@ export default function ProductPage() {
 
         const cats = Array.isArray(categoriesData) ? categoriesData : [];
         setCategories(cats);
+
+        try {
+          const pickupData = await pickupRes.json();
+          if (pickupData && !pickupData.error) {
+            setPickupInfo(pickupData as PickupInfo);
+          }
+        } catch {
+          /* mantiene default */
+        }
 
         const errMsg = typeof productData.error === "string" ? productData.error : "";
         const isDbOutage =
@@ -850,12 +863,11 @@ export default function ProductPage() {
                   {/* Retiro */}
                   <div className="mb-6 flex items-start gap-3 rounded-lg bg-gray-50 p-4">
                     <span className="text-2xl">📍</span>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold text-green-600">Retiro en FADU</p>
-                      <p className="text-sm text-gray-600">Tu pedido listo en 7 días</p>
-                      <p className="mt-1 text-xs text-gray-500">
-                        Av. San Juan 350, CABA
-                      </p>
+                      <div className="mt-2">
+                        <PickupScheduleDisplay info={pickupInfo} showNotes={false} />
+                      </div>
                     </div>
                   </div>
 
