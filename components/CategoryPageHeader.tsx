@@ -23,7 +23,7 @@ export function CategoryPageHeader({ name, slug }: Props) {
             unoptimized
           />
         </div>
-        <h1 className="mt-4 w-full text-center text-[1.75rem] font-bold leading-tight text-[#1d1d1b] md:mt-0 md:flex-1 md:pb-0.5 md:text-left md:text-3xl lg:text-[2rem]">
+        <h1 className="mt-4 w-full text-center text-[1.75rem] font-bold leading-tight text-[#1d1d1b] md:mt-0 md:flex-1 md:-translate-y-full md:text-left md:text-3xl lg:text-[2rem]">
           {name}
         </h1>
       </div>
