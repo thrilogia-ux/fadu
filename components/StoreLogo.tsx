@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useStoreLogo } from "@/lib/store-logo-context";
 import {
+  DEFAULT_FOOTER_LOGO,
+  DEFAULT_HEADER_LOGO,
   DEFAULT_STORE_LOGO_SETTINGS,
   logoResponsiveSizes,
   resolveFooterLogo,
@@ -29,19 +32,26 @@ export function StoreLogo({
 }: Props) {
   const { settings } = useStoreLogo();
   const config = settings ?? DEFAULT_STORE_LOGO_SETTINGS;
-  const src =
+  const resolvedSrc =
     variant === "header" ? resolveHeaderLogo(config) : resolveFooterLogo(config);
+  const fallback = variant === "header" ? DEFAULT_HEADER_LOGO : DEFAULT_FOOTER_LOGO;
+  const [src, setSrc] = useState(resolvedSrc);
+
+  useEffect(() => {
+    setSrc(resolvedSrc);
+  }, [resolvedSrc]);
+
   const baseHeight = variant === "header" ? config.headerHeight : config.footerHeight;
   const sizes = logoResponsiveSizes(baseHeight, variant);
 
   const image = (
     <span
-      className={`inline-block ${className}`}
+      className={`store-logo-slot inline-flex items-center ${objectPosition === "left" ? "justify-start" : "justify-center"} ${className}`}
       style={
         {
-          "--logo-max-h": `${sizes.mobile}px`,
-          "--logo-max-h-md": `${sizes.md}px`,
-          "--logo-max-h-lg": `${sizes.lg}px`,
+          "--logo-h": `${sizes.mobile}px`,
+          "--logo-h-md": `${sizes.md}px`,
+          "--logo-h-lg": `${sizes.lg}px`,
           "--logo-max-w": `min(72vw, ${sizes.maxMobile}px)`,
           "--logo-max-w-md": `${sizes.maxMd}px`,
           "--logo-max-w-lg": `${sizes.maxLg}px`,
@@ -55,9 +65,10 @@ export function StoreLogo({
         height={92}
         priority={priority}
         unoptimized
-        className={`h-auto w-auto max-h-[var(--logo-max-h)] max-w-[var(--logo-max-w)] object-contain md:max-h-[var(--logo-max-h-md)] md:max-w-[var(--logo-max-w-md)] lg:max-h-[var(--logo-max-h-lg)] lg:max-w-[var(--logo-max-w-lg)] ${
-          objectPosition === "left" ? "object-left" : ""
-        } ${variant === "footer" ? "opacity-90" : ""}`}
+        onError={() => {
+          if (src !== fallback) setSrc(fallback);
+        }}
+        className={`store-logo-img ${variant === "footer" ? "opacity-90" : ""}`}
       />
     </span>
   );
@@ -68,5 +79,54 @@ export function StoreLogo({
     <Link href="/" className="inline-block" onClick={onClick}>
       {image}
     </Link>
+  );
+}
+
+/** Vista previa reutilizable en admin (sin contexto). */
+export function StoreLogoPreview({
+  src,
+  baseHeight,
+  variant = "header",
+  className = "",
+}: {
+  src: string;
+  baseHeight: number;
+  variant?: "header" | "footer";
+  className?: string;
+}) {
+  const sizes = logoResponsiveSizes(baseHeight, variant);
+  const fallback = variant === "header" ? DEFAULT_HEADER_LOGO : DEFAULT_FOOTER_LOGO;
+  const [imgSrc, setImgSrc] = useState(src);
+
+  useEffect(() => {
+    setImgSrc(src);
+  }, [src]);
+
+  return (
+    <span
+      className={`store-logo-slot inline-flex items-center justify-center ${className}`}
+      style={
+        {
+          "--logo-h": `${sizes.mobile}px`,
+          "--logo-h-md": `${sizes.md}px`,
+          "--logo-h-lg": `${sizes.lg}px`,
+          "--logo-max-w": `min(72vw, ${sizes.maxMobile}px)`,
+          "--logo-max-w-md": `${sizes.maxMd}px`,
+          "--logo-max-w-lg": `${sizes.maxLg}px`,
+        } as React.CSSProperties
+      }
+    >
+      <Image
+        src={imgSrc}
+        alt="Vista previa del logo"
+        width={300}
+        height={92}
+        unoptimized
+        onError={() => {
+          if (imgSrc !== fallback) setImgSrc(fallback);
+        }}
+        className={`store-logo-img ${variant === "footer" ? "opacity-90" : ""}`}
+      />
+    </span>
   );
 }

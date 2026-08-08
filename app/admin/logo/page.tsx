@@ -1,64 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { uploadAdminLogo } from "@/lib/upload-image-client";
+import { StoreLogoPreview } from "@/components/StoreLogo";
 import {
   DEFAULT_FOOTER_LOGO,
   DEFAULT_HEADER_LOGO,
   DEFAULT_STORE_LOGO_SETTINGS,
-  logoResponsiveSizes,
   normalizeStoreLogoSettings,
   resolveFooterLogo,
   resolveHeaderLogo,
   type StoreLogoSettings,
 } from "@/lib/store-logo";
-
-function LogoPreview({
-  src,
-  baseHeight,
-  label,
-  bgClass,
-  variant = "header",
-}: {
-  src: string;
-  baseHeight: number;
-  label: string;
-  bgClass: string;
-  variant?: "header" | "footer";
-}) {
-  const sizes = logoResponsiveSizes(baseHeight, variant);
-
-  return (
-    <div className={`rounded-xl border border-black/10 p-4 ${bgClass}`}>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <div className="flex min-h-[88px] items-center justify-center">
-        <span
-          style={
-            {
-              "--logo-max-h": `${sizes.mobile}px`,
-              "--logo-max-h-md": `${sizes.md}px`,
-              "--logo-max-w": `min(72vw, ${sizes.maxMobile}px)`,
-              "--logo-max-w-md": `${sizes.maxMd}px`,
-            } as React.CSSProperties
-          }
-        >
-          <Image
-            src={src}
-            alt="Vista previa del logo"
-            width={300}
-            height={92}
-            unoptimized
-            className="h-auto w-auto max-h-[var(--logo-max-h)] max-w-[var(--logo-max-w)] object-contain md:max-h-[var(--logo-max-h-md)] md:max-w-[var(--logo-max-w-md)]"
-          />
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export default function AdminLogoPage() {
   const { data: session, status } = useSession();
@@ -183,13 +139,18 @@ export default function AdminLogoPage() {
           <section className="rounded-xl border border-black/8 bg-white p-5 shadow-sm md:p-6">
             <h2 className="mb-4 text-lg font-semibold text-[#1d1d1b]">Logo del header</h2>
 
-            <LogoPreview
-              src={previewHeaderSrc}
-              baseHeight={settings.headerHeight}
-              label="Vista previa"
-              bgClass="bg-white mb-4"
-              variant="header"
-            />
+            <div className={`rounded-xl border border-black/10 p-4 bg-white mb-4`}>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Vista previa
+              </p>
+              <div className="flex min-h-[88px] items-center justify-center">
+                <StoreLogoPreview
+                  src={previewHeaderSrc}
+                  baseHeight={settings.headerHeight}
+                  variant="header"
+                />
+              </div>
+            </div>
 
             <div className="mb-4 flex flex-wrap gap-3">
               <label className="inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d32cc]">
@@ -228,7 +189,7 @@ export default function AdminLogoPage() {
               <input
                 type="range"
                 min={36}
-                max={100}
+                max={120}
                 value={settings.headerHeight}
                 onChange={(e) =>
                   setSettings((s) => ({ ...s, headerHeight: Number(e.target.value) }))
@@ -236,7 +197,8 @@ export default function AdminLogoPage() {
                 className="w-full accent-[#0f3bff]"
               />
               <span className="mt-1 block text-xs text-gray-500">
-                En desktop se escala automáticamente para no romper el layout.
+                El logo se ajusta solo: si es angosto usa la altura máxima; si es largo, el ancho.
+                Podés subir la versión angosta o la larga y el slider controla el tamaño general.
               </span>
             </label>
           </section>
@@ -258,12 +220,18 @@ export default function AdminLogoPage() {
               </span>
             </label>
 
-            <LogoPreview
-              src={previewFooterSrc}
-              baseHeight={settings.footerHeight}
-              label="Vista previa footer"
-              bgClass="bg-gray-50 mb-4"
-            />
+            <div className="rounded-xl border border-black/10 bg-gray-50 p-4 mb-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Vista previa footer
+              </p>
+              <div className="flex min-h-[88px] items-center justify-center">
+                <StoreLogoPreview
+                  src={previewFooterSrc}
+                  baseHeight={settings.footerHeight}
+                  variant="footer"
+                />
+              </div>
+            </div>
 
             {!settings.useSameForFooter && (
               <div className="mb-4 flex flex-wrap gap-3">
@@ -304,7 +272,7 @@ export default function AdminLogoPage() {
               <input
                 type="range"
                 min={36}
-                max={100}
+                max={120}
                 value={settings.footerHeight}
                 onChange={(e) =>
                   setSettings((s) => ({ ...s, footerHeight: Number(e.target.value) }))
