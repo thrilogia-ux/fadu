@@ -20,12 +20,12 @@ async function main() {
 
   // Categorías iniciales (administrables desde panel después)
   const categories = [
-    { name: "Iluminación", slug: "iluminacion", order: 1 },
-    { name: "Escritorio", slug: "escritorio", order: 2 },
-    { name: "Decoración", slug: "decoracion", order: 3 },
-    { name: "Diseño", slug: "diseno", order: 4 },
-    { name: "Accesorios", slug: "accesorios", order: 5 },
-    { name: "Indumentaria", slug: "indumentaria", order: 6 },
+    { name: "Accesorios", slug: "accesorios", order: 1 },
+    { name: "Almacen", slug: "almacen", order: 2 },
+    { name: "Deco", slug: "decoracion", order: 3 },
+    { name: "Iluminación", slug: "iluminacion", order: 4 },
+    { name: "Indumentaria", slug: "indumentaria", order: 5 },
+    { name: "Libreria", slug: "libreria", order: 6 },
   ];
 
   for (const c of categories) {

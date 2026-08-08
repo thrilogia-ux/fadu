@@ -3,6 +3,7 @@ import type { HomeHeroSlide } from "@/components/HomeHero";
 import { runWithDbRetries } from "@/lib/db-retry";
 import { homeFeaturedOrderBy, homeOffersOrderBy } from "@/lib/product-list-order";
 import { findProductsForList } from "@/lib/product-queries";
+import { ensureHomeExploreCategories } from "@/lib/home-categories";
 
 import { averageRating, isProductNew } from "@/lib/product-badges";
 import { productInStock, productTotalStock } from "@/lib/product-stock";
@@ -170,6 +171,8 @@ export type HomeCategory = { id: string; name: string; slug: string };
 
 /** Todas las categorías activas (mismo orden que admin: campo `order`). Para header y navegación. */
 export async function getAllActiveCategories(): Promise<HomeCategory[]> {
+  await ensureHomeExploreCategories();
+
   let all = await runWithDbRetries("home.categories.all", () =>
     prisma.category.findMany({
       where: { active: true },

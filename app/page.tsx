@@ -6,6 +6,7 @@ import {
   getOffersProductsForHome,
 } from "@/lib/home-data";
 import { mergeHomeCategories } from "@/lib/home-fallback";
+import { HOME_CATEGORY_ICONS, HOME_EXPLORE_SLUGS } from "@/lib/home-categories";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -36,13 +37,7 @@ const HYDRATE_OFFERS_URLS = [
   "/api/products?limit=8",
 ];
 
-const ALLOWED_CATEGORY_SLUGS = [
-  "iluminacion",
-  "escritorio",
-  "decoracion",
-  "diseno",
-  "accesorios",
-];
+const ALLOWED_CATEGORY_SLUGS = [...HOME_EXPLORE_SLUGS];
 
 async function HomePageContent() {
   const [heroSlides, featured, offers, categoriesRaw, pickup] = await Promise.all([
@@ -55,14 +50,6 @@ async function HomePageContent() {
 
   const allCategories = mergeHomeCategories(categoriesRaw);
   const homeGridCategories = categoriesForHomeExplorationGrid(allCategories, ALLOWED_CATEGORY_SLUGS);
-
-  const iconsByCategory: Record<string, string> = {
-    iluminacion: "/iluminacion.png",
-    escritorio: "/escritorio.png",
-    decoracion: "/decoracion.png",
-    diseno: "/diseño.png",
-    accesorios: "/accesorios.png",
-  };
 
   return (
     <>
@@ -91,34 +78,26 @@ async function HomePageContent() {
         <section className="border-t border-black/8 bg-gray-50 py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4">
             <h2 className="mb-6 text-xl font-bold text-[#1d1d1b] md:mb-8 md:text-2xl">Explorar por categoría</h2>
-            <div className="grid grid-cols-3 gap-2 md:hidden">
+            <div className="grid grid-cols-3 gap-3 md:gap-5">
               {homeGridCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categoria/${cat.slug}`}
-                  className="flex min-h-[44px] items-center justify-center rounded-lg bg-white px-3 py-2.5 text-center text-sm font-medium shadow-sm transition hover:shadow-md"
+                  className="group flex flex-col items-center gap-2 rounded-xl border border-black/8 bg-white p-3 transition hover:border-[#0f3bff]/25 hover:shadow-md md:gap-3 md:p-5"
                 >
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-            <div className="hidden md:grid md:grid-cols-5 md:gap-4">
-              {homeGridCategories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/categoria/${cat.slug}`}
-                  className="flex flex-col items-center justify-center gap-3 rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
-                >
-                  <div className="relative h-12 w-12">
+                  <div className="relative aspect-square w-full max-w-[120px] md:max-w-[160px]">
                     <Image
-                      src={iconsByCategory[cat.slug] || "/accesorios.png"}
+                      src={HOME_CATEGORY_ICONS[cat.slug] ?? "/categorias/accesorios.png"}
                       alt=""
                       fill
-                      className="object-contain"
+                      className="object-contain transition group-hover:scale-[1.03]"
+                      sizes="(max-width: 768px) 33vw, 160px"
                       unoptimized
                     />
                   </div>
-                  <span className="text-center text-sm font-medium">{cat.name}</span>
+                  <span className="text-center text-xs font-medium text-[#1d1d1b] md:text-sm">
+                    {cat.name}
+                  </span>
                 </Link>
               ))}
             </div>
