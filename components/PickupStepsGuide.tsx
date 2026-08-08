@@ -21,34 +21,47 @@ const STEPS = [
 export function PickupStepsGuide() {
   return (
     <section className="mb-8" aria-labelledby="pickup-steps-title">
-      <h2 id="pickup-steps-title" className="mb-5 text-lg font-semibold text-[#1d1d1b] md:text-xl">
+      <h2 id="pickup-steps-title" className="mb-6 text-lg font-semibold text-[#1d1d1b] md:text-xl">
         Paso a paso
       </h2>
-      <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {STEPS.map((step, index) => (
-          <li
-            key={step.image}
-            className="flex flex-col overflow-hidden rounded-xl border border-black/8 bg-white shadow-sm"
-          >
-            <div className="relative aspect-[5/4] bg-white">
-              <Image
-                src={step.image}
-                alt=""
-                fill
-                className="object-contain p-3 md:p-4"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                unoptimized
-              />
-            </div>
-            <div className="flex flex-1 flex-col border-t border-black/6 p-4 md:p-5">
-              <span className="mb-2 inline-flex w-fit rounded-full bg-[#0f3bff]/10 px-2.5 py-0.5 text-xs font-semibold text-[#0f3bff]">
-                Paso {index + 1}
-              </span>
-              <h3 className="text-base font-semibold text-[#1d1d1b]">{step.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{step.description}</p>
-            </div>
-          </li>
-        ))}
+      <ol className="flex flex-col gap-6 md:gap-8">
+        {STEPS.map((step, index) => {
+          const reverse = index % 2 === 1;
+
+          return (
+            <li key={step.image} className="relative">
+              {index < STEPS.length - 1 && (
+                <div
+                  className="absolute left-1/2 top-full z-10 hidden h-6 w-px -translate-x-1/2 bg-[#0f3bff]/25 md:block md:h-8"
+                  aria-hidden
+                />
+              )}
+              <div
+                className={`flex flex-col overflow-hidden rounded-2xl border border-black/8 bg-white shadow-sm md:flex-row md:items-stretch ${
+                  reverse ? "md:flex-row-reverse" : ""
+                }`}
+              >
+                <div className="relative aspect-square w-full shrink-0 bg-white md:w-[58%] lg:w-[60%]">
+                  <Image
+                    src={step.image}
+                    alt=""
+                    fill
+                    className="object-contain p-1 sm:p-2"
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    unoptimized
+                  />
+                </div>
+                <div className="flex flex-1 flex-col justify-center border-t border-black/6 p-5 md:border-t-0 md:p-8 lg:p-10">
+                  <span className="mb-3 inline-flex w-fit rounded-full bg-[#0f3bff] px-3 py-1 text-sm font-bold text-white">
+                    Paso {index + 1}
+                  </span>
+                  <h3 className="text-xl font-bold text-[#1d1d1b] md:text-2xl">{step.title}</h3>
+                  <p className="mt-2 text-base leading-relaxed text-gray-600">{step.description}</p>
+                </div>
+              </div>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

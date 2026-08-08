@@ -24,7 +24,7 @@ export default async function RetiroPage() {
       <Header categories={categories} />
 
       <main className="min-h-screen bg-gray-50 py-8 md:py-12">
-        <div className="mx-auto max-w-4xl px-4">
+        <div className="mx-auto max-w-5xl px-4">
           <nav className="mb-6 text-sm text-gray-600">
             <Link href="/" className="hover:text-[#0f3bff] hover:underline">
               Inicio
