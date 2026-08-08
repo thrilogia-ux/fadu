@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { StoreLogo } from "@/components/StoreLogo";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
@@ -143,21 +143,9 @@ export function Header({ categories }: { categories: Category[] }) {
             </button>
           </div>
 
-          <Link
-            href="/"
-            className="pointer-events-auto absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2"
-            onClick={closeMenus}
-          >
-            <Image
-              src="/ubafadushop-logo.svg"
-              alt=".UBAfadu.shop"
-              width={300}
-              height={92}
-              priority
-              unoptimized
-              className="h-[58px] w-auto max-w-[min(64vw,232px)] object-contain"
-            />
-          </Link>
+          <div className="pointer-events-auto absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+            <StoreLogo variant="header" priority link onClick={closeMenus} />
+          </div>
 
           <div className="relative z-10 flex items-center justify-end">
             <Link
@@ -195,17 +183,9 @@ export function Header({ categories }: { categories: Category[] }) {
 
         {/* Desktop: logo | búsqueda centrada | carrito + cuenta */}
         <div className="hidden w-full items-center gap-4 py-4 md:flex md:min-h-[88px]">
-          <Link href="/" className="shrink-0 self-center" onClick={closeMenus}>
-            <Image
-              src="/ubafadushop-logo.svg"
-              alt=".UBAfadu.shop"
-              width={300}
-              height={92}
-              priority
-              unoptimized
-              className="h-[72px] w-auto max-w-[240px] object-contain object-left lg:h-[80px] lg:max-w-[260px]"
-            />
-          </Link>
+          <div className="shrink-0 self-center">
+            <StoreLogo variant="header" priority link objectPosition="left" onClick={closeMenus} />
+          </div>
 
           <div className="flex flex-1 items-center justify-center px-4 lg:px-8">
             <form onSubmit={handleSearch} className="flex w-full max-w-[450px] lg:max-w-[510px]">

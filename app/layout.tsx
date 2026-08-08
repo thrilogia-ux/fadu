@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SessionProvider } from "@/components/SessionProvider";
 import { CartProvider } from "@/lib/cart-context";
+import { StoreLogoProvider } from "@/lib/store-logo-context";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ToastProvider } from "@/components/ToastProvider";
 import "./globals.css";
@@ -53,11 +54,13 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
           <CartProvider>
-            <div className="min-h-screen overflow-x-hidden bg-[#fafafa] text-[#1d1d1b]">
-              {children}
-            </div>
-            <WhatsAppButton />
-            <ToastProvider />
+            <StoreLogoProvider>
+              <div className="min-h-screen overflow-x-hidden bg-[#fafafa] text-[#1d1d1b]">
+                {children}
+              </div>
+              <WhatsAppButton />
+              <ToastProvider />
+            </StoreLogoProvider>
           </CartProvider>
         </SessionProvider>
       </body>

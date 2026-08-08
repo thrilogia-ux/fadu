@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const LOGO_ALLOWED_TYPES = [...ALLOWED_TYPES, "image/svg+xml"];
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -23,6 +24,10 @@ export async function POST(request: Request) {
     );
   }
 
+  const url = new URL(request.url);
+  const isLogoUpload = url.searchParams.get("kind") === "logo";
+  const allowedContentTypes = isLogoUpload ? LOGO_ALLOWED_TYPES : ALLOWED_TYPES;
+
   const body = (await request.json()) as HandleUploadBody;
 
   try {
@@ -31,7 +36,7 @@ export async function POST(request: Request) {
       request,
       token: process.env.BLOB_READ_WRITE_TOKEN,
       onBeforeGenerateToken: async () => ({
-        allowedContentTypes: ALLOWED_TYPES,
+        allowedContentTypes,
         maximumSizeInBytes: MAX_SIZE,
         addRandomSuffix: false,
       }),

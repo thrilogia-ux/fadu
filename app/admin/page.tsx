@@ -76,6 +76,12 @@ export default function AdminDashboard() {
       icon: "🖼️",
     },
     {
+      title: "Logo de la tienda",
+      description: "Cambiar logo del header y footer (PNG/SVG) y su tamaño",
+      href: "/admin/logo",
+      icon: "✨",
+    },
+    {
       title: "Franja superior",
       description: "Mensajes de la barra azul (marquesina del header)",
       href: "/admin/franja-superior",

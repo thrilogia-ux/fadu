@@ -2,6 +2,7 @@ import { upload } from "@vercel/blob/client";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const LOGO_ALLOWED_TYPES = [...ALLOWED_TYPES, "image/svg+xml"];
 
 function safeFolder(folder: string) {
   return folder.replace(/[^a-z0-9-_]/gi, "") || "uploads";
@@ -26,6 +27,25 @@ export async function uploadAdminImage(file: File, folder = "uploads") {
   const blob = await upload(pathname, file, {
     access: "public",
     handleUploadUrl: "/api/upload/client",
+  });
+
+  return blob.url;
+}
+
+/** Sube logo de tienda (PNG, SVG, etc.) */
+export async function uploadAdminLogo(file: File) {
+  if (file.size > MAX_SIZE) {
+    throw new Error("El archivo no puede superar 5MB");
+  }
+
+  if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
+    throw new Error("Solo se permiten PNG, JPG, WebP o SVG");
+  }
+
+  const pathname = buildPathname(file, "store-logo");
+  const blob = await upload(pathname, file, {
+    access: "public",
+    handleUploadUrl: "/api/upload/client?kind=logo",
   });
 
   return blob.url;

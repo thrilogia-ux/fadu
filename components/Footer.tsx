@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { StoreLogo } from "@/components/StoreLogo";
 import { useState } from "react";
 import { FooterInstitutionalStrip } from "@/components/FooterInstitutionalStrip";
 import { STORE_NAME } from "@/lib/brand";
@@ -45,16 +46,9 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Logo y Newsletter */}
           <div className="lg:col-span-2">
-            <Link href="/" className="inline-block mb-6">
-              <Image
-                src="/ubafadushop-logo-gris.svg"
-                alt=".UBAfadu.shop"
-                width={300}
-                height={92}
-                unoptimized
-                className="h-[58px] w-auto max-w-[min(64vw,232px)] object-contain opacity-90 md:h-[72px] md:max-w-[240px] lg:h-[80px] lg:max-w-[260px]"
-              />
-            </Link>
+            <div className="mb-6">
+              <StoreLogo variant="footer" link />
+            </div>
             
             {/* Newsletter */}
             <div className="mt-4">
