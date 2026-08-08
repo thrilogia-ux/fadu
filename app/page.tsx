@@ -109,7 +109,7 @@ async function HomePageContent() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
               <div className="flex items-center gap-3">
                 <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
-                  <Image src="/pickup.png" alt="" fill className="object-contain" unoptimized />
+                  <Image src="/retiro-en-fadu.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
                   <Link href="/retiro" className="font-semibold hover:text-[#0f3bff]">
@@ -120,7 +120,7 @@ async function HomePageContent() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
-                  <Image src="/pay.png" alt="" fill className="object-contain" unoptimized />
+                  <Image src="/paga-como-quieras.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold">Pagá como quieras</h3>
@@ -129,7 +129,7 @@ async function HomePageContent() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
-                  <Image src="/seguro.png" alt="" fill className="object-contain" unoptimized />
+                  <Image src="/compra-segura.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold">Compra segura</h3>
