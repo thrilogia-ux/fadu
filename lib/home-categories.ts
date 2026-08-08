@@ -21,6 +21,10 @@ export const HOME_CATEGORY_ICONS: Record<string, string> = {
   libreria: "/categorias/libreria.png",
 };
 
+export function getCategoryIcon(slug: string): string {
+  return HOME_CATEGORY_ICONS[slug] ?? "/categorias/accesorios.png";
+}
+
 /** Crea o actualiza las categorías del home (idempotente). */
 export async function ensureHomeExploreCategories(): Promise<void> {
   try {
