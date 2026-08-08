@@ -107,8 +107,8 @@ async function HomePageContent() {
         <section className="border-t border-black/8 bg-white py-6 md:py-8">
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
                   <Image src="/retiro-en-fadu.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
@@ -118,8 +118,8 @@ async function HomePageContent() {
                   <p className="text-xs text-gray-600 md:text-sm">Tu pedido listo en 7 días</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 shrink-0 md:h-12 md:w-12">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
                   <Image src="/paga-como-quieras.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
