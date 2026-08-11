@@ -13,9 +13,10 @@ type ShippingPublicInfo = {
 
 type Props = {
   pickupInfo: PickupInfo;
+  compact?: boolean;
 };
 
-export function ProductDeliveryInfo({ pickupInfo }: Props) {
+export function ProductDeliveryInfo({ pickupInfo, compact = false }: Props) {
   const [shipping, setShipping] = useState<ShippingPublicInfo | null>(null);
 
   useEffect(() => {
@@ -38,51 +39,67 @@ export function ProductDeliveryInfo({ pickupInfo }: Props) {
   }, []);
 
   return (
-    <div className="mb-6 space-y-3">
-      <p className="text-sm font-semibold text-gray-700">Formas de entrega</p>
+    <div className={`space-y-3 ${compact ? "mb-4" : "mb-6"}`}>
+      <p className={`font-semibold text-gray-700 ${compact ? "text-xs" : "text-sm"}`}>
+        Formas de entrega
+      </p>
 
-      <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4">
-        <span className="text-2xl" aria-hidden>
+      <div
+        className={`flex items-start gap-2.5 rounded-lg bg-gray-50 ${compact ? "p-3" : "gap-3 p-4"}`}
+      >
+        <span className={compact ? "text-lg" : "text-2xl"} aria-hidden>
           📍
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-green-600">Retiro en FADU (Pickup Point)</p>
-          <div className="mt-2">
+          <p className={`font-semibold text-green-600 ${compact ? "text-sm" : ""}`}>
+            Retiro en FADU
+          </p>
+          <div className={`${compact ? "mt-1 text-sm" : "mt-2"}`}>
             <PickupScheduleDisplay info={pickupInfo} showNotes={false} />
           </div>
-          <Link
-            href="/retiro"
-            className="mt-2 inline-block text-sm font-medium text-[#0f3bff] hover:underline"
-          >
-            Más info sobre el retiro
-          </Link>
+          {!compact && (
+            <Link
+              href="/retiro"
+              className="mt-2 inline-block text-sm font-medium text-[#0f3bff] hover:underline"
+            >
+              Más info sobre el retiro
+            </Link>
+          )}
         </div>
       </div>
 
       {shipping?.enabled && (
-        <div className="flex items-start gap-3 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
-          <span className="text-2xl" aria-hidden>
+        <div
+          className={`flex items-start gap-2.5 rounded-lg border border-indigo-100 bg-indigo-50 ${compact ? "p-3" : "gap-3 p-4"}`}
+        >
+          <span className={compact ? "text-lg" : "text-2xl"} aria-hidden>
             🚚
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-indigo-700">Envío a domicilio</p>
-            <p className="mt-1 text-sm leading-relaxed text-indigo-900">
-              Disponible en CABA, GBA y resto del país. El costo se calcula por código postal al
-              finalizar la compra.
+            <p className={`font-semibold text-indigo-700 ${compact ? "text-sm" : ""}`}>
+              Envío a domicilio
             </p>
-            <p className="mt-2 text-sm text-indigo-800">
-              {shipping.fromPrice != null && shipping.fromPrice > 0 && (
-                <span className="font-semibold">
-                  Desde ${shipping.fromPrice.toLocaleString("es-AR")}
-                </span>
-              )}
-              {shipping.freeShippingMin != null && shipping.freeShippingMin > 0 && (
-                <span>
-                  {shipping.fromPrice != null && shipping.fromPrice > 0 ? " · " : ""}
-                  Envío gratis desde ${shipping.freeShippingMin.toLocaleString("es-AR")}
-                </span>
-              )}
+            <p
+              className={`leading-relaxed text-indigo-900 ${compact ? "mt-0.5 text-xs" : "mt-1 text-sm"}`}
+            >
+              CABA, GBA y resto del país. Costo por CP en el checkout.
             </p>
+            {(shipping.fromPrice != null && shipping.fromPrice > 0) ||
+            (shipping.freeShippingMin != null && shipping.freeShippingMin > 0) ? (
+              <p className={`text-indigo-800 ${compact ? "mt-1 text-xs" : "mt-2 text-sm"}`}>
+                {shipping.fromPrice != null && shipping.fromPrice > 0 && (
+                  <span className="font-semibold">
+                    Desde ${shipping.fromPrice.toLocaleString("es-AR")}
+                  </span>
+                )}
+                {shipping.freeShippingMin != null && shipping.freeShippingMin > 0 && (
+                  <span>
+                    {shipping.fromPrice != null && shipping.fromPrice > 0 ? " · " : ""}
+                    Gratis desde ${shipping.freeShippingMin.toLocaleString("es-AR")}
+                  </span>
+                )}
+              </p>
+            ) : null}
           </div>
         </div>
       )}

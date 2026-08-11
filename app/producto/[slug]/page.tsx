@@ -692,10 +692,12 @@ export default function ProductPage() {
             <span className="min-w-0 truncate text-gray-500">{product.name}</span>
           </nav>
 
-          <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-            {/* Galería (móvil: 1.º; desktop: 2 cols arriba a la izquierda) */}
-            <div className="order-1 min-w-0 lg:order-none lg:col-span-2">
-              <div className="w-full min-w-0 overflow-hidden rounded-xl bg-white shadow-sm md:rounded-lg">
+          <div className="flex flex-col gap-4 md:gap-6">
+            {/* Hero: galería + sidebar (desktop en fila) */}
+            <div className="flex flex-col gap-4 md:gap-6 lg:flex-row lg:items-start">
+              {/* Columna izquierda: galería + descripción */}
+              <div className="order-1 flex min-w-0 flex-1 flex-col gap-4 lg:gap-5">
+                <div className="w-full min-w-0 overflow-hidden rounded-xl border border-black/5 bg-white shadow-sm">
                 <div className={`p-3 md:p-4 ${mediaItems.length > 1 ? "grid md:grid-cols-[80px_1fr] gap-4" : ""}`}>
                   {/* Thumbnails verticales - desktop */}
                   {mediaItems.length > 1 && (
@@ -819,19 +821,32 @@ export default function ProductPage() {
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+                </div>
 
-            {/* Precio / compra / vendedor (móvil: 2.º; desktop: columna derecha) */}
-            <div className="order-2 min-w-0 lg:order-none lg:col-span-1">
-              <div className="space-y-4 lg:sticky lg:top-4">
+                {product.description && (
+                  <div className="hidden min-w-0 rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6 lg:block">
+                    <h2 className="mb-3 border-b border-black/8 pb-3 text-lg font-semibold text-[#1d1d1b] md:text-xl">
+                      Descripción
+                    </h2>
+                    <p className="whitespace-pre-wrap text-[15px] leading-7 text-gray-700 md:text-base">
+                      {product.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+            {/* Columna derecha: compra */}
+            <aside className="order-2 min-w-0 w-full shrink-0 lg:w-[min(100%,400px)] xl:w-[420px]">
+              <div className="space-y-4 lg:sticky lg:top-20">
                 {/* Card principal */}
-                <div className="min-w-0 rounded-xl bg-white p-4 shadow-sm md:rounded-lg md:p-6">
+                <div className="min-w-0 rounded-xl border border-black/5 bg-white p-4 shadow-sm md:p-6">
                   {/* Condición */}
-                  <p className="mb-2 text-sm text-gray-500">Nuevo | +50 vendidos</p>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Nuevo · +50 vendidos
+                  </p>
                   
                   {/* Título */}
-                  <h1 className="mb-3 text-2xl font-semibold text-[#1d1d1b] leading-tight">
+                  <h1 className="mb-3 text-xl font-semibold leading-tight text-[#1d1d1b] md:text-2xl">
                     {product.name}
                   </h1>
                   <div className="mb-4">
@@ -839,7 +854,7 @@ export default function ProductPage() {
                   </div>
 
                   {/* Precio */}
-                  <div className="mb-4">
+                  <div className="mb-5 border-b border-black/8 pb-5">
                     {hasDiscount && (
                       <p className="text-lg text-gray-400 line-through">
                         ${Number(product.compareAtPrice).toLocaleString("es-AR")}
@@ -861,7 +876,7 @@ export default function ProductPage() {
                   </div>
 
                   {/* Entrega: retiro y envío */}
-                  <ProductDeliveryInfo pickupInfo={pickupInfo} />
+                  <ProductDeliveryInfo pickupInfo={pickupInfo} compact />
 
                   {product.useVariants && (product.showSizeSelector || product.showColorSelector) && (
                     <div className="mb-4 space-y-3">
@@ -1004,41 +1019,45 @@ export default function ProductPage() {
                   </div>
                 </div>
 
-                {/* Card vendedor */}
-                <div className="rounded-lg bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3bff] text-white font-bold">
+                {/* Card vendedor + medios de pago */}
+                <div className="rounded-xl border border-black/5 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-3 border-b border-black/8 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3bff] text-sm font-bold text-white">
                       F
                     </div>
                     <div>
-                      <p className="font-semibold">{STORE_NAME}</p>
+                      <p className="font-semibold text-[#1d1d1b]">{STORE_NAME}</p>
                       <p className="text-xs text-gray-500">Vendedor oficial</p>
                     </div>
                   </div>
-                </div>
-
-                {/* Medios de pago */}
-                <div className="rounded-lg bg-white p-4 shadow-sm">
-                  <h3 className="mb-3 text-sm font-semibold">Medios de pago</h3>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <p>💳 Tarjetas de crédito y débito</p>
-                    <p>🏦 Transferencia bancaria</p>
-                    <p>💵 Efectivo en puntos de pago</p>
+                  <div className="pt-4">
+                    <h3 className="mb-2 text-sm font-semibold text-[#1d1d1b]">Medios de pago</h3>
+                    <div className="space-y-1.5 text-sm text-gray-600">
+                      <p>💳 Tarjetas de crédito y débito</p>
+                      <p>🏦 Transferencia bancaria</p>
+                      <p>💵 Efectivo en puntos de pago</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </aside>
 
-            {/* Descripción (móvil: 3.º; desktop: fila debajo de la galería, 2 cols) */}
             {product.description && (
-              <div className="order-3 min-w-0 rounded-lg bg-white p-6 shadow-sm lg:order-none lg:col-span-2">
-                <h2 className="mb-4 text-xl font-semibold text-[#1d1d1b]">Descripción</h2>
-                <p className="whitespace-pre-wrap leading-relaxed text-gray-700">{product.description}</p>
+              <div className="order-3 min-w-0 rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6 lg:hidden">
+                <h2 className="mb-3 border-b border-black/8 pb-3 text-lg font-semibold text-[#1d1d1b]">
+                  Descripción
+                </h2>
+                <p className="whitespace-pre-wrap text-[15px] leading-7 text-gray-700">
+                  {product.description}
+                </p>
               </div>
             )}
+            </div>
 
+            {/* Secciones full-width debajo del hero */}
+            <div className="flex flex-col gap-4 md:gap-6">
             {/* Opiniones del producto */}
-            <div className="order-4 mt-4 rounded-lg bg-white p-6 shadow-sm lg:order-none lg:col-span-3">
+            <div className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
               <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
                 Opiniones del producto
               </h2>
@@ -1150,8 +1169,8 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Preguntas y respuestas - al final (mobile y desktop) */}
-            <div className="order-5 mt-4 rounded-lg bg-white p-6 shadow-sm lg:order-none lg:col-span-3">
+            {/* Preguntas y respuestas */}
+            <div className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
               <h2 className="mb-6 text-xl font-semibold text-[#1d1d1b]">
                 Preguntas y respuestas
               </h2>
@@ -1222,7 +1241,7 @@ export default function ProductPage() {
 
             {relatedProducts.length > 0 && (
               <section
-                className="order-6 mt-4 rounded-lg border border-black/8 bg-white p-6 shadow-sm lg:order-none lg:col-span-3"
+                className="rounded-xl border border-black/5 bg-white p-5 shadow-sm md:p-6"
                 aria-label="Productos relacionados"
               >
                 <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -1255,6 +1274,7 @@ export default function ProductPage() {
                 </div>
               </section>
             )}
+            </div>
           </div>
         </div>
       </main>
