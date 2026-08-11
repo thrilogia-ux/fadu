@@ -3,6 +3,7 @@ import {
   isAuthUrlIgnoredForOAuth,
   prepareAuthRuntimeEnv,
 } from "@/lib/auth-runtime-env";
+import { isWeakAuthSecret } from "@/lib/auth-errors";
 
 prepareAuthRuntimeEnv();
 
@@ -24,6 +25,7 @@ export function getGoogleOAuthEnv(): {
 
 export function getAuthEnvStatus(): {
   authSecretConfigured: boolean;
+  authSecretWeak: boolean;
   authUrl: string | null;
   nextAuthUrl: string | null;
   authUsesRequestHost: boolean;
@@ -32,8 +34,10 @@ export function getAuthEnvStatus(): {
   googleClientIdSuffix: string | null;
 } {
   const google = getGoogleOAuthEnv();
+  const authSecret = process.env.AUTH_SECRET?.trim() ?? "";
   return {
-    authSecretConfigured: Boolean(process.env.AUTH_SECRET?.trim()),
+    authSecretConfigured: Boolean(authSecret),
+    authSecretWeak: isWeakAuthSecret(authSecret),
     authUrl: process.env.AUTH_URL?.trim() || null,
     nextAuthUrl: process.env.NEXTAUTH_URL?.trim() || null,
     authUsesRequestHost: isAuthUrlIgnoredForOAuth() || (!process.env.AUTH_URL && !process.env.NEXTAUTH_URL),

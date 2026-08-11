@@ -64,11 +64,21 @@ export async function GET() {
     );
   }
   if (!authEnv.authSecretConfigured) {
-    hints.push("Falta AUTH_SECRET en el servidor.");
+    hints.push("Falta AUTH_SECRET en Vercel (Production).");
+  }
+  if (authEnv.authSecretWeak) {
+    hints.push(
+      "AUTH_SECRET débil o de desarrollo. Generá uno nuevo (node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\") y redeploy."
+    );
+  }
+  if (authEnv.strippedAuthEnvKeys.length > 0) {
+    hints.push(
+      `Se ignoraron en runtime: ${authEnv.strippedAuthEnvKeys.join(", ")}. Borralas en Vercel → Environment Variables.`
+    );
   }
   if (authEnv.googleOAuthConfigured) {
     hints.push(
-      "Google OAuth: registrá ambos redirect URIs en Google Cloud: ubafadu.shop y www.ubafadu.shop (/api/auth/callback/google)."
+      "Google OAuth: redirect URIs en Google Cloud → ubafadu.shop y www.ubafadu.shop (/api/auth/callback/google)."
     );
   }
 

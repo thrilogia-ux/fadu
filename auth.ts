@@ -17,6 +17,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   events: {
     async signIn({ user, account, profile }) {
@@ -67,14 +68,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             clientId: googleOAuth.clientId,
             clientSecret: googleOAuth.clientSecret,
             allowDangerousEmailAccountLinking: true,
-            profile(profile) {
-              return {
-                id: profile.sub,
-                name: profile.name,
-                email: profile.email,
-                image: profile.picture,
-              };
-            },
           }),
         ]
       : []),

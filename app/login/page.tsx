@@ -6,10 +6,12 @@ import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const oauthError = authErrorMessage(searchParams.get("error"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -51,6 +53,12 @@ function LoginForm() {
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-[360px]">
           <h1 className="text-xl font-semibold text-[#1d1d1b] mb-6">Iniciar sesión</h1>
+
+          {oauthError ? (
+            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+              {oauthError}
+            </p>
+          ) : null}
 
           <GoogleSignInButton callbackUrl={callbackUrl} />
 

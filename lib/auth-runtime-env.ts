@@ -5,6 +5,7 @@ const STRIPPED_AUTH_ENV_KEYS = [
 ] as const;
 
 let strippedAuthEnvKeys: string[] = [];
+let authRuntimeEnvPrepared = false;
 
 /**
  * En Vercel suele quedar NEXTAUTH_URL=https://fadustore.vercel.app u otra URL vieja.
@@ -12,6 +13,7 @@ let strippedAuthEnvKeys: string[] = [];
  * Con trustHost, Auth.js usa x-forwarded-host (ubafadu.shop o www).
  */
 export function prepareAuthRuntimeEnv() {
+  if (authRuntimeEnvPrepared) return;
   if (process.env.AUTH_TRUST_HOST === "false") return;
 
   const isDeployed =
@@ -19,7 +21,7 @@ export function prepareAuthRuntimeEnv() {
 
   if (!isDeployed) return;
 
-  strippedAuthEnvKeys = [];
+  authRuntimeEnvPrepared = true;
   for (const key of STRIPPED_AUTH_ENV_KEYS) {
     if (process.env[key]?.trim()) {
       strippedAuthEnvKeys.push(key);
