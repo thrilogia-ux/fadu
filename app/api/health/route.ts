@@ -6,6 +6,7 @@ import { getAuthEnvStatus } from "@/lib/google-auth-env";
 import { getLastAuthError } from "@/lib/auth-last-error";
 import { getPersistedAuthError } from "@/lib/auth-persist-error";
 import { countActiveProducts } from "@/lib/product-queries";
+import { ensureUserSchema } from "@/lib/user-schema";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,14 @@ export async function GET() {
   const authEnv = getAuthEnvStatus();
   const lastAuthError = getLastAuthError();
   const persistedAuthError = await getPersistedAuthError();
+
+  let userSchemaOk = true;
+  try {
+    await ensureUserSchema();
+  } catch (e) {
+    userSchemaOk = false;
+    console.error("[health] ensureUserSchema:", e);
+  }
 
   let database: "ok" | "error" = "error";
   let databaseLatencyMs: number | null = null;
@@ -85,6 +94,9 @@ export async function GET() {
       "GOOGLE_CLIENT_SECRET no tiene formato válido (debe empezar con GOCSPX-). Copialo de nuevo desde Google Cloud Console."
     );
   }
+  if (!userSchemaOk) {
+    hints.push('Faltan columnas en tabla User (ej. whatsapp_notify). Revisá DATABASE_URL y redeploy.');
+  }
   if (persistedAuthError?.message) {
     hints.push(
       `Último error OAuth guardado (${persistedAuthError.at}): ${persistedAuthError.message}`
@@ -113,6 +125,7 @@ export async function GET() {
       warnings: dbConfig.warnings,
     },
     blobConfigured,
+    userSchemaOk,
     auth: authEnv,
     lastAuthError: persistedAuthError ?? (lastAuthError.message ? lastAuthError : undefined),
     hints: hints.length > 0 ? hints : undefined,

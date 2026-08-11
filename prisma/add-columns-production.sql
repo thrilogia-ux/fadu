@@ -72,6 +72,7 @@ ON CONFLICT ("id") DO NOTHING;
 
 -- Perfil de usuario (carrera FADU, teléfono) para /cuenta/perfil
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "whatsapp_notify" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "fadu_career" TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "fadu_career_other" VARCHAR(255);
 
