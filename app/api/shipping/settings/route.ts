@@ -7,10 +7,15 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const settings = await getShippingSettings();
+    const activeZones = settings.zones.filter((z) => z.active);
+    const fromPrice =
+      activeZones.length > 0 ? Math.min(...activeZones.map((z) => z.price)) : null;
+
     return NextResponse.json({
       enabled: settings.enabled,
       freeShippingMin: settings.freeShippingMin,
-      zoneCount: settings.zones.filter((z) => z.active).length,
+      zoneCount: activeZones.length,
+      fromPrice,
     });
   } catch (error) {
     console.error("[shipping/settings]", error);

@@ -13,7 +13,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { WaitlistButton } from "@/components/WaitlistButton";
 import { ShareProductButton } from "@/components/ShareProductButton";
 import { BrandLoader } from "@/components/BrandLoader";
-import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
+import { ProductDeliveryInfo } from "@/components/ProductDeliveryInfo";
 import { STORE_NAME } from "@/lib/brand";
 import { DEFAULT_PICKUP_INFO, type PickupInfo } from "@/lib/pickup";
 
@@ -860,16 +860,8 @@ export default function ProductPage() {
                     </p>
                   </div>
 
-                  {/* Retiro */}
-                  <div className="mb-6 flex items-start gap-3 rounded-lg bg-gray-50 p-4">
-                    <span className="text-2xl">📍</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-green-600">Retiro en FADU</p>
-                      <div className="mt-2">
-                        <PickupScheduleDisplay info={pickupInfo} showNotes={false} />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Entrega: retiro y envío */}
+                  <ProductDeliveryInfo pickupInfo={pickupInfo} />
 
                   {product.useVariants && (product.showSizeSelector || product.showColorSelector) && (
                     <div className="mb-4 space-y-3">
