@@ -3,7 +3,9 @@ export function authErrorMessage(code: string | null): string | null {
   if (!code) return null;
   switch (code) {
     case "Configuration":
-      return "Error al volver de Google. Revisá GOOGLE_CLIENT_SECRET en Vercel (debe coincidir con el Client ID en Google Cloud) y borrá AUTH_URL. Después de cambiar variables, hacé redeploy.";
+      return "Error al volver de Google. Probá desde https://www.ubafadu.shop/login en incógnito. Si persiste, abrí /api/health y mandame el campo lastAuthError.";
+    case "InvalidCheck":
+      return "La sesión de Google expiró o las cookies se perdieron. Cerrá pestañas, abrí incógnito y entrá por www.ubafadu.shop/login.";
     case "OAuthCallback":
     case "OAuthSignin":
       return "Google rechazó el inicio de sesión. Revisá que GOOGLE_CLIENT_SECRET coincida con Google Cloud.";

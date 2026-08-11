@@ -7,19 +7,24 @@ import { prisma } from "@/lib/prisma";
 import { getGoogleOAuthEnv } from "@/lib/google-auth-env";
 import { prepareAuthRuntimeEnv } from "@/lib/auth-runtime-env";
 import { setLastAuthError } from "@/lib/auth-last-error";
+import { persistAuthError } from "@/lib/auth-persist-error";
+import { getAuthCookiesConfig } from "@/lib/auth-cookies";
 
 prepareAuthRuntimeEnv();
 
 const googleOAuth = getGoogleOAuthEnv();
+const authCookies = getAuthCookiesConfig();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   trustHost: true,
+  ...(authCookies ? { cookies: authCookies } : {}),
   logger: {
     error(error) {
       console.error("[auth]", error);
       setLastAuthError(error);
+      void persistAuthError(error);
     },
   },
   pages: {

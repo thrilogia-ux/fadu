@@ -4,6 +4,7 @@ import { analyzeDatabaseUrl, normalizeServerlessDatabaseUrl } from "@/lib/databa
 import { STORE_NAME } from "@/lib/brand";
 import { getAuthEnvStatus } from "@/lib/google-auth-env";
 import { getLastAuthError } from "@/lib/auth-last-error";
+import { getPersistedAuthError } from "@/lib/auth-persist-error";
 import { countActiveProducts } from "@/lib/product-queries";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export async function GET() {
   const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim());
   const authEnv = getAuthEnvStatus();
   const lastAuthError = getLastAuthError();
+  const persistedAuthError = await getPersistedAuthError();
 
   let database: "ok" | "error" = "error";
   let databaseLatencyMs: number | null = null;
@@ -83,7 +85,11 @@ export async function GET() {
       "GOOGLE_CLIENT_SECRET no tiene formato válido (debe empezar con GOCSPX-). Copialo de nuevo desde Google Cloud Console."
     );
   }
-  if (lastAuthError.message) {
+  if (persistedAuthError?.message) {
+    hints.push(
+      `Último error OAuth guardado (${persistedAuthError.at}): ${persistedAuthError.message}`
+    );
+  } else if (lastAuthError.message) {
     hints.push(`Último error de auth (${lastAuthError.at}): ${lastAuthError.message}`);
   }
 
@@ -108,7 +114,7 @@ export async function GET() {
     },
     blobConfigured,
     auth: authEnv,
-    lastAuthError: lastAuthError.message ? lastAuthError : undefined,
+    lastAuthError: persistedAuthError ?? (lastAuthError.message ? lastAuthError : undefined),
     hints: hints.length > 0 ? hints : undefined,
     ...(database !== "ok"
       ? {
