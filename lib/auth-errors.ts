@@ -3,7 +3,7 @@ export function authErrorMessage(code: string | null): string | null {
   if (!code) return null;
   switch (code) {
     case "Configuration":
-      return "Error de configuración del login. Verificá que AUTH_SECRET y GOOGLE_CLIENT_SECRET estén bien en Vercel y hacé redeploy.";
+      return "Error al volver de Google. Revisá GOOGLE_CLIENT_SECRET en Vercel (debe coincidir con el Client ID en Google Cloud) y borrá AUTH_URL. Después de cambiar variables, hacé redeploy.";
     case "OAuthCallback":
     case "OAuthSignin":
       return "Google rechazó el inicio de sesión. Revisá que GOOGLE_CLIENT_SECRET coincida con Google Cloud.";

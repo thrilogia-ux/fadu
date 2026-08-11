@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getGoogleOAuthEnv } from "@/lib/google-auth-env";
 import { prepareAuthRuntimeEnv } from "@/lib/auth-runtime-env";
+import { setLastAuthError } from "@/lib/auth-last-error";
 
 prepareAuthRuntimeEnv();
 
@@ -15,23 +16,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   trustHost: true,
+  logger: {
+    error(error) {
+      console.error("[auth]", error);
+      setLastAuthError(error);
+    },
+  },
   pages: {
     signIn: "/login",
     error: "/login",
   },
   events: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" && user.id) {
-        const picture =
-          (profile as { picture?: string | null })?.picture ??
-          user.image ??
-          null;
-        if (picture) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { image: picture },
-          });
-        }
+      if (account?.provider !== "google" || !user.id) return;
+      const picture =
+        (profile as { picture?: string | null })?.picture ??
+        user.image ??
+        null;
+      if (!picture) return;
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { image: picture },
+        });
+      } catch (error) {
+        console.error("[auth] no se pudo actualizar avatar de Google:", error);
+        setLastAuthError(error);
       }
     },
   },
@@ -81,14 +91,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { role: true, name: true, image: true },
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
-          if (dbUser.name) token.name = dbUser.name;
-          if (dbUser.image) token.picture = dbUser.image;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true, name: true, image: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            if (dbUser.name) token.name = dbUser.name;
+            if (dbUser.image) token.picture = dbUser.image;
+          }
+        } catch (error) {
+          console.error("[auth] jwt lookup falló:", error);
+          setLastAuthError(error);
         }
       }
 

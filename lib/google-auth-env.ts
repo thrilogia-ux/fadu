@@ -31,10 +31,13 @@ export function getAuthEnvStatus(): {
   authUsesRequestHost: boolean;
   strippedAuthEnvKeys: string[];
   googleOAuthConfigured: boolean;
+  googleClientIdPrefix: string | null;
   googleClientIdSuffix: string | null;
+  googleClientSecretFormat: "ok" | "invalid" | "missing";
 } {
   const google = getGoogleOAuthEnv();
   const authSecret = process.env.AUTH_SECRET?.trim() ?? "";
+  const secret = google.clientSecret;
   return {
     authSecretConfigured: Boolean(authSecret),
     authSecretWeak: isWeakAuthSecret(authSecret),
@@ -43,10 +46,18 @@ export function getAuthEnvStatus(): {
     authUsesRequestHost: isAuthUrlIgnoredForOAuth() || (!process.env.AUTH_URL && !process.env.NEXTAUTH_URL),
     strippedAuthEnvKeys: getStrippedAuthEnvKeys(),
     googleOAuthConfigured: google.configured,
+    googleClientIdPrefix: google.clientId
+      ? google.clientId.slice(0, 20)
+      : null,
     googleClientIdSuffix: google.clientId.includes(".apps.googleusercontent.com")
       ? google.clientId.slice(-28)
       : google.clientId
         ? "(formato inválido)"
         : null,
+    googleClientSecretFormat: !secret
+      ? "missing"
+      : secret.startsWith("GOCSPX-") && secret.length >= 20
+        ? "ok"
+        : "invalid",
   };
 }
