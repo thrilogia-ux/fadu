@@ -21,6 +21,7 @@ import {
 } from "@/components/HomeProductShelfClient";
 import { PickupPromoBanner } from "@/components/PickupPromoBanner";
 import { getPickupInfo } from "@/lib/pickup";
+import { HOME_HIGHLIGHT_ICONS } from "@/lib/brand-icons";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -109,7 +110,7 @@ async function HomePageContent() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="relative h-24 w-24 shrink-0 md:h-[7.2rem] md:w-[7.2rem]">
-                  <Image src="/icons/retiro-fadu.png" alt="" fill className="object-contain" unoptimized />
+                  <Image src={HOME_HIGHLIGHT_ICONS.retiroFadu} alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
                   <Link href="/retiro" className="font-semibold hover:text-[#0f3bff]">
@@ -120,7 +121,7 @@ async function HomePageContent() {
               </div>
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="relative h-24 w-24 shrink-0 md:h-[7.2rem] md:w-[7.2rem]">
-                  <Image src="/icons/tarjetas.png" alt="" fill className="object-contain" unoptimized />
+                  <Image src={HOME_HIGHLIGHT_ICONS.pagaComoQuieras} alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold">Pagá como quieras</h3>
@@ -128,8 +129,8 @@ async function HomePageContent() {
                 </div>
               </div>
               <div className="flex items-center gap-3 md:gap-4">
-                <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
-                  <Image src="/compra-segura.png" alt="" fill className="object-contain" unoptimized />
+                <div className="relative h-24 w-24 shrink-0 md:h-[7.2rem] md:w-[7.2rem]">
+                  <Image src={HOME_HIGHLIGHT_ICONS.compraSegura} alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold">Compra segura</h3>
