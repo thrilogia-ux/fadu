@@ -16,6 +16,12 @@ export type ShippingSettings = {
   enabled: boolean;
   freeShippingMin: number | null;
   zones: ShippingZone[];
+  /** zones = tarifas fijas Fase 1; enviopack = cotización API (Fase 2) */
+  provider?: "zones" | "enviopack";
+  /** Si Enviopack falla, usar zonas fijas */
+  enviopackFallbackToZones?: boolean;
+  /** ID depósito Enviopack (override de ENVOIPACK_DIRECCION_ENVIO_ID) */
+  enviopackDireccionEnvioId?: number | null;
 };
 
 const STORAGE_KEY = "shipping_zones";
@@ -60,6 +66,9 @@ export const DEFAULT_SHIPPING_SETTINGS: ShippingSettings = {
 export type ShippingAddress = {
   recipientName: string;
   street: string;
+  streetNumber?: string;
+  floor?: string;
+  apartment?: string;
   city: string;
   state: string;
   postalCode: string;
@@ -125,6 +134,12 @@ export function normalizeShippingSettings(raw: unknown): ShippingSettings {
     enabled: o.enabled !== false,
     freeShippingMin,
     zones: zones.length > 0 ? zones : [...DEFAULT_SHIPPING_ZONES],
+    provider: o.provider === "enviopack" ? "enviopack" : "zones",
+    enviopackFallbackToZones: o.enviopackFallbackToZones !== false,
+    enviopackDireccionEnvioId:
+      o.enviopackDireccionEnvioId != null && o.enviopackDireccionEnvioId !== ""
+        ? Number(o.enviopackDireccionEnvioId)
+        : null,
   };
 }
 
@@ -180,9 +195,19 @@ function zoneSpecificity(zone: ShippingZone, normalizedCp: string): number {
   return best;
 }
 
+export type ShippingQuoteOption = {
+  id: string;
+  label: string;
+  price: number;
+  estimatedDays?: string;
+  servicio?: string;
+  modalidad?: string;
+};
+
 export type ShippingQuoteResult =
   | {
       ok: true;
+      source: "zones" | "enviopack";
       zoneId: string;
       zoneName: string;
       price: number;
@@ -190,6 +215,10 @@ export type ShippingQuoteResult =
       freeShippingApplied: boolean;
       estimatedDays?: string;
       postalCode: string;
+      options?: ShippingQuoteOption[];
+      selectedOptionId?: string;
+      servicio?: string;
+      modalidad?: string;
     }
   | { ok: false; error: string };
 
@@ -236,6 +265,7 @@ export function quoteShipping(
 
   return {
     ok: true,
+    source: "zones",
     zoneId: zone.id,
     zoneName: zone.name,
     price,
@@ -251,6 +281,9 @@ export function parseShippingAddress(raw: unknown): ShippingAddress | null {
   const o = raw as Record<string, unknown>;
   const recipientName = typeof o.recipientName === "string" ? o.recipientName.trim() : "";
   const street = typeof o.street === "string" ? o.street.trim() : "";
+  const streetNumber = typeof o.streetNumber === "string" ? o.streetNumber.trim() : "";
+  const floor = typeof o.floor === "string" ? o.floor.trim() : undefined;
+  const apartment = typeof o.apartment === "string" ? o.apartment.trim() : undefined;
   const city = typeof o.city === "string" ? o.city.trim() : "";
   const state = typeof o.state === "string" ? o.state.trim() : "";
   const postalCode = typeof o.postalCode === "string" ? normalizePostalCode(o.postalCode) : "";
@@ -261,6 +294,9 @@ export function parseShippingAddress(raw: unknown): ShippingAddress | null {
   return {
     recipientName: recipientName.slice(0, 120),
     street: street.slice(0, 200),
+    streetNumber: streetNumber ? streetNumber.slice(0, 10) : undefined,
+    floor: floor ? floor.slice(0, 6) : undefined,
+    apartment: apartment ? apartment.slice(0, 4) : undefined,
     city: city.slice(0, 80),
     state: state.slice(0, 80) || "Buenos Aires",
     postalCode,
@@ -269,9 +305,11 @@ export function parseShippingAddress(raw: unknown): ShippingAddress | null {
 }
 
 export function formatShippingAddressLines(addr: ShippingAddress): string[] {
+  const streetLine = [addr.street, addr.streetNumber].filter(Boolean).join(" ");
+  const unit = [addr.floor, addr.apartment].filter(Boolean).join(" ");
   const lines = [
     addr.recipientName,
-    addr.street,
+    unit ? `${streetLine}${streetLine ? ", " : ""}${unit}` : streetLine,
     `${addr.postalCode} ${addr.city}${addr.state ? `, ${addr.state}` : ""}`,
   ];
   if (addr.notes) lines.push(`Notas: ${addr.notes}`);

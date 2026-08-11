@@ -24,8 +24,8 @@ import { ensureFinanceSchema } from "@/lib/finance-schema";
 import {
   getShippingSettings,
   parseShippingAddress,
-  quoteShipping,
 } from "@/lib/shipping-zones";
+import { validateShippingQuoteForOrder } from "@/lib/shipping-quote";
 
 class OrderCouponError extends Error {
   constructor(message: string) {
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
     isAdminUser = (session.user as { role?: string })?.role === "admin";
 
-    const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody, deliveryMethod: deliveryMethodBody, shippingAddress: shippingAddressBody } =
+    const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody, deliveryMethod: deliveryMethodBody, shippingAddress: shippingAddressBody, shippingQuote: shippingQuoteBody } =
       await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -343,6 +343,9 @@ export async function POST(request: Request) {
       shippingZoneName?: string | null;
       shippingPostalCode?: string | null;
       shippingAddress?: string | null;
+      shippingQuoteSource?: string | null;
+      shippingServicio?: string | null;
+      shippingModalidad?: string | null;
     } = { deliveryMethod: "pickup", shippingCost: 0 };
 
     if (deliveryMethod === "shipping") {
@@ -354,11 +357,34 @@ export async function POST(request: Request) {
       if (!parsedAddress) {
         return NextResponse.json({ error: "Dirección de envío incompleta." }, { status: 400 });
       }
-      const quote = quoteShipping(
-        parsedAddress.postalCode,
-        shippingSettings,
-        subtotal - discountAmount
-      );
+      if (!parsedAddress.streetNumber?.trim()) {
+        return NextResponse.json({ error: "Ingresá el número de calle para el envío." }, { status: 400 });
+      }
+
+      const quoteBody =
+        shippingQuoteBody && typeof shippingQuoteBody === "object"
+          ? (shippingQuoteBody as Record<string, unknown>)
+          : null;
+      const expectedPrice = quoteBody?.price != null ? Number(quoteBody.price) : NaN;
+      const zoneId = typeof quoteBody?.zoneId === "string" ? quoteBody.zoneId : null;
+      const servicio = typeof quoteBody?.servicio === "string" ? quoteBody.servicio : null;
+      const modalidad = typeof quoteBody?.modalidad === "string" ? quoteBody.modalidad : null;
+
+      if (!Number.isFinite(expectedPrice) || expectedPrice < 0) {
+        return NextResponse.json({ error: "Cotización de envío inválida. Volvé a calcular el envío." }, { status: 400 });
+      }
+
+      const cartLines = lines.map((l) => ({ quantity: l.quantity }));
+      const quote = await validateShippingQuoteForOrder({
+        postalCode: parsedAddress.postalCode,
+        state: parsedAddress.state,
+        cartSubtotalAfterDiscount: subtotal - discountAmount,
+        cartLines,
+        expectedPrice,
+        zoneId,
+        servicio,
+        modalidad,
+      });
       if (!quote.ok) {
         return NextResponse.json({ error: quote.error }, { status: 400 });
       }
@@ -370,6 +396,9 @@ export async function POST(request: Request) {
         shippingZoneName: quote.zoneName,
         shippingPostalCode: quote.postalCode,
         shippingAddress: JSON.stringify(parsedAddress),
+        shippingQuoteSource: quote.source,
+        shippingServicio: quote.servicio ?? null,
+        shippingModalidad: quote.modalidad ?? null,
       };
     }
 
@@ -446,6 +475,9 @@ export async function POST(request: Request) {
               shippingZoneName: shippingData.shippingZoneName ?? null,
               shippingPostalCode: shippingData.shippingPostalCode ?? null,
               shippingAddress: shippingData.shippingAddress ?? null,
+              shippingQuoteSource: shippingData.shippingQuoteSource ?? null,
+              shippingServicio: shippingData.shippingServicio ?? null,
+              shippingModalidad: shippingData.shippingModalidad ?? null,
               ...(isFeriaPresencialOrder && feriaPaidUpdate
                 ? {
                     pickupDate: new Date(),

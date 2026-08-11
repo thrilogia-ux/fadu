@@ -23,6 +23,10 @@ interface Order {
   shippingZoneName?: string | null;
   shippingPostalCode?: string | null;
   shippingAddress?: string | null;
+  shippingQuoteSource?: string | null;
+  trackingNumber?: string | null;
+  shippingCarrier?: string | null;
+  enviopackEnvioId?: number | null;
   user: { name: string | null; email: string; phone: string | null };
   _count: { items: number };
 }
@@ -199,6 +203,15 @@ export default function AdminPedidosPage() {
             }
           }
         }
+        if (newStatus === "shipped" && data.shippedEmailSent === false) {
+          const detail =
+            typeof data.shippedEmailError === "string" && data.shippedEmailError.trim()
+              ? `\n\nDetalle: ${data.shippedEmailError}`
+              : "";
+          alert(
+            "Estado actualizado, pero no se envió el email de envío al cliente." + detail
+          );
+        }
         loadOrders();
       } else {
         const msg =
@@ -210,6 +223,30 @@ export default function AdminPedidosPage() {
     } catch {
       alert("Error de conexión");
     }
+  }
+
+  async function createEnviopackShipment(orderId: string) {
+    if (!confirm("¿Crear envío en Enviopack para este pedido?")) return;
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/enviopack/shipment`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        alert(
+          `Envío Enviopack creado${data.trackingNumber ? ` (tracking: ${data.trackingNumber})` : ""}.`
+        );
+        loadOrders();
+      } else {
+        alert(typeof data.error === "string" ? data.error : "Error al crear envío Enviopack");
+      }
+    } catch {
+      alert("Error de conexión");
+    }
+  }
+
+  function downloadEnviopackLabel(orderId: string) {
+    window.open(`/api/admin/orders/${orderId}/enviopack/label`, "_blank", "noopener,noreferrer");
   }
 
   if (status === "loading" || loading) {
@@ -402,6 +439,15 @@ export default function AdminPedidosPage() {
                               return null;
                             }
                           })()}
+                        {order.trackingNumber && (
+                          <p className="mt-0.5 font-medium">
+                            Tracking: {order.trackingNumber}
+                            {order.shippingCarrier ? ` (${order.shippingCarrier})` : ""}
+                          </p>
+                        )}
+                        {order.shippingQuoteSource === "enviopack" && !order.enviopackEnvioId && (
+                          <p className="mt-0.5 text-amber-700">Pendiente: crear envío Enviopack</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -438,13 +484,34 @@ export default function AdminPedidosPage() {
                     )}
                     {!order.archived && order.status === "preparing" && (
                       order.deliveryMethod === "shipping" ? (
-                        <button
-                          type="button"
-                          onClick={() => changeStatus(order.id, "shipped")}
-                          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                        >
-                          Marcar enviado
-                        </button>
+                        <>
+                          {!order.enviopackEnvioId &&
+                            order.shippingQuoteSource === "enviopack" && (
+                              <button
+                                type="button"
+                                onClick={() => createEnviopackShipment(order.id)}
+                                className="rounded-lg bg-[#0f3bff] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d32cc]"
+                              >
+                                Crear envío Enviopack
+                              </button>
+                            )}
+                          {order.enviopackEnvioId && (
+                            <button
+                              type="button"
+                              onClick={() => downloadEnviopackLabel(order.id)}
+                              className="rounded-lg border border-indigo-300 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                            >
+                              Descargar etiqueta
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => changeStatus(order.id, "shipped")}
+                            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                          >
+                            Marcar enviado
+                          </button>
+                        </>
                       ) : (
                         <button
                           type="button"

@@ -347,6 +347,72 @@ export async function sendPickupReadyEmail(order: OrderForEmail): Promise<SendEm
   }
 }
 
+export type OrderShippedForEmail = {
+  id: string;
+  pickupCode: string | null;
+  trackingNumber?: string | null;
+  shippingCarrier?: string | null;
+  user: { email: string | null; name: string | null };
+};
+
+/** Email cuando el pedido fue despachado (envío a domicilio). */
+export async function sendOrderShippedEmail(order: OrderShippedForEmail): Promise<SendEmailResult> {
+  if (!resend) {
+    return { ok: false, error: "Falta RESEND_API_KEY en el servidor" };
+  }
+
+  const toEmail = resolveTransactionalTo(order.user.email);
+  if (!toEmail) {
+    return { ok: false, error: "El usuario no tiene email en la cuenta" };
+  }
+
+  const code = order.pickupCode || order.id.slice(0, 8);
+  const carrier = order.shippingCarrier?.trim() || "correo";
+  const tracking = order.trackingNumber?.trim();
+  const shop = publicShopUrl();
+  const testRedirect = resendTestOverride();
+  const redirectNote = testRedirect
+    ? `<p style="font-size:12px;color:#666;margin-top:16px">(Prueba Resend: enviado a <strong>${testRedirect}</strong>.)</p>`
+    : "";
+
+  const trackingBlock = tracking
+    ? `<p style="font-size:18px;font-weight:bold;text-align:center;margin:20px 0">Seguimiento: ${tracking}</p>`
+    : `<p>Te avisaremos cuando tengamos el número de seguimiento.</p>`;
+
+  const subject = `Tu pedido #${code} fue enviado — ${STORE_NAME}`;
+  const textBody = `Hola ${order.user.name || "Cliente"},\n\nTu pedido #${code} ya fue despachado por ${carrier}.${tracking ? `\n\nNúmero de seguimiento: ${tracking}` : ""}\n\nPodés ver el estado en tu cuenta: ${shop}/cuenta/pedidos\n— ${STORE_NAME}`;
+
+  const html = emailLayoutHtml(`
+      <h1 style="color: #1d1d1b;margin-top:0;">¡Tu pedido está en camino!</h1>
+      <p>Hola ${order.user.name || "Cliente"},</p>
+      <p>Tu pedido <strong>#${code}</strong> fue despachado${carrier ? ` por <strong>${carrier}</strong>` : ""}.</p>
+      ${trackingBlock}
+      <p style="text-align:center;margin-top:24px">
+        <a href="${shop}/cuenta/pedidos" style="display:inline-block;background:#0f3bff;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Ver mis pedidos</a>
+      </p>
+      ${emailFooterHtml()}
+      ${redirectNote}
+  `);
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: toEmail,
+      subject,
+      html,
+      text: textBody,
+    });
+    if (result.error) {
+      const err = formatResendError(result.error);
+      return { ok: false, error: `${err}${hintResendDomain(err)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    console.error("[email] shipped:", e);
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 export type OrderThankYouForEmail = {
   pickupCode: string | null;
   user: { email: string | null; name: string | null };

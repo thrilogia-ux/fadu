@@ -53,6 +53,10 @@ export default function AdminEnviosPage() {
   const [error, setError] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [freeShippingMin, setFreeShippingMin] = useState("");
+  const [provider, setProvider] = useState<"zones" | "enviopack">("zones");
+  const [enviopackFallbackToZones, setEnviopackFallbackToZones] = useState(true);
+  const [enviopackDireccionEnvioId, setEnviopackDireccionEnvioId] = useState("");
+  const [enviopackConfigured, setEnviopackConfigured] = useState(false);
   const [zones, setZones] = useState<ZoneForm[]>([]);
 
   useEffect(() => {
@@ -77,6 +81,12 @@ export default function AdminEnviosPage() {
       if (!res.ok) throw new Error("No se pudo cargar");
       const data = await res.json();
       setEnabled(data.enabled !== false);
+      setProvider(data.provider === "enviopack" ? "enviopack" : "zones");
+      setEnviopackFallbackToZones(data.enviopackFallbackToZones !== false);
+      setEnviopackDireccionEnvioId(
+        data.enviopackDireccionEnvioId != null ? String(data.enviopackDireccionEnvioId) : ""
+      );
+      setEnviopackConfigured(data.enviopackConfigured === true);
       setFreeShippingMin(
         data.freeShippingMin != null && data.freeShippingMin > 0
           ? String(data.freeShippingMin)
@@ -130,12 +140,18 @@ export default function AdminEnviosPage() {
         body: JSON.stringify({
           enabled,
           freeShippingMin: freeShippingMin.trim() ? Number(freeShippingMin) : null,
+          provider,
+          enviopackFallbackToZones,
+          enviopackDireccionEnvioId: enviopackDireccionEnvioId.trim()
+            ? Number(enviopackDireccionEnvioId)
+            : null,
           zones: parsedZones,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al guardar");
-      setMessage("Zonas de envío guardadas");
+      setMessage("Configuración de envíos guardada");
+      setEnviopackConfigured(data.enviopackConfigured === true);
       setZones(data.zones.map((z: ShippingZone) => zoneToForm(z)));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al guardar");
@@ -159,9 +175,9 @@ export default function AdminEnviosPage() {
           <Link href="/admin" className="text-sm text-[#0f3bff] hover:underline">
             ← Volver al panel
           </Link>
-          <h1 className="mt-2 text-2xl font-bold">Envíos por código postal</h1>
+          <h1 className="mt-2 text-2xl font-bold">Envíos</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Fase 1: tarifas fijas por zona. El checkout cotiza según el CP del cliente.
+            Cotización por zonas fijas o Enviopack (API). Las zonas siguen disponibles como respaldo.
           </p>
         </div>
       </header>
@@ -203,6 +219,88 @@ export default function AdminEnviosPage() {
                 className="min-h-[44px] w-full max-w-xs rounded-lg border border-black/20 px-4 py-2 text-sm"
               />
             </div>
+          </section>
+
+          <section className="rounded-xl border border-black/8 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold">Proveedor de cotización</h2>
+            <div className="space-y-3">
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-black/10 p-3">
+                <input
+                  type="radio"
+                  name="provider"
+                  checked={provider === "zones"}
+                  onChange={() => setProvider("zones")}
+                  className="mt-1 accent-[#0f3bff]"
+                />
+                <span>
+                  <span className="font-medium">Zonas fijas (Fase 1)</span>
+                  <span className="mt-0.5 block text-sm text-gray-600">
+                    Tarifas por prefijo de CP configuradas abajo.
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-black/10 p-3">
+                <input
+                  type="radio"
+                  name="provider"
+                  checked={provider === "enviopack"}
+                  onChange={() => setProvider("enviopack")}
+                  className="mt-1 accent-[#0f3bff]"
+                />
+                <span>
+                  <span className="font-medium">Enviopack (Fase 2)</span>
+                  <span className="mt-0.5 block text-sm text-gray-600">
+                    Cotización real por CP y peso del carrito. Requiere credenciales en Vercel.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            {provider === "enviopack" && (
+              <div className="mt-4 space-y-4 rounded-lg bg-indigo-50/60 p-4">
+                <p className="text-sm">
+                  Estado API:{" "}
+                  <span
+                    className={
+                      enviopackConfigured
+                        ? "font-semibold text-green-700"
+                        : "font-semibold text-amber-700"
+                    }
+                  >
+                    {enviopackConfigured ? "Credenciales detectadas" : "Sin credenciales (ENVOIPACK_API_KEY / SECRET)"}
+                  </span>
+                </p>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={enviopackFallbackToZones}
+                    onChange={(e) => setEnviopackFallbackToZones(e.target.checked)}
+                    className="h-4 w-4 accent-[#0f3bff]"
+                  />
+                  <span className="text-sm">
+                    Si Enviopack falla, usar zonas fijas como respaldo
+                  </span>
+                </label>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    ID depósito Enviopack (opcional)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={enviopackDireccionEnvioId}
+                    onChange={(e) => setEnviopackDireccionEnvioId(e.target.value)}
+                    placeholder="Ej: 12345 (o ENVOIPACK_DIRECCION_ENVIO_ID en Vercel)"
+                    className="min-h-[44px] w-full max-w-xs rounded-lg border border-black/20 px-4 py-2 text-sm"
+                  />
+                </div>
+                <p className="text-xs text-gray-600">
+                  Webhook sugerido:{" "}
+                  <code>{typeof window !== "undefined" ? `${window.location.origin}/api/webhooks/enviopack` : "/api/webhooks/enviopack"}</code>
+                  . Opcional: <code>ENVOIPACK_WEBHOOK_SECRET</code> en Vercel.
+                </p>
+              </div>
+            )}
           </section>
 
           <section className="space-y-4">

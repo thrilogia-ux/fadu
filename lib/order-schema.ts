@@ -19,6 +19,13 @@ const ORDER_COLUMNS_SQL = [
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_zone_name" TEXT`,
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_postal_code" TEXT`,
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_address" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_carrier" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "tracking_number" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "enviopack_pedido_id" INTEGER`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "enviopack_envio_id" INTEGER`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_servicio" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_modalidad" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_quote_source" TEXT`,
 ];
 
 const ORDER_ITEM_COLUMNS_SQL = [

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getShippingSettings, saveShippingSettings } from "@/lib/shipping-zones";
+import { isEnviopackConfigured } from "@/lib/enviopack";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,10 @@ export async function GET() {
   }
 
   const settings = await getShippingSettings();
-  return NextResponse.json(settings);
+  return NextResponse.json({
+    ...settings,
+    enviopackConfigured: isEnviopackConfigured(),
+  });
 }
 
 export async function PUT(request: Request) {
@@ -29,7 +33,10 @@ export async function PUT(request: Request) {
 
   try {
     const saved = await saveShippingSettings(body);
-    return NextResponse.json(saved);
+    return NextResponse.json({
+      ...saved,
+      enviopackConfigured: isEnviopackConfigured(),
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error al guardar";
     return NextResponse.json({ error: msg }, { status: 400 });

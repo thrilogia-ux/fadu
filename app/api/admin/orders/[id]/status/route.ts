@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { sendPickupReadyEmail } from "@/lib/email";
+import { sendPickupReadyEmail, sendOrderShippedEmail } from "@/lib/email";
 import { getPickupInfo } from "@/lib/pickup";
 import { buildPickupReadyNotifyUrl } from "@/lib/whatsapp";
 import { buildPaidOrderUpdate } from "@/lib/finance-order";
@@ -47,6 +47,10 @@ export async function PATCH(
         paymentMethod: true,
         total: true,
         paidAt: true,
+        deliveryMethod: true,
+        pickupCode: true,
+        trackingNumber: true,
+        shippingCarrier: true,
       },
     });
     if (!existing) {
@@ -97,10 +101,13 @@ export async function PATCH(
 
     let pickupReadyEmailSent: boolean | undefined;
     let pickupReadyEmailError: string | undefined;
+    let shippedEmailSent: boolean | undefined;
+    let shippedEmailError: string | undefined;
     let pickupWhatsAppNotifyUrl: string | null = null;
     if (
       status === "ready_for_pickup" &&
-      existing.status !== "ready_for_pickup"
+      existing.status !== "ready_for_pickup" &&
+      existing.deliveryMethod !== "shipping"
     ) {
       const fullOrder = await prisma.order.findUnique({
         where: { id },
@@ -154,10 +161,40 @@ export async function PATCH(
       }
     }
 
+    if (status === "shipped" && existing.status !== "shipped" && existing.deliveryMethod === "shipping") {
+      const fullOrder = await prisma.order.findUnique({
+        where: { id },
+        include: {
+          user: { select: { email: true, name: true } },
+        },
+      });
+      if (fullOrder) {
+        try {
+          const emailResult = await sendOrderShippedEmail({
+            id: fullOrder.id,
+            pickupCode: fullOrder.pickupCode,
+            trackingNumber: fullOrder.trackingNumber,
+            shippingCarrier: fullOrder.shippingCarrier,
+            user: fullOrder.user,
+          });
+          shippedEmailSent = emailResult.ok;
+          if (!emailResult.ok) {
+            shippedEmailError = emailResult.error;
+            console.error("[admin/order/status] sendOrderShippedEmail:", emailResult.error, "orderId", id);
+          }
+        } catch (e) {
+          shippedEmailSent = false;
+          shippedEmailError = e instanceof Error ? e.message : String(e);
+        }
+      }
+    }
+
     return NextResponse.json({
       order,
       pickupReadyEmailSent,
       pickupReadyEmailError,
+      shippedEmailSent,
+      shippedEmailError,
       pickupWhatsAppNotifyUrl,
     });
   } catch (error) {

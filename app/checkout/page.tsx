@@ -47,9 +47,12 @@ export default function CheckoutPage() {
   const [shippingForm, setShippingForm] = useState<ShippingFormState>({
     recipientName: "",
     street: "",
+    streetNumber: "",
     city: "",
     state: "Buenos Aires",
     postalCode: "",
+    floor: "",
+    apartment: "",
     notes: "",
   });
   const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResult | null>(null);
@@ -176,6 +179,7 @@ export default function CheckoutPage() {
       if (
         !shippingForm.recipientName.trim() ||
         !shippingForm.street.trim() ||
+        !shippingForm.streetNumber.trim() ||
         !shippingForm.city.trim() ||
         !shippingForm.postalCode.trim()
       ) {
@@ -207,10 +211,23 @@ export default function CheckoutPage() {
               ? {
                   recipientName: shippingForm.recipientName.trim(),
                   street: shippingForm.street.trim(),
+                  streetNumber: shippingForm.streetNumber.trim(),
+                  floor: shippingForm.floor.trim() || undefined,
+                  apartment: shippingForm.apartment.trim() || undefined,
                   city: shippingForm.city.trim(),
                   state: shippingForm.state.trim() || "Buenos Aires",
                   postalCode: shippingForm.postalCode.trim(),
                   notes: shippingForm.notes.trim() || undefined,
+                }
+              : undefined,
+          shippingQuote:
+            deliveryMethod === "shipping" && shippingQuote?.ok
+              ? {
+                  zoneId: shippingQuote.zoneId,
+                  price: shippingQuote.price,
+                  source: shippingQuote.source,
+                  servicio: shippingQuote.servicio,
+                  modalidad: shippingQuote.modalidad,
                 }
               : undefined,
         }),
@@ -354,6 +371,7 @@ export default function CheckoutPage() {
                     pickupSchedule={pickupSchedule}
                     pickupInfo={pickupInfo}
                     cartSubtotal={finalTotal}
+                    cartItems={items.map((item) => ({ quantity: item.quantity }))}
                     shippingForm={shippingForm}
                     onShippingFormChange={(patch) =>
                       setShippingForm((f) => ({ ...f, ...patch }))

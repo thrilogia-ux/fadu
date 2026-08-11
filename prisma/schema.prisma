@@ -261,6 +261,13 @@ model Order {
   shippingZoneName  String?  @map("shipping_zone_name")
   shippingPostalCode String? @map("shipping_postal_code")
   shippingAddress   String?  @map("shipping_address") @db.Text // JSON ShippingAddress
+  shippingCarrier       String?  @map("shipping_carrier")
+  trackingNumber        String?  @map("tracking_number")
+  enviopackPedidoId     Int?     @map("enviopack_pedido_id")
+  enviopackEnvioId      Int?     @map("enviopack_envio_id")
+  shippingServicio      String?  @map("shipping_servicio")
+  shippingModalidad     String?  @map("shipping_modalidad")
+  shippingQuoteSource   String?  @map("shipping_quote_source") // zones | enviopack
 
   user    User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   items   OrderItem[]

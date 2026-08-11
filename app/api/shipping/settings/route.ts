@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getShippingSettings } from "@/lib/shipping-zones";
+import { isEnviopackConfigured } from "@/lib/enviopack";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,8 @@ export async function GET() {
       freeShippingMin: settings.freeShippingMin,
       zoneCount: activeZones.length,
       fromPrice,
+      provider: settings.provider ?? "zones",
+      enviopackConfigured: isEnviopackConfigured(),
     });
   } catch (error) {
     console.error("[shipping/settings]", error);

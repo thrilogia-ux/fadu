@@ -33,6 +33,8 @@ interface Order {
   shippingZoneName?: string | null;
   shippingPostalCode?: string | null;
   shippingAddress?: string | null;
+  trackingNumber?: string | null;
+  shippingCarrier?: string | null;
   items: {
     product: { name: string } | null;
     productNameSnapshot?: string | null;
@@ -313,6 +315,12 @@ export default function PedidoPage() {
                       ? "Estamos preparando tu pedido para el envío."
                       : "Cuando confirmemos tu pago, prepararemos tu pedido para enviarlo a la dirección indicada."}
                 </p>
+                {order.trackingNumber && (
+                  <p className="mb-2 text-sm text-indigo-800">
+                    <span className="font-semibold">Seguimiento:</span> {order.trackingNumber}
+                    {order.shippingCarrier ? ` (${order.shippingCarrier})` : ""}
+                  </p>
+                )}
                 {order.shippingZoneName && (
                   <p className="mb-2 text-sm text-indigo-800">
                     <span className="font-semibold">Zona:</span> {order.shippingZoneName}
