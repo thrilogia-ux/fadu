@@ -48,10 +48,10 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="¿Te podemos ayudar? Contactar por WhatsApp"
-      className="group fixed bottom-6 right-0 z-50 flex h-[52px] w-[52px] items-center justify-end overflow-hidden rounded-l-full bg-[#25D366] pr-3.5 text-white shadow-[0_4px_20px_rgba(37,211,102,0.4)] transition-[width,box-shadow] duration-300 ease-out hover:w-[220px] hover:shadow-[0_6px_28px_rgba(37,211,102,0.5)] focus-visible:w-[220px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#128C7E] max-md:w-[min(220px,calc(100vw-12px))] max-md:pr-4 md:bottom-8"
+      className="group fixed bottom-6 right-0 z-50 flex h-[52px] w-[52px] items-center justify-end overflow-hidden rounded-l-full bg-[#25D366] pr-3.5 text-white shadow-[0_4px_20px_rgba(37,211,102,0.4)] transition-[width,box-shadow] duration-300 ease-out hover:w-[220px] hover:shadow-[0_6px_28px_rgba(37,211,102,0.5)] focus-visible:w-[220px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#128C7E] md:bottom-8"
     >
       <span
-        className="pointer-events-none mr-3 whitespace-nowrap pl-4 text-[14px] font-semibold tracking-tight opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 max-md:opacity-100 sm:text-[15px]"
+        className="pointer-events-none mr-3 whitespace-nowrap pl-4 text-[14px] font-semibold tracking-tight opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 sm:text-[15px]"
         aria-hidden
       >
         ¿Te podemos ayudar?
