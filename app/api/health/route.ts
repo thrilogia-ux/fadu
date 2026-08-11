@@ -66,6 +66,11 @@ export async function GET() {
   if (!authEnv.authSecretConfigured) {
     hints.push("Falta AUTH_SECRET en el servidor.");
   }
+  if (authEnv.googleOAuthConfigured && !authEnv.authUsesRequestHost && authEnv.authUrl) {
+    hints.push(
+      `AUTH_URL fijo (${authEnv.authUrl}) puede romper Google OAuth en ubafadu.shop. La app debería usar el host de cada request (www o sin www).`
+    );
+  }
 
   const ok = database === "ok";
 

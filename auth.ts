@@ -5,6 +5,9 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getGoogleOAuthEnv } from "@/lib/google-auth-env";
+import { prepareAuthRuntimeEnv } from "@/lib/auth-runtime-env";
+
+prepareAuthRuntimeEnv();
 
 const googleOAuth = getGoogleOAuthEnv();
 

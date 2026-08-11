@@ -1,3 +1,7 @@
+import { isAuthUrlIgnoredForOAuth, prepareAuthRuntimeEnv } from "@/lib/auth-runtime-env";
+
+prepareAuthRuntimeEnv();
+
 /** Lee credenciales Google OAuth sin espacios ni comillas accidentales. */
 export function getGoogleOAuthEnv(): {
   clientId: string;
@@ -17,6 +21,7 @@ export function getGoogleOAuthEnv(): {
 export function getAuthEnvStatus(): {
   authSecretConfigured: boolean;
   authUrl: string | null;
+  authUsesRequestHost: boolean;
   googleOAuthConfigured: boolean;
   googleClientIdSuffix: string | null;
 } {
@@ -25,6 +30,7 @@ export function getAuthEnvStatus(): {
   return {
     authSecretConfigured: Boolean(process.env.AUTH_SECRET?.trim()),
     authUrl,
+    authUsesRequestHost: isAuthUrlIgnoredForOAuth() || !authUrl,
     googleOAuthConfigured: google.configured,
     googleClientIdSuffix: google.clientId.includes(".apps.googleusercontent.com")
       ? google.clientId.slice(-28)
