@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { sendPickupReadyEmail, sendOrderShippedEmail } from "@/lib/email";
 import { getPickupInfo } from "@/lib/pickup";
-import { buildPickupReadyNotifyUrl } from "@/lib/whatsapp";
+import { buildPickupReadyNotifyUrl, buildShippedNotifyUrl } from "@/lib/whatsapp";
+import { getWhatsAppSettings } from "@/lib/whatsapp-settings";
 import { buildPaidOrderUpdate } from "@/lib/finance-order";
 import { ensureFinanceSchema } from "@/lib/finance-schema";
 
@@ -104,6 +105,8 @@ export async function PATCH(
     let shippedEmailSent: boolean | undefined;
     let shippedEmailError: string | undefined;
     let pickupWhatsAppNotifyUrl: string | null = null;
+    let shippedWhatsAppNotifyUrl: string | null = null;
+    const waSettings = await getWhatsAppSettings();
     if (
       status === "ready_for_pickup" &&
       existing.status !== "ready_for_pickup" &&
@@ -113,12 +116,16 @@ export async function PATCH(
         where: { id },
         include: {
           items: { include: { product: { select: { name: true } } } },
-          user: { select: { email: true, name: true, phone: true } },
+          user: { select: { email: true, name: true, phone: true, whatsappNotify: true } },
         },
       });
       if (fullOrder?.pickupCode) {
         const pickup = await getPickupInfo();
-        if (fullOrder.user.phone) {
+        if (
+          waSettings.notifyOnPickupReady &&
+          fullOrder.user.phone &&
+          fullOrder.user.whatsappNotify
+        ) {
           pickupWhatsAppNotifyUrl = buildPickupReadyNotifyUrl(fullOrder.user.phone, {
             customerName: fullOrder.user.name,
             pickupCode: fullOrder.pickupCode,
@@ -165,10 +172,24 @@ export async function PATCH(
       const fullOrder = await prisma.order.findUnique({
         where: { id },
         include: {
-          user: { select: { email: true, name: true } },
+          user: { select: { email: true, name: true, phone: true, whatsappNotify: true } },
         },
       });
       if (fullOrder) {
+        if (
+          waSettings.notifyOnShipped &&
+          fullOrder.user.phone &&
+          fullOrder.user.whatsappNotify &&
+          fullOrder.pickupCode
+        ) {
+          shippedWhatsAppNotifyUrl = buildShippedNotifyUrl(fullOrder.user.phone, {
+            customerName: fullOrder.user.name,
+            pickupCode: fullOrder.pickupCode,
+            orderId: fullOrder.id,
+            trackingNumber: fullOrder.trackingNumber,
+            shippingCarrier: fullOrder.shippingCarrier,
+          });
+        }
         try {
           const emailResult = await sendOrderShippedEmail({
             id: fullOrder.id,
@@ -196,6 +217,7 @@ export async function PATCH(
       shippedEmailSent,
       shippedEmailError,
       pickupWhatsAppNotifyUrl,
+      shippedWhatsAppNotifyUrl,
     });
   } catch (error) {
     console.error("Error updating order status:", error);

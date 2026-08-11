@@ -19,6 +19,7 @@ model User {
   name          String?
   image         String?
   phone                 String? @map("phone")
+  whatsappNotify        Boolean @default(false) @map("whatsapp_notify")
   faduCareer            String? @map("fadu_career")
   faduCareerOther       String? @map("fadu_career_other") @db.VarChar(255)
   role          String    @default("user") // "user" | "admin"

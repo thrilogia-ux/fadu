@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isValidFaduCareerSlug } from "@/lib/fadu-careers";
 import { isGoogleProfileImage } from "@/lib/profile-avatars";
 import { isAllowedProfileImage } from "@/lib/profile-avatars-store";
+import { ensureUserSchema } from "@/lib/user-schema";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +14,15 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
+  await ensureUserSchema();
+
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
       name: true,
       email: true,
       phone: true,
+      whatsappNotify: true,
       faduCareer: true,
       faduCareerOther: true,
       image: true,
@@ -44,6 +48,8 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
+  await ensureUserSchema();
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -54,6 +60,7 @@ export async function PATCH(request: Request) {
   const data: {
     name?: string | null;
     phone?: string | null;
+    whatsappNotify?: boolean;
     faduCareer?: string | null;
     faduCareerOther?: string | null;
     image?: string | null;
@@ -90,6 +97,10 @@ export async function PATCH(request: Request) {
   if (typeof body.phone === "string") {
     const t = body.phone.trim();
     data.phone = t.length > 40 ? t.slice(0, 40) : t || null;
+  }
+
+  if (typeof body.whatsappNotify === "boolean") {
+    data.whatsappNotify = body.whatsappNotify;
   }
 
   if ("faduCareer" in body) {
@@ -138,6 +149,7 @@ export async function PATCH(request: Request) {
         name: true,
         email: true,
         phone: true,
+        whatsappNotify: true,
         faduCareer: true,
         faduCareerOther: true,
         image: true,

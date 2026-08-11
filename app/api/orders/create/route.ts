@@ -17,6 +17,7 @@ import {
   isMissingPickupCodeColumnError,
   prismaErrorMessage,
 } from "@/lib/order-schema";
+import { ensureUserSchema } from "@/lib/user-schema";
 import { isMaxConnectionsSessionError } from "@/lib/database-url";
 import { getFairModeSettings } from "@/lib/fair-mode";
 import { buildPaidOrderUpdate } from "@/lib/finance-order";
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
 
   try {
     await ensureOrderSchema();
+    await ensureUserSchema();
     await ensureFinanceSchema();
 
     const session = await auth();
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
 
     isAdminUser = (session.user as { role?: string })?.role === "admin";
 
-    const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody, deliveryMethod: deliveryMethodBody, shippingAddress: shippingAddressBody, shippingQuote: shippingQuoteBody } =
+    const { items, paymentMethod, phone: phoneBody, whatsappNotify: whatsappNotifyBody, couponCode: couponCodeBody, deliveryMethod: deliveryMethodBody, shippingAddress: shippingAddressBody, shippingQuote: shippingQuoteBody } =
       await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -158,7 +160,17 @@ export async function POST(request: Request) {
       const trimmedPhone = phoneBody.trim().slice(0, 40);
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { phone: trimmedPhone },
+        data: {
+          phone: trimmedPhone,
+          ...(typeof whatsappNotifyBody === "boolean"
+            ? { whatsappNotify: whatsappNotifyBody }
+            : {}),
+        },
+      });
+    } else if (typeof whatsappNotifyBody === "boolean") {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { whatsappNotify: whatsappNotifyBody },
       });
     }
 

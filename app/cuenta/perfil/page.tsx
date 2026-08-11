@@ -14,6 +14,7 @@ type Profile = {
   name: string | null;
   email: string | null;
   phone: string | null;
+  whatsappNotify?: boolean;
   faduCareer: string | null;
   faduCareerOther: string | null;
   image: string | null;
@@ -29,6 +30,7 @@ export default function PerfilPage() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [whatsappNotify, setWhatsappNotify] = useState(false);
   const [faduCareer, setFaduCareer] = useState("");
   const [faduCareerOther, setFaduCareerOther] = useState("");
   const [emailDisplay, setEmailDisplay] = useState("");
@@ -61,6 +63,7 @@ export default function PerfilPage() {
         if (cancelled) return;
         setName(data.name ?? "");
         setPhone(data.phone ?? "");
+        setWhatsappNotify(Boolean(data.whatsappNotify));
         setFaduCareer(data.faduCareer ?? "");
         setFaduCareerOther(data.faduCareerOther ?? "");
         setEmailDisplay(data.email ?? "");
@@ -90,6 +93,7 @@ export default function PerfilPage() {
         body: JSON.stringify({
           name,
           phone,
+          whatsappNotify,
           faduCareer: faduCareer || "",
           faduCareerOther: faduCareer === "otra" ? faduCareerOther : "",
           image: profileImage,
@@ -214,6 +218,17 @@ export default function PerfilPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-[#0f3bff]"
                 maxLength={40}
               />
+              <label className="mt-3 flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={whatsappNotify}
+                  onChange={(e) => setWhatsappNotify(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[#0f3bff]"
+                />
+                <span className="text-sm text-gray-600">
+                  Quiero recibir avisos por WhatsApp sobre mis pedidos (listo para retirar o enviado).
+                </span>
+              </label>
             </div>
 
             <div>

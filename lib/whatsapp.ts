@@ -108,5 +108,55 @@ export function buildOrderPickupWhatsAppMessage(
   return lines.join("\n");
 }
 
+export type ShippedNotifyOptions = {
+  customerName?: string | null;
+  pickupCode: string;
+  orderId?: string;
+  trackingNumber?: string | null;
+  shippingCarrier?: string | null;
+};
+
+/** Mensaje admin → cliente cuando el pedido fue enviado. */
+export function buildShippedNotifyMessage(options: ShippedNotifyOptions): string {
+  const greeting = options.customerName?.trim()
+    ? `Hola ${options.customerName.trim()}!`
+    : "Hola!";
+
+  const code = options.pickupCode;
+  const lines = [
+    greeting,
+    "",
+    `Tu pedido *${code}* ya fue despachado.`,
+  ];
+
+  if (options.trackingNumber?.trim()) {
+    lines.push("", `Seguimiento: ${options.trackingNumber.trim()}`);
+  }
+  if (options.shippingCarrier?.trim()) {
+    lines.push(`Transporte: ${options.shippingCarrier.trim()}`);
+  }
+
+  lines.push(
+    "",
+    "Cualquier consulta sobre la entrega, escribinos por acá."
+  );
+
+  if (options.orderId) {
+    lines.push("", `Ver pedido: ${publicSiteUrl()}/pedido/${options.orderId}`);
+  }
+
+  lines.push("", `— ${STORE_NAME}`);
+  return lines.join("\n");
+}
+
+export function buildShippedNotifyUrl(
+  customerPhone: string,
+  options: ShippedNotifyOptions
+): string | null {
+  const normalized = normalizeWhatsAppPhone(customerPhone);
+  if (!normalized) return null;
+  return buildWhatsAppUrl(buildShippedNotifyMessage(options), normalized);
+}
+
 export const DEFAULT_WHATSAPP_GREETING =
   `Hola! Tengo una consulta sobre ${STORE_NAME}`;

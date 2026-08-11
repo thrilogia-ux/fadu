@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminPickupWhatsAppNotify } from "@/components/admin/AdminPickupWhatsAppNotify";
+import { AdminShippingWhatsAppNotify } from "@/components/admin/AdminShippingWhatsAppNotify";
 import {
   formatShippingAddressLines,
   parseShippingAddress,
@@ -27,13 +28,18 @@ interface Order {
   trackingNumber?: string | null;
   shippingCarrier?: string | null;
   enviopackEnvioId?: number | null;
-  user: { name: string | null; email: string; phone: string | null };
+  user: { name: string | null; email: string; phone: string | null; whatsappNotify?: boolean };
   _count: { items: number };
 }
 
 type PickupInfoState = {
   address: string;
   scheduleLines: string[];
+};
+
+type WhatsAppAdminFlags = {
+  notifyOnPickupReady: boolean;
+  notifyOnShipped: boolean;
 };
 
 type ListMode = "active" | "archived" | "all";
@@ -70,6 +76,10 @@ export default function AdminPedidosPage() {
     address: "",
     scheduleLines: [],
   });
+  const [waFlags, setWaFlags] = useState<WhatsAppAdminFlags>({
+    notifyOnPickupReady: true,
+    notifyOnShipped: true,
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -93,6 +103,17 @@ export default function AdminPedidosPage() {
             setPickupInfo({
               address: typeof data.address === "string" ? data.address : "",
               scheduleLines: Array.isArray(data.scheduleLines) ? data.scheduleLines : [],
+            });
+          }
+        })
+        .catch(() => {});
+      fetch("/api/admin/whatsapp-settings")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) {
+            setWaFlags({
+              notifyOnPickupReady: data.notifyOnPickupReady !== false,
+              notifyOnShipped: data.notifyOnShipped !== false,
             });
           }
         })
@@ -203,14 +224,28 @@ export default function AdminPedidosPage() {
             }
           }
         }
-        if (newStatus === "shipped" && data.shippedEmailSent === false) {
-          const detail =
-            typeof data.shippedEmailError === "string" && data.shippedEmailError.trim()
-              ? `\n\nDetalle: ${data.shippedEmailError}`
-              : "";
-          alert(
-            "Estado actualizado, pero no se envió el email de envío al cliente." + detail
-          );
+        if (newStatus === "shipped") {
+          const waUrl =
+            typeof data.shippedWhatsAppNotifyUrl === "string"
+              ? data.shippedWhatsAppNotifyUrl
+              : null;
+          if (waUrl) {
+            const openWa = confirm(
+              "Pedido marcado como enviado.\n\n¿Abrir WhatsApp para avisar al cliente con el tracking?"
+            );
+            if (openWa) {
+              window.open(waUrl, "_blank", "noopener,noreferrer");
+            }
+          }
+          if (data.shippedEmailSent === false) {
+            const detail =
+              typeof data.shippedEmailError === "string" && data.shippedEmailError.trim()
+                ? `\n\nDetalle: ${data.shippedEmailError}`
+                : "";
+            alert(
+              "Estado actualizado, pero no se envió el email de envío al cliente." + detail
+            );
+          }
         }
         loadOrders();
       } else {
@@ -405,7 +440,12 @@ export default function AdminPedidosPage() {
                       Cliente: {order.user.name || order.user.email}
                     </p>
                     {order.user.phone ? (
-                      <p className="text-sm text-gray-600">Tel: {order.user.phone}</p>
+                      <p className="text-sm text-gray-600">
+                        Tel: {order.user.phone}
+                        {order.user.whatsappNotify ? (
+                          <span className="ml-2 text-green-700">· Avisos WA ✓</span>
+                        ) : null}
+                      </p>
                     ) : (
                       <p className="text-sm text-amber-700">Sin teléfono (no se puede avisar por WhatsApp)</p>
                     )}
@@ -532,9 +572,25 @@ export default function AdminPedidosPage() {
                       </button>
                     )}
                     {!order.archived &&
+                      order.deliveryMethod === "shipping" &&
+                      (order.status === "shipped" || order.status === "completed") &&
+                      order.pickupCode &&
+                      waFlags.notifyOnShipped && (
+                        <AdminShippingWhatsAppNotify
+                          customerPhone={order.user.phone}
+                          customerName={order.user.name}
+                          pickupCode={order.pickupCode}
+                          orderId={order.id}
+                          trackingNumber={order.trackingNumber}
+                          shippingCarrier={order.shippingCarrier}
+                          variant="compact"
+                        />
+                      )}
+                    {!order.archived &&
                       order.deliveryMethod !== "shipping" &&
                       (order.status === "ready_for_pickup" || order.status === "completed") &&
-                      order.pickupCode && (
+                      order.pickupCode &&
+                      waFlags.notifyOnPickupReady && (
                         <AdminPickupWhatsAppNotify
                           customerPhone={order.user.phone}
                           customerName={order.user.name}

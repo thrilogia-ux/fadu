@@ -1,9 +1,34 @@
 "use client";
 
-import { buildWhatsAppUrl, DEFAULT_WHATSAPP_GREETING } from "@/lib/whatsapp";
+import { useEffect, useState } from "react";
+import { buildWhatsAppUrl, DEFAULT_WHATSAPP_GREETING, DEFAULT_WHATSAPP_PHONE } from "@/lib/whatsapp";
+
+type PublicSettings = {
+  enabled: boolean;
+  phone: string;
+  greeting: string;
+};
 
 export function WhatsAppButton() {
-  const whatsappUrl = buildWhatsAppUrl(DEFAULT_WHATSAPP_GREETING);
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
+
+  useEffect(() => {
+    fetch("/api/whatsapp/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.enabled === "boolean") {
+          setSettings(data as PublicSettings);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  if (settings && !settings.enabled) return null;
+
+  const phone = settings?.phone?.replace(/\D/g, "") || DEFAULT_WHATSAPP_PHONE;
+  const greeting = settings?.greeting?.trim() || DEFAULT_WHATSAPP_GREETING;
+  const whatsappUrl = buildWhatsAppUrl(greeting, phone);
+
   return (
     <a
       href={whatsappUrl}

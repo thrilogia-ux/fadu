@@ -36,6 +36,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phone, setPhone] = useState("");
+  const [whatsappNotify, setWhatsappNotify] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -144,6 +145,9 @@ export default function CheckoutPage() {
         if (data?.phone && typeof data.phone === "string") {
           setPhone(data.phone);
         }
+        if (typeof data?.whatsappNotify === "boolean") {
+          setWhatsappNotify(data.whatsappNotify);
+        }
       })
       .catch(() => {});
   }, [status]);
@@ -204,6 +208,7 @@ export default function CheckoutPage() {
           })),
           paymentMethod,
           phone: phone.trim() || null,
+          whatsappNotify,
           couponCode: appliedCoupon?.code ?? null,
           deliveryMethod,
           shippingAddress:
@@ -356,8 +361,22 @@ export default function CheckoutPage() {
                       <p className="mt-1 text-xs text-gray-600">
                         {isFairPresencial
                           ? "Para el comprobante de compra y seguimiento del pedido."
-                          : "Para avisarte por email y, si lo cargás, para que el equipo te contacte por WhatsApp cuando el pedido esté listo para retirar."}
+                          : "Para avisarte por email y WhatsApp cuando haya novedades de tu pedido."}
                       </p>
+                      {!isFairPresencial && (
+                        <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-lg border border-black/10 bg-gray-50/80 p-3">
+                          <input
+                            type="checkbox"
+                            checked={whatsappNotify}
+                            onChange={(e) => setWhatsappNotify(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 accent-[#0f3bff]"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Quiero recibir avisos por WhatsApp cuando el pedido esté listo o
+                            enviado (necesitás cargar tu teléfono).
+                          </span>
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>

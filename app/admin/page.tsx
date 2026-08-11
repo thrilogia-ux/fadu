@@ -52,6 +52,12 @@ export default function AdminDashboard() {
       icon: "🚚",
     },
     {
+      title: "WhatsApp",
+      description: "Número, botón flotante y avisos a clientes",
+      href: "/admin/whatsapp",
+      icon: "💬",
+    },
+    {
       title: "Productos",
       description: "Agregar, editar y eliminar productos",
       href: "/admin/productos",
