@@ -66,14 +66,9 @@ export async function GET() {
   if (!authEnv.authSecretConfigured) {
     hints.push("Falta AUTH_SECRET en el servidor.");
   }
-  if (authEnv.strippedAuthEnvKeys.length > 0) {
+  if (authEnv.googleOAuthConfigured) {
     hints.push(
-      `OAuth: se ignoraron variables obsoletas en runtime (${authEnv.strippedAuthEnvKeys.join(", ")}). Borralas en Vercel si el login sigue fallando.`
-    );
-  }
-  if (authEnv.googleOAuthConfigured && !authEnv.authUsesRequestHost) {
-    hints.push(
-      "NEXTAUTH_URL o AUTH_URL en Vercel apuntan a un dominio distinto al sitio. Borralas y redeploy."
+      "Google OAuth: registrá ambos redirect URIs en Google Cloud: ubafadu.shop y www.ubafadu.shop (/api/auth/callback/google)."
     );
   }
 
