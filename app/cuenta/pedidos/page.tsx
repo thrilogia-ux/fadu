@@ -19,6 +19,7 @@ interface Order {
   status: string;
   total: number;
   createdAt: string;
+  deliveryMethod?: string;
   items: {
     product: { name: string } | null;
     productNameSnapshot?: string | null;
@@ -33,6 +34,7 @@ const statusLabels: Record<string, string> = {
   paid: "Pagado",
   preparing: "Preparando",
   ready_for_pickup: "Listo para retirar",
+  shipped: "Enviado",
   completed: "Completado",
   cancelled: "Cancelado",
 };
@@ -42,6 +44,7 @@ const statusColors: Record<string, string> = {
   paid: "bg-blue-100 text-blue-800",
   preparing: "bg-purple-100 text-purple-800",
   ready_for_pickup: "bg-green-100 text-green-800",
+  shipped: "bg-indigo-100 text-indigo-800",
   completed: "bg-gray-100 text-gray-800",
   cancelled: "bg-red-100 text-red-800",
 };
@@ -130,6 +133,11 @@ export default function MisPedidosPage() {
                         <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusColors[order.status]}`}>
                           {statusLabels[order.status]}
                         </span>
+                        {order.deliveryMethod === "shipping" && (
+                          <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                            Envío
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600">
                         {new Date(order.createdAt).toLocaleDateString("es-AR", {

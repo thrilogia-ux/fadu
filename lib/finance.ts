@@ -8,7 +8,7 @@ export type { FinanceSummary } from "@/lib/finance-display";
 export const FINANCE_EXCLUDED_PAYMENT_METHODS = ["test"] as const;
 
 /** Estados que implican cobro confirmado (si no hay paidAt legacy) */
-export const COLLECTED_STATUSES = ["paid", "preparing", "ready_for_pickup", "completed"] as const;
+export const COLLECTED_STATUSES = ["paid", "preparing", "ready_for_pickup", "shipped", "completed"] as const;
 
 export function monthRange(year: number, month: number): { start: Date; end: Date } {
   const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));

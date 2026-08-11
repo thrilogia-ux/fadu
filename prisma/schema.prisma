@@ -254,6 +254,14 @@ model Order {
   validatedAt     DateTime? @map("validated_at") // Cuándo se validó
   archived        Boolean   @default(false) @map("archived")
 
+  // Envío a domicilio (fase 1: zonas por CP)
+  deliveryMethod    String   @default("pickup") @map("delivery_method") // pickup | shipping
+  shippingCost      Decimal  @default(0) @map("shipping_cost") @db.Decimal(10, 2)
+  shippingZoneId    String?  @map("shipping_zone_id")
+  shippingZoneName  String?  @map("shipping_zone_name")
+  shippingPostalCode String? @map("shipping_postal_code")
+  shippingAddress   String?  @map("shipping_address") @db.Text // JSON ShippingAddress
+
   user    User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   items   OrderItem[]
   history OrderStatusHistory[]

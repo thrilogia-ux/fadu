@@ -1,0 +1,266 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
+import type { PickupInfo } from "@/lib/pickup";
+import type { ShippingQuoteResult } from "@/lib/shipping-zones";
+
+export type DeliveryMethod = "pickup" | "shipping";
+
+export type ShippingFormState = {
+  recipientName: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  notes: string;
+};
+
+type Props = {
+  deliveryMethod: DeliveryMethod;
+  onDeliveryMethodChange: (method: DeliveryMethod) => void;
+  shippingEnabled: boolean;
+  pickupAddress: string;
+  pickupSchedule: string[];
+  pickupInfo: PickupInfo | null;
+  cartSubtotal: number;
+  shippingForm: ShippingFormState;
+  onShippingFormChange: (patch: Partial<ShippingFormState>) => void;
+  onQuoteChange: (quote: ShippingQuoteResult | null) => void;
+  disabled?: boolean;
+};
+
+const emptyQuote = null;
+
+export function CheckoutDeliverySection({
+  deliveryMethod,
+  onDeliveryMethodChange,
+  shippingEnabled,
+  pickupAddress,
+  pickupSchedule,
+  pickupInfo,
+  cartSubtotal,
+  shippingForm,
+  onShippingFormChange,
+  onQuoteChange,
+  disabled = false,
+}: Props) {
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
+  const [quote, setQuote] = useState<ShippingQuoteResult | null>(emptyQuote);
+
+  const pickupDisplay: PickupInfo = pickupInfo ?? {
+    address: pickupAddress,
+    notes: null,
+    slots: [],
+    scheduleLines: pickupSchedule,
+  };
+
+  async function fetchQuote(cp: string) {
+    const trimmed = cp.trim();
+    if (trimmed.length < 4) {
+      setQuote(null);
+      onQuoteChange(null);
+      setQuoteError("");
+      return;
+    }
+
+    setQuoteLoading(true);
+    setQuoteError("");
+    try {
+      const res = await fetch(
+        `/api/shipping/quote?postalCode=${encodeURIComponent(trimmed)}&subtotal=${cartSubtotal}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setQuote(null);
+        onQuoteChange(null);
+        setQuoteError(data.error || "No hay envío para ese CP");
+        return;
+      }
+      const result = data as ShippingQuoteResult;
+      if (result.ok) {
+        setQuote(result);
+        onQuoteChange(result);
+      }
+    } catch {
+      setQuoteError("Error al cotizar envío");
+      setQuote(null);
+      onQuoteChange(null);
+    } finally {
+      setQuoteLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (deliveryMethod !== "shipping" || !shippingEnabled) {
+      setQuote(null);
+      onQuoteChange(null);
+      setQuoteError("");
+      return;
+    }
+    const t = setTimeout(() => {
+      void fetchQuote(shippingForm.postalCode);
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliveryMethod, shippingForm.postalCode, cartSubtotal, shippingEnabled]);
+
+  return (
+    <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
+      <h2 className="mb-4 text-lg font-semibold">¿Cómo querés recibir tu pedido?</h2>
+
+      <div className="space-y-3">
+        <label
+          className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5 ${
+            disabled ? "cursor-not-allowed opacity-60" : "border-black/10 hover:border-[#0f3bff]/40"
+          }`}
+        >
+          <input
+            type="radio"
+            name="delivery"
+            value="pickup"
+            checked={deliveryMethod === "pickup"}
+            onChange={() => onDeliveryMethodChange("pickup")}
+            disabled={disabled}
+            className="mt-1"
+          />
+          <div className="min-w-0 flex-1">
+            <span className="font-semibold text-[#1d1d1b]">Retiro en Pickup Point FADU</span>
+            <p className="mt-1 text-sm text-green-700 font-medium">Sin costo de envío</p>
+            <div className="mt-3 rounded-lg bg-gray-50 p-3">
+              <PickupScheduleDisplay info={pickupDisplay} showNotes={false} />
+            </div>
+            <Link href="/retiro" className="mt-2 inline-block text-sm text-[#0f3bff] hover:underline">
+              Ver guía de retiro
+            </Link>
+          </div>
+        </label>
+
+        {shippingEnabled && (
+          <label
+            className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition has-[:checked]:border-[#0f3bff] has-[:checked]:bg-[#0f3bff]/5 ${
+              disabled ? "cursor-not-allowed opacity-60" : "border-black/10 hover:border-[#0f3bff]/40"
+            }`}
+          >
+            <input
+              type="radio"
+              name="delivery"
+              value="shipping"
+              checked={deliveryMethod === "shipping"}
+              onChange={() => onDeliveryMethodChange("shipping")}
+              disabled={disabled}
+              className="mt-1"
+            />
+            <div className="min-w-0 flex-1">
+              <span className="font-semibold text-[#1d1d1b]">Envío a domicilio</span>
+              <p className="mt-1 text-sm text-gray-600">
+                Calculamos el costo según tu código postal
+              </p>
+
+              {deliveryMethod === "shipping" && (
+                <div className="mt-4 space-y-3 border-t border-black/8 pt-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Código postal *</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={shippingForm.postalCode}
+                      onChange={(e) => onShippingFormChange({ postalCode: e.target.value })}
+                      placeholder="Ej: 1425"
+                      className="min-h-[44px] w-full max-w-xs rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                      autoComplete="postal-code"
+                    />
+                    {quoteLoading && (
+                      <p className="mt-1 text-xs text-gray-500">Calculando envío…</p>
+                    )}
+                    {quoteError && (
+                      <p className="mt-1 text-sm text-red-600" role="alert">
+                        {quoteError}
+                      </p>
+                    )}
+                    {quote?.ok && (
+                      <div className="mt-2 rounded-lg bg-[#0f3bff]/5 px-3 py-2 text-sm">
+                        <p className="font-semibold text-[#1d1d1b]">
+                          {quote.zoneName}:{" "}
+                          {quote.freeShippingApplied ? (
+                            <span className="text-green-700">Envío gratis</span>
+                          ) : (
+                            `$${quote.price.toLocaleString("es-AR")}`
+                          )}
+                        </p>
+                        {quote.estimatedDays && (
+                          <p className="text-gray-600">{quote.estimatedDays}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {quote?.ok && (
+                    <>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">Nombre y apellido *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.recipientName}
+                          onChange={(e) => onShippingFormChange({ recipientName: e.target.value })}
+                          className="min-h-[44px] w-full rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                          autoComplete="name"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">Calle y número *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.street}
+                          onChange={(e) => onShippingFormChange({ street: e.target.value })}
+                          className="min-h-[44px] w-full rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                          autoComplete="street-address"
+                        />
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium">Ciudad / localidad *</label>
+                          <input
+                            type="text"
+                            value={shippingForm.city}
+                            onChange={(e) => onShippingFormChange({ city: e.target.value })}
+                            className="min-h-[44px] w-full rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                            autoComplete="address-level2"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium">Provincia</label>
+                          <input
+                            type="text"
+                            value={shippingForm.state}
+                            onChange={(e) => onShippingFormChange({ state: e.target.value })}
+                            placeholder="Buenos Aires"
+                            className="min-h-[44px] w-full rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                            autoComplete="address-level1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">
+                          Piso, depto, referencias (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingForm.notes}
+                          onChange={(e) => onShippingFormChange({ notes: e.target.value })}
+                          className="min-h-[44px] w-full rounded-lg border border-black/20 px-4 py-2.5 text-base outline-none focus:border-[#0f3bff] focus:ring-2 focus:ring-[#0f3bff]/20 sm:text-sm"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}

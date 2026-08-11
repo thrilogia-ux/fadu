@@ -14,6 +14,11 @@ import { CheckoutSteps } from "@/components/CheckoutSteps";
 import { ReorderButton } from "@/components/ReorderButton";
 import { STORE_TRANSFER_ALIAS } from "@/lib/brand";
 import type { PickupInfo } from "@/lib/pickup";
+import {
+  formatShippingAddressLines,
+  parseShippingAddress,
+  type ShippingAddress,
+} from "@/lib/shipping-zones";
 
 interface Order {
   id: string;
@@ -23,6 +28,11 @@ interface Order {
   total: number;
   discountTotal?: number;
   createdAt: string;
+  deliveryMethod?: string;
+  shippingCost?: number;
+  shippingZoneName?: string | null;
+  shippingPostalCode?: string | null;
+  shippingAddress?: string | null;
   items: {
     product: { name: string } | null;
     productNameSnapshot?: string | null;
@@ -91,12 +101,26 @@ export default function PedidoPage() {
   const isTransfer = order.paymentMethod === "transfer";
   const isTest = order.paymentMethod === "test";
   const isFeriaPresencial = order.paymentMethod === "feria_presencial";
+  const isShipping = order.deliveryMethod === "shipping";
+
+  let parsedShippingAddress: ShippingAddress | null = null;
+  if (isShipping && order.shippingAddress) {
+    try {
+      parsedShippingAddress = parseShippingAddress(JSON.parse(order.shippingAddress));
+    } catch {
+      parsedShippingAddress = null;
+    }
+  }
+  const shippingAddressLines = parsedShippingAddress
+    ? formatShippingAddressLines(parsedShippingAddress)
+    : [];
 
   const statusLabels: Record<string, string> = {
     pending_payment: "Pendiente de pago",
     paid: "Pagado",
     preparing: "Preparando",
     ready_for_pickup: "Listo para retirar",
+    shipped: "Enviado",
     completed: "Completado",
     cancelled: "Cancelado",
   };
@@ -105,6 +129,7 @@ export default function PedidoPage() {
     paid: "bg-blue-100 text-blue-800",
     preparing: "bg-purple-100 text-purple-800",
     ready_for_pickup: "bg-green-100 text-green-800",
+    shipped: "bg-indigo-100 text-indigo-800",
     completed: "bg-gray-100 text-gray-800",
     cancelled: "bg-red-100 text-red-800",
   };
@@ -129,12 +154,20 @@ export default function PedidoPage() {
                 {isFeriaPresencial
                   ? "Tu compra quedó registrada y te llevaste el producto en el stand. Te enviamos un email de confirmación."
                   : isTest
-                    ? "Simulación completada. Revisá tu email para ver los correos de prueba (confirmación + QR para retiro)."
+                    ? isShipping
+                      ? "Simulación completada. Revisá tu email de confirmación con los datos de envío."
+                      : "Simulación completada. Revisá tu email para ver los correos de prueba (confirmación + QR para retiro)."
                     : isTransfer
-                      ? "Te enviamos un email con los datos de transferencia. Una vez confirmado el pago, te avisaremos cuando tu pedido esté listo para retirar en FADU."
-                      : order.status === "ready_for_pickup"
-                        ? "Te enviamos un email con el código QR para retirar tu pedido en el Pickup Point de FADU."
-                        : "Te avisaremos por email cuando tu pedido esté listo para retirar en FADU."}
+                      ? isShipping
+                        ? "Te enviamos un email con los datos de transferencia. Una vez confirmado el pago, prepararemos tu envío."
+                        : "Te enviamos un email con los datos de transferencia. Una vez confirmado el pago, te avisaremos cuando tu pedido esté listo para retirar en FADU."
+                      : isShipping
+                        ? order.status === "shipped" || order.status === "completed"
+                          ? "Tu pedido fue despachado. Te avisamos por email cuando salga en camino."
+                          : "Te avisaremos por email cuando tu pedido sea despachado."
+                        : order.status === "ready_for_pickup"
+                          ? "Te enviamos un email con el código QR para retirar tu pedido en el Pickup Point de FADU."
+                          : "Te avisaremos por email cuando tu pedido esté listo para retirar en FADU."}
               </p>
             </div>
           )}
@@ -232,7 +265,9 @@ export default function PedidoPage() {
                     <span>
                       $
                       {(
-                        Number(order.total) + Number(order.discountTotal ?? 0)
+                        Number(order.total) +
+                        Number(order.discountTotal ?? 0) -
+                        Number(order.shippingCost ?? 0)
                       ).toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -241,6 +276,18 @@ export default function PedidoPage() {
                     <span>-${Number(order.discountTotal).toLocaleString("es-AR")}</span>
                   </div>
                 </>
+              )}
+              {Number(order.shippingCost ?? 0) > 0 && (
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Envío{order.shippingZoneName ? ` (${order.shippingZoneName})` : ""}</span>
+                  <span>${Number(order.shippingCost).toLocaleString("es-AR")}</span>
+                </div>
+              )}
+              {isShipping && Number(order.shippingCost ?? 0) === 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Envío{order.shippingZoneName ? ` (${order.shippingZoneName})` : ""}</span>
+                  <span>Gratis</span>
+                </div>
               )}
               <div className="flex justify-between text-xl font-bold">
                 <span>Total</span>
@@ -255,6 +302,31 @@ export default function PedidoPage() {
                 <p className="text-sm leading-relaxed text-emerald-900">
                   Este pedido fue entregado en el stand de la feria. No requiere retiro en FADU ni código QR.
                 </p>
+              </div>
+            ) : isShipping ? (
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 sm:p-5">
+                <h3 className="mb-2 font-semibold text-indigo-950">Envío a domicilio</h3>
+                <p className="mb-4 text-sm leading-relaxed text-indigo-900">
+                  {order.status === "shipped" || order.status === "completed"
+                    ? "Tu pedido fue despachado. Si tenés dudas sobre el seguimiento, escribinos por WhatsApp."
+                    : order.status === "preparing" || order.status === "paid"
+                      ? "Estamos preparando tu pedido para el envío."
+                      : "Cuando confirmemos tu pago, prepararemos tu pedido para enviarlo a la dirección indicada."}
+                </p>
+                {order.shippingZoneName && (
+                  <p className="mb-2 text-sm text-indigo-800">
+                    <span className="font-semibold">Zona:</span> {order.shippingZoneName}
+                    {order.shippingPostalCode ? ` (CP ${order.shippingPostalCode})` : ""}
+                  </p>
+                )}
+                {shippingAddressLines.length > 0 && (
+                  <div className="rounded-lg border border-indigo-200 bg-white/70 p-3 text-sm text-indigo-950">
+                    <p className="mb-1 font-semibold">Dirección de entrega</p>
+                    {shippingAddressLines.map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
             <div className="rounded-xl border border-black/8 bg-gray-50 p-4 sm:p-5">
@@ -302,7 +374,8 @@ export default function PedidoPage() {
 
               {(order.status === "ready_for_pickup" || order.status === "completed") &&
               order.pickupCode &&
-              !isFeriaPresencial ? (
+              !isFeriaPresencial &&
+              !isShipping ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <ReorderButton orderId={order.id} className="w-full" />
                   <a

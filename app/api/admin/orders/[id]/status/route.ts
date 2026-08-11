@@ -30,6 +30,7 @@ export async function PATCH(
       "paid",
       "preparing",
       "ready_for_pickup",
+      "shipped",
       "completed",
       "cancelled",
     ];

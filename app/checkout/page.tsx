@@ -6,7 +6,14 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CheckoutSteps } from "@/components/CheckoutSteps";
+import {
+  CheckoutDeliverySection,
+  type DeliveryMethod,
+  type ShippingFormState,
+} from "@/components/CheckoutDeliverySection";
 import { useCart } from "@/lib/cart-context";
+import type { PickupInfo } from "@/lib/pickup";
+import type { ShippingQuoteResult } from "@/lib/shipping-zones";
 import { cartLineKey } from "@/lib/cart-line";
 import Link from "next/link";
 
@@ -34,6 +41,18 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [pickupSchedule, setPickupSchedule] = useState<string[]>([]);
   const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupInfo, setPickupInfo] = useState<PickupInfo | null>(null);
+  const [shippingEnabled, setShippingEnabled] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("pickup");
+  const [shippingForm, setShippingForm] = useState<ShippingFormState>({
+    recipientName: "",
+    street: "",
+    city: "",
+    state: "Buenos Aires",
+    postalCode: "",
+    notes: "",
+  });
+  const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResult | null>(null);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -45,6 +64,14 @@ export default function CheckoutPage() {
         if (data && !data.error) {
           setPickupSchedule(Array.isArray(data.scheduleLines) ? data.scheduleLines : []);
           setPickupAddress(typeof data.address === "string" ? data.address : "");
+          setPickupInfo(data as PickupInfo);
+        }
+      });
+    fetch("/api/shipping/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && typeof data.enabled === "boolean") {
+          setShippingEnabled(data.enabled);
         }
       });
     fetch("/api/fair-mode")
@@ -127,9 +154,35 @@ export default function CheckoutPage() {
     }
   }, [status, items, router]);
 
+  useEffect(() => {
+    if (session?.user?.name && !shippingForm.recipientName) {
+      setShippingForm((f) => ({ ...f, recipientName: session.user?.name ?? "" }));
+    }
+  }, [session?.user?.name, shippingForm.recipientName]);
+
+  const shippingCost =
+    deliveryMethod === "shipping" && shippingQuote?.ok ? shippingQuote.price : 0;
+  const checkoutTotal = Math.max(0, finalTotal + shippingCost);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!session?.user) return;
+
+    if (deliveryMethod === "shipping") {
+      if (!shippingQuote?.ok) {
+        setError("Ingresá un código postal válido para calcular el envío.");
+        return;
+      }
+      if (
+        !shippingForm.recipientName.trim() ||
+        !shippingForm.street.trim() ||
+        !shippingForm.city.trim() ||
+        !shippingForm.postalCode.trim()
+      ) {
+        setError("Completá la dirección de envío.");
+        return;
+      }
+    }
 
     setLoading(true);
     setError("");
@@ -148,6 +201,18 @@ export default function CheckoutPage() {
           paymentMethod,
           phone: phone.trim() || null,
           couponCode: appliedCoupon?.code ?? null,
+          deliveryMethod,
+          shippingAddress:
+            deliveryMethod === "shipping"
+              ? {
+                  recipientName: shippingForm.recipientName.trim(),
+                  street: shippingForm.street.trim(),
+                  city: shippingForm.city.trim(),
+                  state: shippingForm.state.trim() || "Buenos Aires",
+                  postalCode: shippingForm.postalCode.trim(),
+                  notes: shippingForm.notes.trim() || undefined,
+                }
+              : undefined,
         }),
       });
 
@@ -279,6 +344,23 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </div>
+
+                {!isFairPresencial && (
+                  <CheckoutDeliverySection
+                    deliveryMethod={deliveryMethod}
+                    onDeliveryMethodChange={setDeliveryMethod}
+                    shippingEnabled={shippingEnabled}
+                    pickupAddress={pickupAddress}
+                    pickupSchedule={pickupSchedule}
+                    pickupInfo={pickupInfo}
+                    cartSubtotal={finalTotal}
+                    shippingForm={shippingForm}
+                    onShippingFormChange={(patch) =>
+                      setShippingForm((f) => ({ ...f, ...patch }))
+                    }
+                    onQuoteChange={setShippingQuote}
+                  />
+                )}
 
                 {/* Método de pago */}
                 <div className="min-w-0 rounded-lg border border-black/8 bg-white p-4 sm:p-6">
@@ -414,6 +496,20 @@ export default function CheckoutPage() {
                         <span className="font-semibold shrink-0">-${discount.toLocaleString("es-AR")}</span>
                       </div>
                     )}
+                    {shippingCost > 0 && (
+                      <div className="flex justify-between gap-2 text-sm">
+                        <span className="text-gray-600">Envío</span>
+                        <span className="font-semibold shrink-0">
+                          ${shippingCost.toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    )}
+                    {deliveryMethod === "shipping" && shippingQuote?.ok && shippingQuote.freeShippingApplied && (
+                      <div className="flex justify-between gap-2 text-sm text-green-600">
+                        <span>Envío</span>
+                        <span className="font-semibold shrink-0">Gratis</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-4">
@@ -452,10 +548,12 @@ export default function CheckoutPage() {
 
                   <div className="mb-6 flex justify-between gap-2 text-xl font-bold">
                     <span>Total</span>
-                    <span className="shrink-0">${finalTotal.toLocaleString("es-AR")}</span>
+                    <span className="shrink-0">${checkoutTotal.toLocaleString("es-AR")}</span>
                   </div>
 
-                  {(pickupAddress || pickupSchedule.length > 0) && !isFairPresencial && (
+                  {deliveryMethod === "pickup" &&
+                    (pickupAddress || pickupSchedule.length > 0) &&
+                    !isFairPresencial && (
                     <div className="mb-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
                       <p className="mb-2 font-semibold text-[#1d1d1b]">Retiro en FADU</p>
                       {pickupAddress ? <p className="mb-1">{pickupAddress}</p> : null}
@@ -469,6 +567,16 @@ export default function CheckoutPage() {
                       <Link href="/retiro" className="mt-2 inline-block text-[#0f3bff] hover:underline">
                         Más info
                       </Link>
+                    </div>
+                  )}
+
+                  {deliveryMethod === "shipping" && shippingQuote?.ok && (
+                    <div className="mb-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
+                      <p className="mb-1 font-semibold text-[#1d1d1b]">Envío a domicilio</p>
+                      <p>
+                        {shippingQuote.zoneName}
+                        {shippingQuote.estimatedDays ? ` · ${shippingQuote.estimatedDays}` : ""}
+                      </p>
                     </div>
                   )}
 

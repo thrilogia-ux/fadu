@@ -5,6 +5,10 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminPickupWhatsAppNotify } from "@/components/admin/AdminPickupWhatsAppNotify";
+import {
+  formatShippingAddressLines,
+  parseShippingAddress,
+} from "@/lib/shipping-zones";
 
 interface Order {
   id: string;
@@ -14,6 +18,11 @@ interface Order {
   total: number;
   createdAt: string;
   archived: boolean;
+  deliveryMethod?: string;
+  shippingCost?: number;
+  shippingZoneName?: string | null;
+  shippingPostalCode?: string | null;
+  shippingAddress?: string | null;
   user: { name: string | null; email: string; phone: string | null };
   _count: { items: number };
 }
@@ -30,6 +39,7 @@ const statusLabels: Record<string, string> = {
   paid: "Pagado",
   preparing: "Preparando",
   ready_for_pickup: "Listo para retirar",
+  shipped: "Enviado",
   completed: "Completado",
   cancelled: "Cancelado",
 };
@@ -39,6 +49,7 @@ const statusColors: Record<string, string> = {
   paid: "bg-blue-100 text-blue-800",
   preparing: "bg-purple-100 text-purple-800",
   ready_for_pickup: "bg-green-100 text-green-800",
+  shipped: "bg-indigo-100 text-indigo-800",
   completed: "bg-gray-100 text-gray-800",
   cancelled: "bg-red-100 text-red-800",
 };
@@ -368,6 +379,31 @@ export default function AdminPedidosPage() {
                       ${Number(order.total).toLocaleString("es-AR")} — {order._count.items}{" "}
                       producto(s)
                     </p>
+                    {order.deliveryMethod === "shipping" && (
+                      <div className="mt-1 text-sm text-indigo-700">
+                        <p>
+                          Envío{order.shippingZoneName ? `: ${order.shippingZoneName}` : ""}
+                          {order.shippingPostalCode ? ` (CP ${order.shippingPostalCode})` : ""}
+                          {order.shippingCost != null && Number(order.shippingCost) > 0
+                            ? ` — $${Number(order.shippingCost).toLocaleString("es-AR")}`
+                            : ""}
+                        </p>
+                        {order.shippingAddress &&
+                          (() => {
+                            try {
+                              const addr = parseShippingAddress(JSON.parse(order.shippingAddress));
+                              if (!addr) return null;
+                              return (
+                                <p className="mt-0.5 text-indigo-600">
+                                  {formatShippingAddressLines(addr).join(" · ")}
+                                </p>
+                              );
+                            } catch {
+                              return null;
+                            }
+                          })()}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-shrink-0 flex-wrap gap-2">
@@ -389,25 +425,47 @@ export default function AdminPedidosPage() {
                         >
                           Preparar
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => changeStatus(order.id, "ready_for_pickup")}
-                          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                        >
-                          Listo para retirar
-                        </button>
+                        {order.deliveryMethod !== "shipping" && (
+                          <button
+                            type="button"
+                            onClick={() => changeStatus(order.id, "ready_for_pickup")}
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                          >
+                            Listo para retirar
+                          </button>
+                        )}
                       </>
                     )}
                     {!order.archived && order.status === "preparing" && (
+                      order.deliveryMethod === "shipping" ? (
+                        <button
+                          type="button"
+                          onClick={() => changeStatus(order.id, "shipped")}
+                          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                        >
+                          Marcar enviado
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => changeStatus(order.id, "ready_for_pickup")}
+                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        >
+                          Listo para retirar
+                        </button>
+                      )
+                    )}
+                    {!order.archived && order.status === "shipped" && (
                       <button
                         type="button"
-                        onClick={() => changeStatus(order.id, "ready_for_pickup")}
-                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        onClick={() => changeStatus(order.id, "completed")}
+                        className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900"
                       >
-                        Listo para retirar
+                        Completar
                       </button>
                     )}
                     {!order.archived &&
+                      order.deliveryMethod !== "shipping" &&
                       (order.status === "ready_for_pickup" || order.status === "completed") &&
                       order.pickupCode && (
                         <AdminPickupWhatsAppNotify

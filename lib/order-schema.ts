@@ -13,6 +13,12 @@ const ORDER_COLUMNS_SQL = [
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "validated_by" TEXT`,
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "validated_at" TIMESTAMPTZ`,
   `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "delivery_method" TEXT NOT NULL DEFAULT 'pickup'`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_cost" DECIMAL(10, 2) NOT NULL DEFAULT 0`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_zone_id" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_zone_name" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_postal_code" TEXT`,
+  `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shipping_address" TEXT`,
 ];
 
 const ORDER_ITEM_COLUMNS_SQL = [

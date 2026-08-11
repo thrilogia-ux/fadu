@@ -21,6 +21,11 @@ import { isMaxConnectionsSessionError } from "@/lib/database-url";
 import { getFairModeSettings } from "@/lib/fair-mode";
 import { buildPaidOrderUpdate } from "@/lib/finance-order";
 import { ensureFinanceSchema } from "@/lib/finance-schema";
+import {
+  getShippingSettings,
+  parseShippingAddress,
+  quoteShipping,
+} from "@/lib/shipping-zones";
 
 class OrderCouponError extends Error {
   constructor(message: string) {
@@ -94,7 +99,8 @@ export async function POST(request: Request) {
 
     isAdminUser = (session.user as { role?: string })?.role === "admin";
 
-    const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody } = await request.json();
+    const { items, paymentMethod, phone: phoneBody, couponCode: couponCodeBody, deliveryMethod: deliveryMethodBody, shippingAddress: shippingAddressBody } =
+      await request.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
@@ -326,15 +332,62 @@ export async function POST(request: Request) {
         : [];
 
     const isFeriaPresencialOrder = paymentMethod === "feria_presencial";
+    const deliveryMethod =
+      deliveryMethodBody === "shipping" && !isFeriaPresencialOrder ? "shipping" : "pickup";
+
+    let shippingCost = 0;
+    let shippingData: {
+      deliveryMethod: string;
+      shippingCost: number;
+      shippingZoneId?: string | null;
+      shippingZoneName?: string | null;
+      shippingPostalCode?: string | null;
+      shippingAddress?: string | null;
+    } = { deliveryMethod: "pickup", shippingCost: 0 };
+
+    if (deliveryMethod === "shipping") {
+      const shippingSettings = await getShippingSettings();
+      if (!shippingSettings.enabled) {
+        return NextResponse.json({ error: "Los envíos no están habilitados." }, { status: 400 });
+      }
+      const parsedAddress = parseShippingAddress(shippingAddressBody);
+      if (!parsedAddress) {
+        return NextResponse.json({ error: "Dirección de envío incompleta." }, { status: 400 });
+      }
+      const quote = quoteShipping(
+        parsedAddress.postalCode,
+        shippingSettings,
+        subtotal - discountAmount
+      );
+      if (!quote.ok) {
+        return NextResponse.json({ error: quote.error }, { status: 400 });
+      }
+      shippingCost = quote.price;
+      shippingData = {
+        deliveryMethod: "shipping",
+        shippingCost,
+        shippingZoneId: quote.zoneId,
+        shippingZoneName: quote.zoneName,
+        shippingPostalCode: quote.postalCode,
+        shippingAddress: JSON.stringify(parsedAddress),
+      };
+    }
+
     const feriaPaidUpdate = isFeriaPresencialOrder
       ? await buildPaidOrderUpdate("feria_presencial", subtotal - discountAmount)
       : null;
     const initialStatus = isFeriaPresencialOrder
       ? "completed"
       : paymentMethod === "test"
-        ? "ready_for_pickup"
+        ? deliveryMethod === "shipping"
+          ? "preparing"
+          : "ready_for_pickup"
         : "pending_payment";
-    const historyNoteBase = `Pedido creado. Método: ${paymentMethod}`;
+    const deliveryNote =
+      deliveryMethod === "shipping"
+        ? `Envío ${shippingData.shippingZoneName ?? ""} ($${shippingCost.toLocaleString("es-AR")})`.trim()
+        : "Retiro en FADU";
+    const historyNoteBase = `Pedido creado. ${deliveryNote}. Pago: ${paymentMethod}`;
     const historyNote =
       couponCodeStr && discountAmount > 0
         ? `${historyNoteBase}. Cupón ${couponCodeStr} (-$${discountAmount.toLocaleString("es-AR")})`
@@ -347,12 +400,18 @@ export async function POST(request: Request) {
           { status: "completed", note: "Entrega inmediata en el stand de la feria" },
         ]
       : paymentMethod === "test"
-        ? [
-            { status: "pending_payment", note: "Pedido creado (pago de prueba)" },
-            { status: "paid", note: "Pago simulado (admin)" },
-            { status: "preparing", note: "Preparación simulgada" },
-            { status: "ready_for_pickup", note: "Listo para retiro (simulación)" },
-          ]
+        ? deliveryMethod === "shipping"
+          ? [
+              { status: "pending_payment", note: "Pedido creado (pago de prueba)" },
+              { status: "paid", note: "Pago simulado (admin)" },
+              { status: "preparing", note: "Preparando envío (simulación)" },
+            ]
+          : [
+              { status: "pending_payment", note: "Pedido creado (pago de prueba)" },
+              { status: "paid", note: "Pago simulado (admin)" },
+              { status: "preparing", note: "Preparación simulgada" },
+              { status: "ready_for_pickup", note: "Listo para retiro (simulación)" },
+            ]
         : [{ status: "pending_payment", note: historyNote }];
 
     const orderCountBase = await prisma.order.count();
@@ -371,7 +430,7 @@ export async function POST(request: Request) {
             }
           }
 
-          const finalTotal = subtotal - discountAmount;
+          const finalTotal = subtotal - discountAmount + shippingCost;
 
           const o = await tx.order.create({
             data: {
@@ -381,6 +440,12 @@ export async function POST(request: Request) {
               total: finalTotal,
               discountTotal: discountAmount,
               pickupCode,
+              deliveryMethod: shippingData.deliveryMethod,
+              shippingCost: shippingData.shippingCost,
+              shippingZoneId: shippingData.shippingZoneId ?? null,
+              shippingZoneName: shippingData.shippingZoneName ?? null,
+              shippingPostalCode: shippingData.shippingPostalCode ?? null,
+              shippingAddress: shippingData.shippingAddress ?? null,
               ...(isFeriaPresencialOrder && feriaPaidUpdate
                 ? {
                     pickupDate: new Date(),
@@ -489,11 +554,13 @@ export async function POST(request: Request) {
         const conf = await sendOrderConfirmation(orderForEmail);
         emailConfirmationSent = conf.ok;
         emailConfirmationError = conf.ok ? undefined : conf.error;
-        const pickMail = await sendPickupReadyEmail(orderForEmail);
-        emailPickupSent = pickMail.ok;
-        emailPickupError = pickMail.ok ? undefined : pickMail.error;
-        if (!pickMail.ok) {
-          console.error("[orders/create] test sendPickupReadyEmail:", pickMail.error);
+        if (fullOrder.deliveryMethod !== "shipping") {
+          const pickMail = await sendPickupReadyEmail(orderForEmail);
+          emailPickupSent = pickMail.ok;
+          emailPickupError = pickMail.ok ? undefined : pickMail.error;
+          if (!pickMail.ok) {
+            console.error("[orders/create] test sendPickupReadyEmail:", pickMail.error);
+          }
         }
       }
       return NextResponse.json({

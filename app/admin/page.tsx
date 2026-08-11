@@ -46,6 +46,12 @@ export default function AdminDashboard() {
       icon: "🕐",
     },
     {
+      title: "Envíos",
+      description: "Zonas y tarifas por código postal",
+      href: "/admin/envios",
+      icon: "🚚",
+    },
+    {
       title: "Productos",
       description: "Agregar, editar y eliminar productos",
       href: "/admin/productos",
