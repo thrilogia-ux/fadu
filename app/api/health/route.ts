@@ -66,9 +66,14 @@ export async function GET() {
   if (!authEnv.authSecretConfigured) {
     hints.push("Falta AUTH_SECRET en el servidor.");
   }
-  if (authEnv.googleOAuthConfigured && !authEnv.authUsesRequestHost && authEnv.authUrl) {
+  if (authEnv.strippedAuthEnvKeys.length > 0) {
     hints.push(
-      `AUTH_URL fijo (${authEnv.authUrl}) puede romper Google OAuth en ubafadu.shop. La app debería usar el host de cada request (www o sin www).`
+      `OAuth: se ignoraron variables obsoletas en runtime (${authEnv.strippedAuthEnvKeys.join(", ")}). Borralas en Vercel si el login sigue fallando.`
+    );
+  }
+  if (authEnv.googleOAuthConfigured && !authEnv.authUsesRequestHost) {
+    hints.push(
+      "NEXTAUTH_URL o AUTH_URL en Vercel apuntan a un dominio distinto al sitio. Borralas y redeploy."
     );
   }
 

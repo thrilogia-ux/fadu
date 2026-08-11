@@ -1,4 +1,8 @@
-import { isAuthUrlIgnoredForOAuth, prepareAuthRuntimeEnv } from "@/lib/auth-runtime-env";
+import {
+  getStrippedAuthEnvKeys,
+  isAuthUrlIgnoredForOAuth,
+  prepareAuthRuntimeEnv,
+} from "@/lib/auth-runtime-env";
 
 prepareAuthRuntimeEnv();
 
@@ -21,16 +25,19 @@ export function getGoogleOAuthEnv(): {
 export function getAuthEnvStatus(): {
   authSecretConfigured: boolean;
   authUrl: string | null;
+  nextAuthUrl: string | null;
   authUsesRequestHost: boolean;
+  strippedAuthEnvKeys: string[];
   googleOAuthConfigured: boolean;
   googleClientIdSuffix: string | null;
 } {
   const google = getGoogleOAuthEnv();
-  const authUrl = process.env.AUTH_URL?.trim() || null;
   return {
     authSecretConfigured: Boolean(process.env.AUTH_SECRET?.trim()),
-    authUrl,
-    authUsesRequestHost: isAuthUrlIgnoredForOAuth() || !authUrl,
+    authUrl: process.env.AUTH_URL?.trim() || null,
+    nextAuthUrl: process.env.NEXTAUTH_URL?.trim() || null,
+    authUsesRequestHost: isAuthUrlIgnoredForOAuth() || (!process.env.AUTH_URL && !process.env.NEXTAUTH_URL),
+    strippedAuthEnvKeys: getStrippedAuthEnvKeys(),
     googleOAuthConfigured: google.configured,
     googleClientIdSuffix: google.clientId.includes(".apps.googleusercontent.com")
       ? google.clientId.slice(-28)

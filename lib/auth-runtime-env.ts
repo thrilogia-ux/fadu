@@ -1,9 +1,15 @@
-let authUrlIgnoredForOAuth = false;
+const STRIPPED_AUTH_ENV_KEYS = [
+  "AUTH_URL",
+  "NEXTAUTH_URL",
+  "AUTH_REDIRECT_PROXY_URL",
+] as const;
+
+let strippedAuthEnvKeys: string[] = [];
 
 /**
- * AUTH_URL fijo (p. ej. https://www.ubafadu.shop) fuerza callbacks OAuth a www
- * aunque el usuario entre por ubafadu.shop → error Configuration.
- * Con trustHost, Auth.js infiere el host de cada request (www o apex).
+ * En Vercel suele quedar NEXTAUTH_URL=https://fadustore.vercel.app u otra URL vieja.
+ * Eso fuerza callbacks OAuth al dominio incorrecto → error Configuration.
+ * Con trustHost, Auth.js usa x-forwarded-host (ubafadu.shop o www).
  */
 export function prepareAuthRuntimeEnv() {
   if (process.env.AUTH_TRUST_HOST === "false") return;
@@ -11,12 +17,21 @@ export function prepareAuthRuntimeEnv() {
   const isDeployed =
     process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 
-  if (isDeployed && process.env.AUTH_URL?.trim()) {
-    authUrlIgnoredForOAuth = true;
-    delete process.env.AUTH_URL;
+  if (!isDeployed) return;
+
+  strippedAuthEnvKeys = [];
+  for (const key of STRIPPED_AUTH_ENV_KEYS) {
+    if (process.env[key]?.trim()) {
+      strippedAuthEnvKeys.push(key);
+      delete process.env[key];
+    }
   }
 }
 
+export function getStrippedAuthEnvKeys() {
+  return strippedAuthEnvKeys;
+}
+
 export function isAuthUrlIgnoredForOAuth() {
-  return authUrlIgnoredForOAuth;
+  return strippedAuthEnvKeys.length > 0;
 }
