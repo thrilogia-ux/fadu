@@ -85,7 +85,7 @@ export default function CuentaPage() {
               >
                 <div className="mb-3">
                   {item.icon ? (
-                    <BrandIcon name={item.icon} size={40} />
+                    <BrandIcon name={item.icon} size={48} />
                   ) : (
                     <span className="text-3xl" aria-hidden>
                       {item.emoji}

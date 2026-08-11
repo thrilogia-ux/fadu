@@ -108,7 +108,7 @@ async function HomePageContent() {
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
               <div className="flex items-center gap-3 md:gap-4">
-                <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
+                <div className="relative h-24 w-24 shrink-0 md:h-[7.2rem] md:w-[7.2rem]">
                   <Image src="/icons/retiro-fadu.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">
@@ -119,7 +119,7 @@ async function HomePageContent() {
                 </div>
               </div>
               <div className="flex items-center gap-3 md:gap-4">
-                <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
+                <div className="relative h-24 w-24 shrink-0 md:h-[7.2rem] md:w-[7.2rem]">
                   <Image src="/icons/tarjetas.png" alt="" fill className="object-contain" unoptimized />
                 </div>
                 <div className="min-w-0">

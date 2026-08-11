@@ -82,7 +82,7 @@ export default function CarritoPage() {
 
           {items.length === 0 ? (
             <EmptyState
-              icon={<BrandIcon name="carrito" size={36} />}
+              icon={<BrandIcon name="carrito" size={43} />}
               title="Tu carrito está vacío"
               description="Explorá el catálogo y sumá productos. Retirás tu pedido en el Pickup Point en FADU."
               primaryHref="/productos"

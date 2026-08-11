@@ -45,7 +45,7 @@ export default async function RetiroPage() {
 
             <div className="mb-6 rounded-lg bg-[#0f3bff]/5 p-5">
               <h2 className="mb-3 flex items-center gap-2 font-semibold text-[#1d1d1b]">
-                <BrandIcon name="retiroFadu" size={24} className="shrink-0" />
+                <BrandIcon name="retiroFadu" size={29} className="shrink-0" />
                 Dónde y cuándo
               </h2>
               <PickupScheduleDisplay info={pickup} />

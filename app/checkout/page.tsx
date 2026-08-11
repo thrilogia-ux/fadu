@@ -440,7 +440,7 @@ export default function CheckoutPage() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <BrandIcon name="tarjetas" size={22} className="shrink-0" />
+                          <BrandIcon name="tarjetas" size={26} className="shrink-0" />
                           <span className="font-semibold">Mercado Pago</span>
                           <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
                             Recomendado
@@ -465,7 +465,7 @@ export default function CheckoutPage() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <BrandIcon name="transferencia" size={22} className="shrink-0" />
+                          <BrandIcon name="transferencia" size={26} className="shrink-0" />
                           <span className="font-semibold">Transferencia bancaria</span>
                         </div>
                         <p className="text-sm text-gray-600">

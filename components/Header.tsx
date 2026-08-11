@@ -163,7 +163,7 @@ export function Header({ categories }: { categories: Category[] }) {
                   size={28}
                 />
               ) : (
-                <BrandIcon name="perfil" size={24} />
+                <BrandIcon name="perfil" size={29} />
               )}
             </Link>
             <Link
@@ -172,7 +172,7 @@ export function Header({ categories }: { categories: Category[] }) {
               onClick={closeMenus}
               aria-label={itemCount > 0 ? `Carrito, ${itemCount} productos` : "Carrito"}
             >
-              <BrandIcon name="carrito" size={24} />
+              <BrandIcon name="carrito" size={29} />
               <CartBadge count={itemCount} bump={cartBump} />
             </Link>
           </div>
@@ -212,7 +212,7 @@ export function Header({ categories }: { categories: Category[] }) {
               onClick={closeMenus}
               aria-label={itemCount > 0 ? `Carrito, ${itemCount} productos` : "Carrito"}
             >
-              <BrandIcon name="carrito" size={24} />
+              <BrandIcon name="carrito" size={29} />
               <CartBadge count={itemCount} bump={cartBump} />
             </Link>
 

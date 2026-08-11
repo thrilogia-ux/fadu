@@ -130,9 +130,9 @@ export function HelpCenterView({ faqPage, faqItems, categories, pickup }: Props)
                 href={link.href}
                 className="rounded-xl border border-black/8 bg-white p-4 shadow-sm transition hover:border-[#0f3bff]/30 hover:shadow-md"
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center" aria-hidden>
+                <span className="inline-flex h-10 w-10 items-center justify-center" aria-hidden>
                   {link.icon ? (
-                    <BrandIcon name={link.icon} size={32} />
+                    <BrandIcon name={link.icon} size={38} />
                   ) : (
                     <span className="text-2xl">{link.emoji}</span>
                   )}

@@ -7,7 +7,7 @@ type Props = {
   className?: string;
 };
 
-export function BrandIcon({ name, size = 24, className = "" }: Props) {
+export function BrandIcon({ name, size = 29, className = "" }: Props) {
   return (
     <Image
       src={BRAND_ICONS[name]}

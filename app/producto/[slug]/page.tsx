@@ -1035,11 +1035,11 @@ export default function ProductPage() {
                     <h3 className="mb-2 text-sm font-semibold text-[#1d1d1b]">Medios de pago</h3>
                     <div className="space-y-2 text-sm text-gray-600">
                       <p className="flex items-center gap-2">
-                        <BrandIcon name="tarjetas" size={20} className="shrink-0" />
+                        <BrandIcon name="tarjetas" size={24} className="shrink-0" />
                         Tarjetas de crédito y débito
                       </p>
                       <p className="flex items-center gap-2">
-                        <BrandIcon name="transferencia" size={20} className="shrink-0" />
+                        <BrandIcon name="transferencia" size={24} className="shrink-0" />
                         Transferencia bancaria
                       </p>
                       <p>💵 Efectivo en puntos de pago</p>

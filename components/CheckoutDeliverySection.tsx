@@ -156,7 +156,7 @@ export function CheckoutDeliverySection({
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <BrandIcon name="retiroFadu" size={22} className="shrink-0" />
+              <BrandIcon name="retiroFadu" size={26} className="shrink-0" />
               <span className="font-semibold text-[#1d1d1b]">Retiro en Pickup Point FADU</span>
             </div>
             <p className="mt-1 text-sm text-green-700 font-medium">Sin costo de envío</p>
@@ -186,7 +186,7 @@ export function CheckoutDeliverySection({
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <BrandIcon name="envioDomicilio" size={22} className="shrink-0" />
+                <BrandIcon name="envioDomicilio" size={26} className="shrink-0" />
                 <span className="font-semibold text-[#1d1d1b]">Envío a domicilio</span>
               </div>
               <p className="mt-1 text-sm text-gray-600">

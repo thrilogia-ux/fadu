@@ -111,7 +111,7 @@ export default function MisPedidosPage() {
 
           {orders.length === 0 ? (
             <EmptyState
-              icon={<BrandIcon name="misCompras" size={36} />}
+              icon={<BrandIcon name="misCompras" size={43} />}
               title="No tenés compras todavía"
               description="Cuando hagas tu primera compra, vas a ver acá el estado, el código de retiro y el detalle de cada pedido."
               primaryHref="/productos"
