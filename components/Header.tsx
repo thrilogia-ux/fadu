@@ -9,6 +9,7 @@ import { useCart } from "@/lib/cart-context";
 import { TopBannerMarquee } from "@/components/TopBannerMarquee";
 import { UserAvatar } from "@/components/UserAvatar";
 import { CartBadge, useCartBumpPulse } from "@/components/CartBadge";
+import { BrandIcon } from "@/components/BrandIcon";
 
 interface Category {
   id: string;
@@ -162,9 +163,7 @@ export function Header({ categories }: { categories: Category[] }) {
                   size={28}
                 />
               ) : (
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+                <BrandIcon name="perfil" size={24} />
               )}
             </Link>
             <Link
@@ -173,9 +172,7 @@ export function Header({ categories }: { categories: Category[] }) {
               onClick={closeMenus}
               aria-label={itemCount > 0 ? `Carrito, ${itemCount} productos` : "Carrito"}
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <BrandIcon name="carrito" size={24} />
               <CartBadge count={itemCount} bump={cartBump} />
             </Link>
           </div>
@@ -215,9 +212,7 @@ export function Header({ categories }: { categories: Category[] }) {
               onClick={closeMenus}
               aria-label={itemCount > 0 ? `Carrito, ${itemCount} productos` : "Carrito"}
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <BrandIcon name="carrito" size={24} />
               <CartBadge count={itemCount} bump={cartBump} />
             </Link>
 

@@ -10,6 +10,7 @@ import { ReorderButton } from "@/components/ReorderButton";
 import { OrderListSkeleton } from "@/components/ProductCardSkeleton";
 import { BrandLoader } from "@/components/BrandLoader";
 import { EmptyState } from "@/components/EmptyState";
+import { BrandIcon } from "@/components/BrandIcon";
 import { formatVariantLabel } from "@/lib/cart-line";
 import { orderItemProductName } from "@/lib/order-item-display";
 
@@ -110,7 +111,7 @@ export default function MisPedidosPage() {
 
           {orders.length === 0 ? (
             <EmptyState
-              icon="📦"
+              icon={<BrandIcon name="misCompras" size={36} />}
               title="No tenés compras todavía"
               description="Cuando hagas tu primera compra, vas a ver acá el estado, el código de retiro y el detalle de cada pedido."
               primaryHref="/productos"

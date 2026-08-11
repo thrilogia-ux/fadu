@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import { PickupStepsGuide } from "@/components/PickupStepsGuide";
+import { BrandIcon } from "@/components/BrandIcon";
 import { getAllActiveCategories } from "@/lib/home-data";
 import { getPickupInfo } from "@/lib/pickup";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -43,7 +44,10 @@ export default async function RetiroPage() {
             </p>
 
             <div className="mb-6 rounded-lg bg-[#0f3bff]/5 p-5">
-              <h2 className="mb-3 font-semibold text-[#1d1d1b]">📍 Dónde y cuándo</h2>
+              <h2 className="mb-3 flex items-center gap-2 font-semibold text-[#1d1d1b]">
+                <BrandIcon name="retiroFadu" size={24} className="shrink-0" />
+                Dónde y cuándo
+              </h2>
               <PickupScheduleDisplay info={pickup} />
             </div>
 

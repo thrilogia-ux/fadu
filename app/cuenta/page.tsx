@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
+import { BrandIcon } from "@/components/BrandIcon";
+import type { BrandIconName } from "@/lib/brand-icons";
 
 export default function CuentaPage() {
   const { data: session, status } = useSession();
@@ -25,24 +27,30 @@ export default function CuentaPage() {
     return null;
   }
 
-  const menuItems = [
+  const menuItems: {
+    title: string;
+    description: string;
+    href: string;
+    icon?: BrandIconName;
+    emoji?: string;
+  }[] = [
     {
       title: "Mis compras",
       description: "Revisá el estado de tus pedidos",
       href: "/cuenta/pedidos",
-      icon: "📦",
+      icon: "misCompras",
     },
     {
       title: "Favoritos",
       description: "Productos que guardaste",
       href: "/cuenta/favoritos",
-      icon: "❤️",
+      emoji: "❤️",
     },
     {
       title: "Mis datos",
       description: "Administrá tu información personal",
       href: "/cuenta/perfil",
-      icon: "👤",
+      icon: "perfil",
     },
   ];
 
@@ -75,7 +83,15 @@ export default function CuentaPage() {
                 href={item.href}
                 className="group rounded-lg border border-black/8 bg-white p-6 transition hover:shadow-lg"
               >
-                <div className="mb-3 text-3xl">{item.icon}</div>
+                <div className="mb-3">
+                  {item.icon ? (
+                    <BrandIcon name={item.icon} size={40} />
+                  ) : (
+                    <span className="text-3xl" aria-hidden>
+                      {item.emoji}
+                    </span>
+                  )}
+                </div>
                 <h2 className="mb-1 text-lg font-semibold text-[#1d1d1b] group-hover:text-[#0f3bff]">
                   {item.title}
                 </h2>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandIcon } from "@/components/BrandIcon";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import type { PickupInfo } from "@/lib/pickup";
 
@@ -47,9 +48,7 @@ export function ProductDeliveryInfo({ pickupInfo, compact = false }: Props) {
       <div
         className={`flex items-start gap-2.5 rounded-lg bg-gray-50 ${compact ? "p-3" : "gap-3 p-4"}`}
       >
-        <span className={compact ? "text-lg" : "text-2xl"} aria-hidden>
-          📍
-        </span>
+        <BrandIcon name="retiroFadu" size={compact ? 22 : 28} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <p className={`font-semibold text-green-600 ${compact ? "text-sm" : ""}`}>
             Retiro en FADU
@@ -72,9 +71,7 @@ export function ProductDeliveryInfo({ pickupInfo, compact = false }: Props) {
         <div
           className={`flex items-start gap-2.5 rounded-lg border border-indigo-100 bg-indigo-50 ${compact ? "p-3" : "gap-3 p-4"}`}
         >
-          <span className={compact ? "text-lg" : "text-2xl"} aria-hidden>
-            🚚
-          </span>
+          <BrandIcon name="envioDomicilio" size={compact ? 22 : 28} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className={`font-semibold text-indigo-700 ${compact ? "text-sm" : ""}`}>
               Envío a domicilio

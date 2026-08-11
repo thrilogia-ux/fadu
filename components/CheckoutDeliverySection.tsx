@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandIcon } from "@/components/BrandIcon";
 import { PickupScheduleDisplay } from "@/components/PickupScheduleDisplay";
 import type { PickupInfo } from "@/lib/pickup";
 import type { ShippingQuoteResult } from "@/lib/shipping-zones";
@@ -154,7 +155,10 @@ export function CheckoutDeliverySection({
             className="mt-1"
           />
           <div className="min-w-0 flex-1">
-            <span className="font-semibold text-[#1d1d1b]">Retiro en Pickup Point FADU</span>
+            <div className="flex items-center gap-2">
+              <BrandIcon name="retiroFadu" size={22} className="shrink-0" />
+              <span className="font-semibold text-[#1d1d1b]">Retiro en Pickup Point FADU</span>
+            </div>
             <p className="mt-1 text-sm text-green-700 font-medium">Sin costo de envío</p>
             <div className="mt-3 rounded-lg bg-gray-50 p-3">
               <PickupScheduleDisplay info={pickupDisplay} showNotes={false} />
@@ -181,7 +185,10 @@ export function CheckoutDeliverySection({
               className="mt-1"
             />
             <div className="min-w-0 flex-1">
-              <span className="font-semibold text-[#1d1d1b]">Envío a domicilio</span>
+              <div className="flex items-center gap-2">
+                <BrandIcon name="envioDomicilio" size={22} className="shrink-0" />
+                <span className="font-semibold text-[#1d1d1b]">Envío a domicilio</span>
+              </div>
               <p className="mt-1 text-sm text-gray-600">
                 Calculamos el costo según tu código postal
               </p>

@@ -14,6 +14,7 @@ import { WaitlistButton } from "@/components/WaitlistButton";
 import { ShareProductButton } from "@/components/ShareProductButton";
 import { BrandLoader } from "@/components/BrandLoader";
 import { ProductDeliveryInfo } from "@/components/ProductDeliveryInfo";
+import { BrandIcon } from "@/components/BrandIcon";
 import { STORE_NAME } from "@/lib/brand";
 import { DEFAULT_PICKUP_INFO, type PickupInfo } from "@/lib/pickup";
 
@@ -1032,9 +1033,15 @@ export default function ProductPage() {
                   </div>
                   <div className="pt-4">
                     <h3 className="mb-2 text-sm font-semibold text-[#1d1d1b]">Medios de pago</h3>
-                    <div className="space-y-1.5 text-sm text-gray-600">
-                      <p>💳 Tarjetas de crédito y débito</p>
-                      <p>🏦 Transferencia bancaria</p>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p className="flex items-center gap-2">
+                        <BrandIcon name="tarjetas" size={20} className="shrink-0" />
+                        Tarjetas de crédito y débito
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <BrandIcon name="transferencia" size={20} className="shrink-0" />
+                        Transferencia bancaria
+                      </p>
                       <p>💵 Efectivo en puntos de pago</p>
                     </div>
                   </div>

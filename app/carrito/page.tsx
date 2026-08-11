@@ -10,6 +10,7 @@ import { useCart } from "@/lib/cart-context";
 import { cartLineKey } from "@/lib/cart-line";
 import Image from "next/image";
 import Link from "next/link";
+import { BrandIcon } from "@/components/BrandIcon";
 
 export default function CarritoPage() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function CarritoPage() {
 
           {items.length === 0 ? (
             <EmptyState
-              icon="🛒"
+              icon={<BrandIcon name="carrito" size={36} />}
               title="Tu carrito está vacío"
               description="Explorá el catálogo y sumá productos. Retirás tu pedido en el Pickup Point en FADU."
               primaryHref="/productos"

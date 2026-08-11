@@ -16,6 +16,7 @@ import type { PickupInfo } from "@/lib/pickup";
 import type { ShippingQuoteResult } from "@/lib/shipping-zones";
 import { cartLineKey } from "@/lib/cart-line";
 import Link from "next/link";
+import { BrandIcon } from "@/components/BrandIcon";
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
@@ -439,6 +440,7 @@ export default function CheckoutPage() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
+                          <BrandIcon name="tarjetas" size={22} className="shrink-0" />
                           <span className="font-semibold">Mercado Pago</span>
                           <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
                             Recomendado
@@ -462,7 +464,10 @@ export default function CheckoutPage() {
                         className="mt-1"
                       />
                       <div className="flex-1">
-                        <span className="font-semibold">Transferencia bancaria</span>
+                        <div className="flex items-center gap-2">
+                          <BrandIcon name="transferencia" size={22} className="shrink-0" />
+                          <span className="font-semibold">Transferencia bancaria</span>
+                        </div>
                         <p className="text-sm text-gray-600">
                           Te enviaremos los datos por email
                         </p>

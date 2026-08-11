@@ -7,6 +7,8 @@ import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PickupPromoBanner } from "@/components/PickupPromoBanner";
+import { BrandIcon } from "@/components/BrandIcon";
+import type { BrandIconName } from "@/lib/brand-icons";
 import type { LegalPageMeta } from "@/lib/legal-pages";
 import type { PickupInfo } from "@/lib/pickup";
 
@@ -19,11 +21,17 @@ type Props = {
   pickup: PickupInfo;
 };
 
-const QUICK_LINKS = [
-  { href: "/ayuda/comprar", label: "Cómo comprar", icon: "🛒", desc: "Paso a paso" },
-  { href: "/retiro", label: "Retiro en FADU", icon: "📍", desc: "Horarios y ubicación" },
-  { href: "/medios-de-pago", label: "Medios de pago", icon: "💳", desc: "MP y transferencia" },
-  { href: "/ayuda/devoluciones", label: "Devoluciones", icon: "↩️", desc: "Cambios y reembolsos" },
+const QUICK_LINKS: {
+  href: string;
+  label: string;
+  icon?: BrandIconName;
+  emoji?: string;
+  desc: string;
+}[] = [
+  { href: "/ayuda/comprar", label: "Cómo comprar", icon: "carrito", desc: "Paso a paso" },
+  { href: "/retiro", label: "Retiro en FADU", icon: "retiroFadu", desc: "Horarios y ubicación" },
+  { href: "/medios-de-pago", label: "Medios de pago", icon: "tarjetas", desc: "MP y transferencia" },
+  { href: "/ayuda/devoluciones", label: "Devoluciones", emoji: "↩️", desc: "Cambios y reembolsos" },
 ];
 
 const STEPS = [
@@ -122,8 +130,12 @@ export function HelpCenterView({ faqPage, faqItems, categories, pickup }: Props)
                 href={link.href}
                 className="rounded-xl border border-black/8 bg-white p-4 shadow-sm transition hover:border-[#0f3bff]/30 hover:shadow-md"
               >
-                <span className="text-2xl" aria-hidden>
-                  {link.icon}
+                <span className="inline-flex h-8 w-8 items-center justify-center" aria-hidden>
+                  {link.icon ? (
+                    <BrandIcon name={link.icon} size={32} />
+                  ) : (
+                    <span className="text-2xl">{link.emoji}</span>
+                  )}
                 </span>
                 <p className="mt-2 text-sm font-semibold text-[#1d1d1b]">{link.label}</p>
                 <p className="mt-0.5 text-xs text-gray-500">{link.desc}</p>
